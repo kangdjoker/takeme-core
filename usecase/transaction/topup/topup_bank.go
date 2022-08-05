@@ -1,0 +1,138 @@
+package topup
+
+import (
+	"os"
+	"time"
+
+	"github.com/takeme-id/core/domain"
+	"github.com/takeme-id/core/service"
+	"github.com/takeme-id/core/usecase"
+	"github.com/takeme-id/core/usecase/transaction"
+	"github.com/takeme-id/core/utils"
+	"github.com/takeme-id/core/utils/gateway"
+)
+
+type TopupBank struct {
+	corporate          domain.Corporate
+	from               domain.Bank
+	to                 domain.TransactionObject
+	balance            domain.Balance
+	amount             int
+	reference          string
+	transactionUsecase transaction.Base
+}
+
+func (self TopupBank) Execute(from domain.Bank, balanceID string, amount int,
+	reference string) (domain.Transaction, domain.Balance, error) {
+
+	balance, owner, corporate, err := identifyBalance(balanceID)
+	if err != nil {
+		return domain.Transaction{}, domain.Balance{}, err
+	}
+
+	gateway := gateway.XenditGateway{}
+	self.corporate = corporate
+	self.from = from
+	self.to = owner
+	self.balance = balance
+	self.amount = amount
+	self.reference = reference
+	self.transactionUsecase = transaction.Base{}
+
+	var statements []domain.Statement
+
+	transaction, transactionStatement := createTransaction(self.corporate, self.balance, self.from,
+		self.to, self.amount, self.reference, gateway)
+
+	feeStatement, err := self.transactionUsecase.CreateFeeStatement(corporate, balance, transaction)
+	if err != nil {
+		return domain.Transaction{}, domain.Balance{}, err
+	}
+
+	statements = append(statements, transactionStatement)
+	statements = append(statements, feeStatement...)
+
+	err = self.transactionUsecase.Commit(statements, &transaction)
+	if err != nil {
+		return domain.Transaction{}, domain.Balance{}, err
+	}
+
+	go usecase.PublishTopupCallback(corporate, balance, transaction)
+
+	return transaction, balance, nil
+}
+
+func identifyBalance(balanceID string) (domain.Balance, domain.TransactionObject, domain.Corporate, error) {
+	balance, err := service.BalanceByIDNoSession(balanceID)
+	if err != nil {
+		return domain.Balance{}, domain.TransactionObject{}, domain.Corporate{},
+			utils.ErrorBadRequest(utils.InvalidBalanceID, "Balance id not found")
+	}
+
+	var balanceOwner domain.TransactionObject
+	ownerID := balance.Owner.ID.Hex()
+	corporateID := balance.CorporateID.Hex()
+	balanceOwnerType := balance.Owner.Type
+
+	if balanceOwnerType == domain.ACTOR_TYPE_CORPORATE {
+		corporate, err := service.CorporateByIDNoSession(ownerID)
+		if err != nil {
+			return domain.Balance{}, domain.TransactionObject{}, domain.Corporate{},
+				utils.ErrorBadRequest(utils.CorporateNotFound, "Corporate id not found")
+		}
+
+		balanceOwner = corporate.ToTransactionObject()
+	} else {
+		user, err := service.UserByIDNoSession(ownerID)
+		if err != nil {
+			return domain.Balance{}, domain.TransactionObject{}, domain.Corporate{},
+				utils.ErrorBadRequest(utils.UserNotFound, "User id not found")
+		}
+
+		balanceOwner = user.ToTransactionObject()
+	}
+
+	corporate, err := service.CorporateByIDNoSession(corporateID)
+	if err != nil {
+		return domain.Balance{}, domain.TransactionObject{}, domain.Corporate{},
+			utils.ErrorBadRequest(utils.CorporateNotFound, "Corporate id not found")
+	}
+
+	return balance, balanceOwner, corporate, nil
+}
+
+func createTransaction(corporate domain.Corporate, balance domain.Balance, from domain.Bank,
+	to domain.TransactionObject, subAmount int, reference string, gateway gateway.Gateway) (domain.Transaction, domain.Statement) {
+
+	var totalFee = 0
+	if balance.Owner.Type == domain.ACTOR_TYPE_USER {
+		totalFee = corporate.FeeUser.Topup
+	} else {
+		totalFee = corporate.FeeCorporate.Topup
+	}
+
+	transcation := domain.Transaction{
+		TransactionCode:  utils.GenerateTransactionCode("2"),
+		CorporateID:      corporate.ID,
+		Type:             domain.TOPUP,
+		Method:           domain.METHOD_VA,
+		ToBalanceID:      balance.ID,
+		From:             from.ToTransactionObject(),
+		To:               to,
+		TotalFee:         totalFee,
+		SubAmount:        subAmount,
+		Amount:           subAmount - totalFee,
+		Time:             time.Now().Format(os.Getenv("TIME_FORMAT")),
+		Notes:            "",
+		Status:           domain.PENDING_STATUS,
+		Unpaid:           false,
+		ExternalID:       "",
+		Gateway:          gateway.Name(),
+		GatewayReference: reference,
+	}
+
+	statement := service.DepositTransactionStatement(
+		balance.ID, transcation.Time, transcation.TransactionCode, subAmount)
+
+	return transcation, statement
+}
