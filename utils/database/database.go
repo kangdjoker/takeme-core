@@ -33,6 +33,21 @@ func FindCount(colName string, query bson.M) (int64, error) {
 	return total, nil
 }
 
+func FindWithJoin(colName string, query []bson.M) (*mongo.Cursor, error) {
+	collection := DBClient.Database(os.Getenv("MONGO_DB_NAME")).Collection(colName)
+	cursor, err := collection.Aggregate(
+		context.TODO(),
+		query,
+	)
+
+	if err != nil {
+		errorMessage := err.Error()
+		return nil, utils.ErrorInternalServer(utils.QueryFailed, errorMessage)
+	}
+
+	return cursor, nil
+}
+
 func FindOneByID(colName string, ID string) *mongo.SingleResult {
 	objectID, _ := primitive.ObjectIDFromHex(ID)
 
