@@ -15,6 +15,24 @@ import (
 
 var DBClient *mongo.Client
 
+func FindCount(colName string, query bson.M) (int64, error) {
+
+	opts := options.CountOptions{}
+
+	collection := DBClient.Database(os.Getenv("MONGO_DB_NAME")).Collection(colName)
+	total, err := collection.CountDocuments(
+		context.TODO(),
+		query,
+		&opts,
+	)
+
+	if err != nil {
+		return 0, utils.ErrorInternalServer(utils.QueryFailed, err.Error())
+	}
+
+	return total, nil
+}
+
 func FindOneByID(colName string, ID string) *mongo.SingleResult {
 	objectID, _ := primitive.ObjectIDFromHex(ID)
 
