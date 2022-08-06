@@ -32,8 +32,8 @@ func JWTDecode(tokenString string) (domain.Claims, error) {
 	return claims, nil
 }
 
-func JWTEncode(claimsAble domain.ClaimsAble, minute int) (string, error) {
-	expirationTime := time.Now().Add(time.Minute * time.Duration(minute))
+func JWTEncode(claimsAble domain.ClaimsAble, corporate domain.Corporate) (string, error) {
+	expirationTime := time.Now().Add(time.Minute * time.Duration(corporate.TokenExpired))
 
 	claims := &domain.Claims{
 		SocketID:        claimsAble.GetID(),
@@ -42,8 +42,12 @@ func JWTEncode(claimsAble domain.ClaimsAble, minute int) (string, error) {
 		Verified:        claimsAble.GetVerified(),
 		IsPinAlreadySet: claimsAble.GetIsPinAlreadySet(),
 		CorporateID:     claimsAble.GetCorporateID(),
+		CorporateName:   corporate.Name,
 		AccessLevel:     claimsAble.GetAccessLevel(),
 		Privileges:      claimsAble.GetPrivileges(),
+		Resources:       corporate.Products,
+		SAAS:            corporate.SAAS,
+		CorporateURL:    corporate.DashboardURL,
 		StandardClaims: jwt.StandardClaims{
 			// In JWT, the expiry time is expressed as unix milliseconds
 			ExpiresAt: expirationTime.Unix(),

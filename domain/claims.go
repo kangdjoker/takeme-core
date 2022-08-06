@@ -9,8 +9,12 @@ type Claims struct {
 	Verified        bool     `json:"verified"`
 	IsPinAlreadySet bool     `json:"is_pin_already_set "`
 	CorporateID     string   `json:"corporate_id"`
+	CorporateName   string   `json:"corporate_name"`
 	AccessLevel     string   `json:"access_level"`
 	Privileges      []string `json:"privileges"`
+	SAAS            bool     `json:"saas"`
+	Resources       []string `json:"resources"`
+	CorporateURL    string   `json:"corporate_url"`
 	jwt.StandardClaims
 }
 

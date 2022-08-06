@@ -131,7 +131,7 @@ func UserActivation(phoneNumber string, corporate domain.Corporate, code string)
 		}
 
 		// Generate JWT
-		tokenString, err := utils.JWTEncode(user, corporate.TokenExpired)
+		tokenString, err := utils.JWTEncode(user, corporate)
 		if err != nil {
 			return err
 		}
@@ -271,7 +271,7 @@ func UserLogin(phoneNumber string, corporate domain.Corporate, code string) (str
 		}
 
 		// Generate JWT
-		tokenString, err := utils.JWTEncode(user, corporate.TokenExpired)
+		tokenString, err := utils.JWTEncode(user, corporate)
 		if err != nil {
 			return err
 		}
@@ -339,7 +339,7 @@ func UserFaceLogin(phoneNumber string, corporate domain.Corporate, faceImage str
 		}
 
 		// Generate JWT
-		tokenString, err := utils.JWTEncode(user, corporate.TokenExpired)
+		tokenString, err := utils.JWTEncode(user, corporate)
 		if err != nil {
 			return err
 		}
