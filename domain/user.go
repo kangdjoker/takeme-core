@@ -25,7 +25,7 @@ type User struct {
 	MainBalance primitive.ObjectID `json:"main_balance" bson:"main_balance"`
 	ListBalance []AccessBalance    `json:"list_balance" bson:"list_balance"`
 
-	// Balance int `json:"balance" bson:"balance"`
+	Balance int `json:"balance" bson:"balance"`
 
 	VANumberMANDIRI string `json:"va_number_mandiri" bson:"va_number_mandiri,omitempty"`
 	VANumberBNI     string `json:"va_number_bni" bson:"va_number_bni,omitempty"`
