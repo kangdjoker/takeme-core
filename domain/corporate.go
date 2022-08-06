@@ -49,6 +49,9 @@ type Corporate struct {
 	ChangePIN               string               `json:"change_pin" bson:"change_pin,omitempty"`
 	ChangePINCode           string               `json:"change_pin_code" bson:"change_pin_code,omitempty"`
 	VACode                  string               `json:"va_code" bson:"va_code,omitempty"`
+
+	Products []string `json:"products" bson:"products,omitempty"`
+	SAAS     bool     `json:"saas" bson:"saas,omitempty"`
 }
 
 type Fee struct {
