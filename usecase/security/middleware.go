@@ -161,6 +161,10 @@ func MiddlewareWithoutSignature(h http.HandlerFunc, secure bool) http.HandlerFun
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
+		var ctx context.Context
+		var corporate domain.Corporate
+		var claims domain.Claims
+
 		if secure == true {
 			_, err := validateJWT(r)
 			if err != nil {
@@ -170,7 +174,20 @@ func MiddlewareWithoutSignature(h http.HandlerFunc, secure bool) http.HandlerFun
 
 		}
 
-		h.ServeHTTP(w, r)
+		corporate, err := service.CorporateByRequest(r)
+		if err != nil {
+			utils.ResponseError(err, w, r)
+			return
+		}
+
+		data := utils.ContextValue{
+			"claims":    claims,
+			"userID":    claims.SocketID,
+			"corporate": corporate,
+		}
+
+		ctx = context.WithValue(r.Context(), "data", data)
+		h.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
