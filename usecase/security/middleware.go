@@ -164,9 +164,10 @@ func MiddlewareWithoutSignature(h http.HandlerFunc, secure bool) http.HandlerFun
 		var ctx context.Context
 		var corporate domain.Corporate
 		var claims domain.Claims
+		var err error
 
 		if secure == true {
-			_, err := validateJWT(r)
+			claims, err = validateJWT(r)
 			if err != nil {
 				utils.ResponseError(err, w, r)
 				return
@@ -174,7 +175,7 @@ func MiddlewareWithoutSignature(h http.HandlerFunc, secure bool) http.HandlerFun
 
 		}
 
-		corporate, err := service.CorporateByRequest(r)
+		corporate, err = service.CorporateByRequest(r)
 		if err != nil {
 			utils.ResponseError(err, w, r)
 			return
