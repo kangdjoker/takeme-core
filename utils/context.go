@@ -16,6 +16,12 @@ func CorporateContext(request *http.Request) domain.Corporate {
 	return data
 }
 
+func AccessLevelByContext(request *http.Request) string {
+	claims := request.Context().Value("data").(ContextValue)["claims"].(domain.Claims)
+
+	return claims.AccessLevel
+}
+
 func UserContext(request *http.Request) domain.User {
 	data := request.Context().Value("data").(ContextValue)["user"].(domain.User)
 	return data
