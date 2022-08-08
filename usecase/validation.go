@@ -25,7 +25,10 @@ func ValidateActorPIN(actor domain.ActorAble, pinEncrypted string) error {
 
 		pin, err := utils.RSADecrypt(pinEncrypted)
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DecryptError, "Decrypt error")
+			pin, err = utils.RSADecrypDashboard(pinEncrypted)
+			if err != nil {
+				return utils.ErrorInternalServer(utils.DecryptError, "Decrypt error")
+			}
 		}
 
 		if pin != actor.GetPIN() {
