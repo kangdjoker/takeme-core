@@ -124,7 +124,7 @@ func createTransaction(corporate domain.Corporate, balance domain.Balance, from 
 		Amount:           subAmount - totalFee,
 		Time:             time.Now().Format(os.Getenv("TIME_FORMAT")),
 		Notes:            "",
-		Status:           domain.PENDING_STATUS,
+		Status:           domain.COMPLETED_STATUS,
 		Unpaid:           false,
 		ExternalID:       "",
 		Gateway:          gateway.Name(),
