@@ -47,7 +47,7 @@ func RSADecrypDashboard(encryptedString string) (string, error) {
 
 	privateKeyFileByte, err := ioutil.ReadFile("rsa_1024_priv.pem")
 	if err != nil {
-		return "", ErrorInternalServer(AesError, "AES Error")
+		return "", ErrorInternalServer(DecryptError, "AES Error")
 	}
 
 	b, _ := pem.Decode(privateKeyFileByte)
@@ -55,19 +55,19 @@ func RSADecrypDashboard(encryptedString string) (string, error) {
 	privateKey, error := x509.ParsePKCS1PrivateKey(b.Bytes)
 	// privateKey, error := ssh.ParseRawPrivateKey(b.Bytes)
 	if error != nil {
-		return "", ErrorInternalServerAesError, "AES Error")
+		return "", ErrorInternalServer(DecryptError, "AES Error")
 	}
 
 	actualPrivateKey := privateKey
 
 	base64DecodeBytes, err := base64.StdEncoding.DecodeString(encryptedString)
 	if error != nil {
-		return "", model.InternalServer(model.AesError, "AES Error")
+		return "", ErrorInternalServer(DecryptError, "AES Error")
 	}
 
 	decryptedData, decryptErr := rsa.DecryptPKCS1v15(rand.Reader, actualPrivateKey, base64DecodeBytes)
 	if decryptErr != nil {
-		return "", model.InternalServer(model.AesError, "AES Error")
+		return "", ErrorInternalServer(DecryptError, "AES Error")
 	}
 
 	return string(decryptedData), nil
