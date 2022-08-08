@@ -14,6 +14,7 @@ import (
 type UserTransferBank struct {
 	corporate   domain.Corporate
 	actor       domain.ActorAble
+	from        domain.TransactionObject
 	to          domain.TransactionObject
 	fromBalance domain.Balance
 	// toBalance          domain.Balance
@@ -32,19 +33,25 @@ func (self UserTransferBank) Execute(corporate domain.Corporate, actor domain.Ac
 		return domain.Transaction{}, err
 	}
 
+	from, err := usecase.ActorObjectToActor(balance.Owner.ToActorObject())
+	if err != nil {
+		return domain.Transaction{}, err
+	}
+
 	self.corporate = corporate
 	self.actor = actor
 	self.to = to
 	self.subAmount = subAmount
 	self.pin = encryptedPIN
 	self.externalID = externalID
+	self.from = from.ToTransactionObject()
 	self.fromBalance = balance
 	self.transactionUsecase = transaction.Base{}
 	self.transferBankBase = TransferBank{}
 
 	var statements []domain.Statement
 
-	transaction, transactionStatement := createTransaction(self.corporate, self.fromBalance, self.actor, to, subAmount, externalID)
+	transaction, transactionStatement := createTransaction(self.corporate, self.fromBalance, self.actor, self.from, to, subAmount, externalID)
 
 	feeStatement, err := self.transactionUsecase.CreateFeeStatement(corporate, self.fromBalance, transaction)
 	if err != nil {
@@ -85,11 +92,11 @@ func identifyBalance(balanceID string) (domain.Balance, error) {
 	return balance, nil
 }
 
-func createTransaction(corporate domain.Corporate, balance domain.Balance, from domain.ActorAble,
+func createTransaction(corporate domain.Corporate, balance domain.Balance, actor domain.ActorAble, from domain.TransactionObject,
 	to domain.TransactionObject, subAmount int, externalID string) (domain.Transaction, domain.Statement) {
 
 	totalFee := 0
-	if from.GetActorType() == domain.ACTOR_TYPE_USER {
+	if actor.GetActorType() == domain.ACTOR_TYPE_USER {
 		totalFee = corporate.FeeUser.TransferBank
 	} else {
 		totalFee = corporate.FeeCorporate.TransferBank
@@ -97,12 +104,13 @@ func createTransaction(corporate domain.Corporate, balance domain.Balance, from 
 
 	transcation := domain.Transaction{
 		TransactionCode: utils.GenerateTransactionCode("1"),
-		UserID:          from.GetActorID(),
+		UserID:          actor.GetActorID(),
 		CorporateID:     corporate.ID,
 		Type:            domain.TRANSFER_BANK,
 		Method:          domain.METHOD_BALANCE,
 		FromBalanceID:   balance.ID,
-		From:            from.ToTransactionObject(),
+		Actor:           actor.ToTransactionObject(),
+		From:            from,
 		To:              to,
 		TotalFee:        totalFee,
 		SubAmount:       subAmount,

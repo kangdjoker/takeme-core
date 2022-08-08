@@ -15,6 +15,7 @@ type DeductCorporate struct {
 	corporate          domain.Corporate
 	actor              domain.ActorAble
 	to                 domain.TransactionObject
+	from               domain.TransactionObject
 	fromBalance        domain.Balance
 	toBalance          domain.Balance
 	pin                string
@@ -27,6 +28,11 @@ func (self DeductCorporate) Execute(corporate domain.Corporate, actor domain.Act
 	toBalanceID string, fromBalanceID string, subAmount int, encryptedPIN string, externalID string) (domain.Transaction, error) {
 
 	fromBalance, err := identifyBalance(fromBalanceID)
+	if err != nil {
+		return domain.Transaction{}, err
+	}
+
+	from, err := usecase.ActorObjectToActor(fromBalance.Owner.ToActorObject())
 	if err != nil {
 		return domain.Transaction{}, err
 	}
@@ -44,6 +50,7 @@ func (self DeductCorporate) Execute(corporate domain.Corporate, actor domain.Act
 	self.corporate = corporate
 	self.actor = actor
 	self.to = to.ToTransactionObject()
+	self.from = from.ToTransactionObject()
 
 	self.fromBalance = fromBalance
 	self.toBalance = toBalance
@@ -54,7 +61,7 @@ func (self DeductCorporate) Execute(corporate domain.Corporate, actor domain.Act
 
 	var statements []domain.Statement
 
-	transaction, transactionStatement := createTransaction(self.corporate, self.fromBalance, self.actor, self.to,
+	transaction, transactionStatement := createTransaction(self.corporate, self.fromBalance, self.actor, self.from, self.to,
 		self.toBalance, self.subAmount, self.externalID)
 
 	feeStatement, err := self.transactionUsecase.CreateFeeStatement(corporate, self.fromBalance, transaction)
@@ -85,11 +92,11 @@ func (self DeductCorporate) Execute(corporate domain.Corporate, actor domain.Act
 	return transaction, nil
 }
 
-func createTransaction(corporate domain.Corporate, fromBalance domain.Balance, from domain.ActorAble,
+func createTransaction(corporate domain.Corporate, fromBalance domain.Balance, actor domain.ActorAble, from domain.TransactionObject,
 	to domain.TransactionObject, toBalance domain.Balance, subAmount int, externalID string) (domain.Transaction, []domain.Statement) {
 
 	totalFee := 0
-	if from.GetActorType() == domain.ACTOR_TYPE_USER {
+	if actor.GetActorType() == domain.ACTOR_TYPE_USER {
 		totalFee = corporate.FeeUser.Deduct
 	} else {
 		totalFee = corporate.FeeCorporate.Deduct
@@ -97,14 +104,15 @@ func createTransaction(corporate domain.Corporate, fromBalance domain.Balance, f
 
 	transaction := domain.Transaction{
 		TransactionCode: utils.GenerateTransactionCode("1"),
-		UserID:          from.GetActorID(),
+		UserID:          actor.GetActorID(),
 		CorporateID:     corporate.ID,
 		Type:            domain.DEDUCT,
 		Method:          domain.METHOD_BALANCE,
 		FromBalanceID:   toBalance.ID,
 		ToBalanceID:     fromBalance.ID,
+		Actor:           actor.ToTransactionObject(),
 		From:            to,
-		To:              from.ToTransactionObject(),
+		To:              from,
 		TotalFee:        totalFee,
 		SubAmount:       subAmount,
 		Amount:          subAmount + totalFee,
