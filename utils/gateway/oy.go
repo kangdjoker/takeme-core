@@ -39,7 +39,7 @@ func (gateway OYGateway) CreateTransfer(transaction domain.Transaction) (string,
 		RecipientBank:    utils.ConvertBankCodeOY(bank),
 		RecipientAccount: accountNumber,
 		Amount:           amount,
-		Note:             "PT FUSINDO SOKA",
+		Note:             "FSND " + transaction.From.Name,
 		TransactionID:    transaction.TransactionCode,
 		Email:            "",
 	}

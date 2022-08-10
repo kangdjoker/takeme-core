@@ -100,7 +100,7 @@ func (gateway XenditGateway) CreateTransfer(transaction domain.Transaction) (str
 	data.Set("bank_code", transaction.To.GetInstitutionCode())
 	data.Set("account_holder_name", transaction.To.GetInstitutionCode())
 	data.Set("account_number", transaction.To.GetAccountNumber())
-	data.Set("description", "PT FUSINDO SOKA")
+	data.Set("description", "FSND "+transaction.From.Name)
 
 	client := &http.Client{}
 	token := fmt.Sprintf("%v:", os.Getenv("XENDIT_API_KEY"))
