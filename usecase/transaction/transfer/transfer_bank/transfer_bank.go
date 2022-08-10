@@ -109,7 +109,7 @@ func (self TransferBank) ProcessCallbackGatewayTransfer(gatewayCode string, tran
 		corporate, err = service.CorporateByIDNoSession(transaction.CorporateID.Hex())
 		nextGateway = checkUnexecutedGateway(transaction)
 	} else {
-		transaction, err = service.TransactionByCodeNoSession(transactionCode)
+		transaction, err = service.TransactionByGatewayReferenceNoSession(transactionCode)
 		corporate, err = service.CorporateByIDNoSession(transaction.CorporateID.Hex())
 		nextGateway = checkUnexecutedGateway(transaction)
 	}
