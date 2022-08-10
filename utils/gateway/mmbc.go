@@ -81,7 +81,7 @@ func createTransferToBank(transaction domain.Transaction) (string, error) {
 			"password":           os.Getenv("MMBC_PASSWORD"),
 			"bank_code":          bankCode,
 			"remark":             "PT FUSINDO SOKA",
-			"invoice":            transaction.TransactionCode,
+			"invoice":            strings.Replace(transaction.TransactionCode, ":", "", -1),
 			"bank_accountnumber": bankAccount,
 			"amount":             amount,
 		}).
