@@ -73,6 +73,7 @@ func createTransferToBank(transaction domain.Transaction) (string, error) {
 	// need convert
 	bankAccount := transaction.To.AccountNumber
 	amount := strconv.Itoa(transaction.SubAmount)
+	invoice := strings.Replace(transaction.TransactionCode, ":", "", -1)[9:]
 
 	var result MMBCTransferResponse
 	_, err := client.R().
@@ -81,7 +82,7 @@ func createTransferToBank(transaction domain.Transaction) (string, error) {
 			"password":           os.Getenv("MMBC_PASSWORD"),
 			"bank_code":          bankCode,
 			"remark":             "PT FUSINDO SOKA",
-			"invoice":            strings.Replace(transaction.TransactionCode, ":", "", -1),
+			"invoice":            invoice,
 			"bank_accountnumber": bankAccount,
 			"amount":             amount,
 		}).
@@ -116,6 +117,7 @@ func createTransferToWallet(transaction domain.Transaction) (string, error) {
 
 	bankAccount := transaction.To.AccountNumber
 	amount := strconv.Itoa(transaction.SubAmount)
+	invoice := strings.Replace(transaction.TransactionCode, ":", "", -1)[9:]
 
 	var result MMBCTransferWalletResponse
 	_, err := client.R().
@@ -125,7 +127,7 @@ func createTransferToWallet(transaction domain.Transaction) (string, error) {
 			"merchant_code":          bankCode,
 			"merchant_accountnumber": bankAccount,
 			"amount":                 amount,
-			"invoice":                strings.Replace(transaction.TransactionCode, ":", "", -1),
+			"invoice":                invoice,
 		}).
 		SetResult(&result).Post(url)
 
