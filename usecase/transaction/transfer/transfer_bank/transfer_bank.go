@@ -140,7 +140,7 @@ func (self TransferBank) ProcessCallbackGatewayTransfer(gatewayCode string, tran
 		return domain.Transaction{}, nil
 	}
 
-	transaction.Status = domain.BULK_COMPLETED_STATUS
+	transaction.Status = domain.COMPLETED_STATUS
 	commitTransactionGateway(transaction.ID.Hex(), transaction.Status, gatewayCode, reference, transaction.GatewayStrategies)
 
 	go usecase.PublishTransferCallback(corporate, transaction)

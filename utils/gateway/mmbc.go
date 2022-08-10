@@ -100,7 +100,7 @@ func createTransferToBank(transaction domain.Transaction) (string, error) {
 		return "", utils.ErrorInternalServer(utils.MMBCRetryTransctionFailed, "MMBC API Call failed")
 	}
 
-	go createFakeSuccessCallback(transaction.TransactionCode)
+	// go createFakeSuccessCallback(transaction.TransactionCode)
 
 	return result.Invoice, nil
 }
@@ -143,7 +143,7 @@ func createTransferToWallet(transaction domain.Transaction) (string, error) {
 		return "", utils.ErrorInternalServer(utils.MMBCRetryTransctionFailed, "MMBC API Call failed")
 	}
 
-	go createFakeSuccessCallback(transaction.TransactionCode)
+	// go createFakeSuccessCallback(transaction.TransactionCode)
 
 	return result.Invoice, nil
 }
@@ -187,26 +187,26 @@ func convertStatusMMBC(status string) string {
 	return domain.COMPLETED_STATUS
 }
 
-func createFakeSuccessCallback(invoice string) {
-	log.Info("--------------------------- Execute Fake MMBC Callback ---------------------------")
-	client := resty.New()
-	url := os.Getenv("MMBC_FAKE_CALLBACK_URL")
+// func createFakeSuccessCallback(invoice string) {
+// 	log.Info("--------------------------- Execute Fake MMBC Callback ---------------------------")
+// 	client := resty.New()
+// 	url := os.Getenv("MMBC_FAKE_CALLBACK_URL")
 
-	payload := MMBCTransferResponse{
-		Status:  domain.COMPLETED_STATUS,
-		Invoice: invoice,
-	}
+// 	payload := MMBCTransferResponse{
+// 		Status:  domain.COMPLETED_STATUS,
+// 		Invoice: invoice,
+// 	}
 
-	_, err := client.R().
-		SetHeaders(map[string]string{
-			"Content-Type": "application/json",
-		}).
-		SetBody(payload).Post(url)
+// 	_, err := client.R().
+// 		SetHeaders(map[string]string{
+// 			"Content-Type": "application/json",
+// 		}).
+// 		SetBody(payload).Post(url)
 
-	if err != nil {
-		log.Info("Failed fake callback mmbc")
-	}
-}
+// 	if err != nil {
+// 		log.Info("Failed fake callback mmbc")
+// 	}
+// }
 
 func checkIsTransferToWallet(institutionCode string) bool {
 	if institutionCode == utils.DANA ||
