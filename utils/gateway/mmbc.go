@@ -100,7 +100,7 @@ func createTransferToBank(transaction domain.Transaction) (string, error) {
 		return "", utils.ErrorInternalServer(utils.MMBCRetryTransctionFailed, "MMBC API Call failed")
 	}
 
-	defer createFakeSuccessCallback(transaction.TransactionCode)
+	go createFakeSuccessCallback(transaction.TransactionCode)
 
 	return result.Invoice, nil
 }
@@ -143,7 +143,7 @@ func createTransferToWallet(transaction domain.Transaction) (string, error) {
 		return "", utils.ErrorInternalServer(utils.MMBCRetryTransctionFailed, "MMBC API Call failed")
 	}
 
-	defer createFakeSuccessCallback(transaction.TransactionCode)
+	go createFakeSuccessCallback(transaction.TransactionCode)
 
 	return result.Invoice, nil
 }
@@ -184,16 +184,17 @@ func convertStatusMMBC(status string) string {
 		return domain.REFUND_STATUS
 	}
 
-	return domain.BULK_COMPLETED_STATUS
+	return domain.COMPLETED_STATUS
 }
 
-func createFakeSuccessCallback(transactionCode string) {
+func createFakeSuccessCallback(invoice string) {
+	log.Info("--------------------------- Execute Fake MMBC Callback ---------------------------")
 	client := resty.New()
 	url := os.Getenv("MMBC_FAKE_CALLBACK_URL")
 
 	payload := MMBCTransferResponse{
-		Status:  domain.BULK_COMPLETED_STATUS,
-		Invoice: transactionCode,
+		Status:  domain.COMPLETED_STATUS,
+		Invoice: invoice,
 	}
 
 	_, err := client.R().
