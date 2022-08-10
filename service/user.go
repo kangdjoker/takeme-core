@@ -647,3 +647,14 @@ func ValidateUserPIN(user domain.User, pin string) error {
 
 	return nil
 }
+
+func UserbyIDNoSession(ID string) (domain.User, error) {
+	model := domain.User{}
+	cursor := database.FindOneByID(domain.USER_COLLECTION, ID)
+	err := cursor.Decode(&model)
+	if err != nil {
+		return model, err
+	}
+
+	return model, nil
+}

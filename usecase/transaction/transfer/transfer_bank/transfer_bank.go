@@ -25,19 +25,38 @@ type TransferBank struct {
 
 func (self TransferBank) SetupGateway(transaction *domain.Transaction) {
 
-	transaction.GatewayStrategies = []domain.GatewayStrategy{
-		{
-			Code:       gateway.OY,
-			IsExecuted: false,
-		},
-		{
-			Code:       gateway.MMBC,
-			IsExecuted: false,
-		},
-		{
-			Code:       gateway.Xendit,
-			IsExecuted: false,
-		},
+	if transaction.To.InstitutionCode == utils.OCBC || transaction.To.InstitutionCode == utils.DKI || transaction.To.InstitutionCode == utils.JAWA_BARAT {
+
+		transaction.GatewayStrategies = []domain.GatewayStrategy{
+			{
+				Code:       gateway.MMBC,
+				IsExecuted: false,
+			},
+			{
+				Code:       gateway.OY,
+				IsExecuted: false,
+			},
+			{
+				Code:       gateway.Xendit,
+				IsExecuted: false,
+			},
+		}
+	} else {
+
+		transaction.GatewayStrategies = []domain.GatewayStrategy{
+			{
+				Code:       gateway.OY,
+				IsExecuted: false,
+			},
+			{
+				Code:       gateway.MMBC,
+				IsExecuted: false,
+			},
+			{
+				Code:       gateway.Xendit,
+				IsExecuted: false,
+			},
+		}
 	}
 }
 
