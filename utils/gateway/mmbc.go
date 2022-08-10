@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -124,7 +125,7 @@ func createTransferToWallet(transaction domain.Transaction) (string, error) {
 			"merchant_code":          bankCode,
 			"merchant_accountnumber": bankAccount,
 			"amount":                 amount,
-			"invoice":                transaction.TransactionCode,
+			"invoice":                strings.Replace(transaction.TransactionCode, ":", "", -1),
 		}).
 		SetResult(&result).Post(url)
 
