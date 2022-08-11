@@ -36,6 +36,22 @@ func TransactionPendingByCodeNoSession(code string) (domain.Transaction, error) 
 	return transaction, nil
 }
 
+func TransactionPendingByReferenceNoSession(code string) (domain.Transaction, error) {
+	var transaction domain.Transaction
+	query := bson.M{"gateway_reference": code, "status": "Pending"}
+	cursor := database.FindOne(domain.TRANSACTION_COLLECTION, query)
+	err := cursor.Decode(&transaction)
+	if err != nil {
+		return domain.Transaction{}, utils.ErrorInternalServer(utils.QueryFailed, "Query failed")
+	}
+
+	if transaction.TransactionCode == "" {
+		return domain.Transaction{}, utils.ErrorBadRequest(utils.TransactionNotFound, "Transaction not found")
+	}
+
+	return transaction, nil
+}
+
 func TransactionByGatewayReferenceNoSession(code string) (domain.Transaction, error) {
 	var transaction domain.Transaction
 	query := bson.M{"gateway_reference": code}

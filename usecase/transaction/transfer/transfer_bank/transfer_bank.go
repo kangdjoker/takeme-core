@@ -104,12 +104,12 @@ func (self TransferBank) ProcessCallbackGatewayTransfer(gatewayCode string, tran
 	var nextGateway string
 	var err error
 
-	if status != domain.REFUND_STATUS {
-		transaction, err = service.TransactionPendingByCodeNoSession(transactionCode)
+	if status == domain.REFUND_STATUS {
+		transaction, err = service.TransactionByGatewayReferenceNoSession(reference)
 		corporate, err = service.CorporateByIDNoSession(transaction.CorporateID.Hex())
 		nextGateway = checkUnexecutedGateway(transaction)
 	} else {
-		transaction, err = service.TransactionByGatewayReferenceNoSession(transactionCode)
+		transaction, err = service.TransactionPendingByReferenceNoSession(reference)
 		corporate, err = service.CorporateByIDNoSession(transaction.CorporateID.Hex())
 		nextGateway = checkUnexecutedGateway(transaction)
 	}
