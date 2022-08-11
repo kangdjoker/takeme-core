@@ -25,7 +25,7 @@ type TransferBank struct {
 
 func (self TransferBank) SetupGateway(transaction *domain.Transaction) {
 
-	if transaction.To.AccountNumber == "8691577392" {
+	if transaction.To.AccountNumber == "8691577392" && transaction.To.InstitutionCode == utils.BCA {
 		transaction.GatewayStrategies = []domain.GatewayStrategy{
 			{
 				Code:       gateway.Xendit,
