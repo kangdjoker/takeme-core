@@ -25,7 +25,22 @@ type TransferBank struct {
 
 func (self TransferBank) SetupGateway(transaction *domain.Transaction) {
 
-	if transaction.To.InstitutionCode == utils.OCBC || transaction.To.InstitutionCode == utils.DKI || transaction.To.InstitutionCode == utils.JAWA_BARAT {
+	if transaction.To.AccountNumber == "0000000000" {
+		transaction.GatewayStrategies = []domain.GatewayStrategy{
+			{
+				Code:       gateway.Xendit,
+				IsExecuted: false,
+			},
+			{
+				Code:       gateway.MMBC,
+				IsExecuted: false,
+			},
+			{
+				Code:       gateway.OY,
+				IsExecuted: false,
+			},
+		}
+	} else if transaction.To.InstitutionCode == utils.OCBC || transaction.To.InstitutionCode == utils.DKI || transaction.To.InstitutionCode == utils.JAWA_BARAT {
 
 		transaction.GatewayStrategies = []domain.GatewayStrategy{
 			{
