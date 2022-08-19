@@ -22,10 +22,11 @@ type ActorTransferBalance struct {
 	subAmount          int
 	externalID         string
 	transactionUsecase transaction.Base
+	isTopuoType        bool
 }
 
 func (self ActorTransferBalance) Execute(corporate domain.Corporate, actor domain.ActorAble,
-	toBalanceID string, fromBalanceID string, subAmount int, encryptedPIN string, externalID string) (domain.Transaction, error) {
+	toBalanceID string, fromBalanceID string, subAmount int, encryptedPIN string, externalID string, isTopupType bool) (domain.Transaction, error) {
 
 	fromBalance, err := identifyBalance(fromBalanceID)
 	if err != nil {
@@ -58,11 +59,12 @@ func (self ActorTransferBalance) Execute(corporate domain.Corporate, actor domai
 	self.subAmount = subAmount
 	self.externalID = externalID
 	self.transactionUsecase = transaction.Base{}
+	self.isTopuoType = isTopupType
 
 	var statements []domain.Statement
 
 	transaction, transactionStatement := createTransaction(self.corporate, self.fromBalance, self.actor, self.from, self.to,
-		self.toBalance, self.subAmount, self.externalID)
+		self.toBalance, self.subAmount, self.externalID, isTopupType)
 
 	feeStatement, err := self.transactionUsecase.CreateFeeStatement(corporate, self.fromBalance, transaction)
 	if err != nil {
@@ -100,7 +102,7 @@ func (self ActorTransferBalance) Execute(corporate domain.Corporate, actor domai
 }
 
 func createTransaction(corporate domain.Corporate, fromBalance domain.Balance, actor domain.ActorAble, from domain.TransactionObject,
-	to domain.TransactionObject, toBalance domain.Balance, subAmount int, externalID string) (domain.Transaction, []domain.Statement) {
+	to domain.TransactionObject, toBalance domain.Balance, subAmount int, externalID string, isTopupType bool) (domain.Transaction, []domain.Statement) {
 
 	totalFee := 0
 	if actor.GetActorType() == domain.ACTOR_TYPE_USER {
@@ -109,11 +111,16 @@ func createTransaction(corporate domain.Corporate, fromBalance domain.Balance, a
 		totalFee = corporate.FeeCorporate.TransferBalance
 	}
 
+	transactionType := domain.TRANSFER_WALLET
+	if isTopupType == true {
+		transactionType = domain.TOPUP
+	}
+
 	transaction := domain.Transaction{
 		TransactionCode: utils.GenerateTransactionCode("1"),
 		UserID:          actor.GetActorID(),
 		CorporateID:     corporate.ID,
-		Type:            domain.TRANSFER_WALLET,
+		Type:            transactionType,
 		Method:          domain.METHOD_BALANCE,
 		FromBalanceID:   fromBalance.ID,
 		ToBalanceID:     toBalance.ID,
