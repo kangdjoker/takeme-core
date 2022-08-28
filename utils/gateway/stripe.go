@@ -128,7 +128,7 @@ func (gateway StripeGateway) CallbackAcceptPaymentCard(w http.ResponseWriter, r 
 	}
 
 	if event.Type != "payment_intent.succeeded" {
-		return "", 0, domain.Card{}, "", utils.ErrorBadRequest(utils.InvalidRequestPayload, "Invalid payload stripe callback")
+		return "", 0, domain.Card{}, "", nil
 	}
 
 	var paymentIntent stripe.PaymentIntent
@@ -138,10 +138,10 @@ func (gateway StripeGateway) CallbackAcceptPaymentCard(w http.ResponseWriter, r 
 	}
 
 	card := domain.Card{
-		AccountNumber: "**** **** **** " + paymentIntent.PaymentMethod.Card.Last4,
-		ExpMonth:      strconv.Itoa(int(paymentIntent.PaymentMethod.Card.ExpMonth)),
-		ExpYear:       strconv.Itoa(int(paymentIntent.PaymentMethod.Card.ExpYear)),
-		Network:       string(paymentIntent.PaymentMethod.Card.Brand),
+		AccountNumber: "**** **** **** " + paymentIntent.Charges.Data[0].PaymentMethodDetails.Card.Last4,
+		ExpMonth:      strconv.Itoa(int(paymentIntent.Charges.Data[0].PaymentMethodDetails.Card.ExpMonth)),
+		ExpYear:       strconv.Itoa(int(paymentIntent.Charges.Data[0].PaymentMethodDetails.Card.ExpYear)),
+		Network:       string(paymentIntent.Charges.Data[0].PaymentMethodDetails.Card.Brand),
 	}
 
 	amount := int(paymentIntent.Amount)
