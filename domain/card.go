@@ -5,6 +5,7 @@ type Card struct {
 	ExpMonth      string `json:"exp_month" bson:"exp_month,omitempty"`
 	ExpYear       string `json:"exp_year" bson:"exp_year,omitempty"`
 	Network       string `json:"network" bson:"network,omitempty"`
+	CVC           string `json:"cvc" bson:"cvc,omitempty"`
 }
 
 func (self Card) ToTransactionObject() TransactionObject {

@@ -24,6 +24,19 @@ type AcceptCard struct {
 	transactionUsecase transaction.Base
 }
 
+func (self AcceptCard) Initialize(from domain.Card, balanceID string, amount int,
+	reference string, currency string, returnURL string) (string, string, error) {
+
+	gateway := gateway.StripeGateway{}
+
+	status, authURL, err := gateway.ChargeCard(balanceID, returnURL, from)
+	if err != nil {
+		return "", "", err
+	}
+
+	return status, authURL, nil
+}
+
 func (self AcceptCard) Execute(from domain.Card, balanceID string, amount int,
 	reference string, currency string) (domain.Transaction, domain.Balance, error) {
 

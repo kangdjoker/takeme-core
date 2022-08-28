@@ -105,6 +105,7 @@ const (
 	MMBCBankNoutFound         = 933
 	QontakAPICallFailed       = 934
 	DBStartTransactionFailed  = 935
+	StripeAPICallFail         = 936
 )
 
 type CustomError struct {
