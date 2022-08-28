@@ -14,13 +14,14 @@ const (
 )
 
 const (
-	TOPUP           = "TOPUP"
-	DEDUCT          = "DEDUCT"
-	TRANSFER_WALLET = "TRANSFER_TO_WALLET"
-	TRANSFER_CASH   = "TRANSFER_TO_CASH"
-	TRANSFER_BANK   = "TRANSFER_TO_BANK"
-	PAY_QR          = "PAY_QR"
-	BILLER          = "PAY_BILLER"
+	TOPUP               = "TOPUP"
+	DEDUCT              = "DEDUCT"
+	ACCEPT_PAYMENT_CARD = "ACCEPT_PAYMENT_CARD"
+	TRANSFER_WALLET     = "TRANSFER_TO_WALLET"
+	TRANSFER_CASH       = "TRANSFER_TO_CASH"
+	TRANSFER_BANK       = "TRANSFER_TO_BANK"
+	PAY_QR              = "PAY_QR"
+	BILLER              = "PAY_BILLER"
 )
 
 const (
@@ -31,6 +32,7 @@ const (
 
 const (
 	BANK_OBJECT      = "BANK_ACCOUNT"
+	CARD_OBJECT      = "CARD_ACCOUNT"
 	WALLET_OBJECT    = "WALLET_ACCOUNT"
 	BILLER_OBJECT    = "BILLER"
 	CORPORATE_OBJECT = "CORPORATE_ACCOUNT"
@@ -97,6 +99,7 @@ type Transaction struct {
 	GatewayReference  string             `json:"gateway_reference" bson:"gateway_reference"`
 	GatewayStrategies []GatewayStrategy  `json:"gateway_strategies" bson:"gateway_strategies"`
 	GatewayHistories  []GatewayHistory   `json:"gateway_histories" bson:"gateway_histories"`
+	Currency          string             `json:"currency" bson:"currency,omitempty"`
 }
 
 // Interface for mongo document result

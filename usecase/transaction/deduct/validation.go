@@ -25,3 +25,11 @@ func validateMaximum(transaction domain.Transaction) error {
 
 	return nil
 }
+
+func validateCurrency(from domain.Balance, to domain.Balance) error {
+	if from.Currency != to.Currency {
+		return utils.ErrorBadRequest(utils.CurrencyError, "Transaction cross currency")
+	}
+
+	return nil
+}

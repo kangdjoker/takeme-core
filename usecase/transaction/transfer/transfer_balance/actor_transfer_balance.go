@@ -63,6 +63,11 @@ func (self ActorTransferBalance) Execute(corporate domain.Corporate, actor domai
 
 	var statements []domain.Statement
 
+	err = validateCurrency(fromBalance, toBalance)
+	if err != nil {
+		return domain.Transaction{}, err
+	}
+
 	transaction, transactionStatement := createTransaction(self.corporate, self.fromBalance, self.actor, self.from, self.to,
 		self.toBalance, self.subAmount, self.externalID, isTopupType)
 
@@ -135,6 +140,7 @@ func createTransaction(corporate domain.Corporate, fromBalance domain.Balance, a
 		Status:          domain.COMPLETED_STATUS,
 		Unpaid:          false,
 		ExternalID:      externalID,
+		Currency:        corporate.Currency,
 	}
 
 	var statements []domain.Statement

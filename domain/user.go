@@ -184,12 +184,6 @@ func (self User) ToTransactionObject() TransactionObject {
 	}
 }
 
-type Card struct {
-	AccountNumber string `json:"account_number" bson:"account_number,omitempty"`
-	ExpMonth      string `json:"exp_month" bson:"exp_month,omitempty"`
-	ExpYear       string `json:"exp_year" bson:"exp_year,omitempty"`
-}
-
 type CreditCard struct {
 	Name       string `json:"name" bson:"name,omitempty"`
 	CardNumber string `json:"card_number" bson:"card_number,omitempty"`

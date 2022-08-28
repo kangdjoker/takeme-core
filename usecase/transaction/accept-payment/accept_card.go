@@ -1,7 +1,8 @@
-package topup
+package acceptpayment
 
 import (
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/takeme-id/core/domain"
@@ -12,9 +13,9 @@ import (
 	"github.com/takeme-id/core/utils/gateway"
 )
 
-type TopupBank struct {
+type AcceptCard struct {
 	corporate          domain.Corporate
-	from               domain.Bank
+	from               domain.Card
 	to                 domain.TransactionObject
 	balance            domain.Balance
 	amount             int
@@ -23,7 +24,7 @@ type TopupBank struct {
 	transactionUsecase transaction.Base
 }
 
-func (self TopupBank) Execute(from domain.Bank, balanceID string, amount int,
+func (self AcceptCard) Execute(from domain.Card, balanceID string, amount int,
 	reference string, currency string) (domain.Transaction, domain.Balance, error) {
 
 	balance, owner, corporate, err := identifyBalance(balanceID)
@@ -31,7 +32,7 @@ func (self TopupBank) Execute(from domain.Bank, balanceID string, amount int,
 		return domain.Transaction{}, domain.Balance{}, err
 	}
 
-	gateway := gateway.XenditGateway{}
+	gateway := gateway.StripeGateway{}
 	self.corporate = corporate
 	self.from = from
 	self.to = owner
@@ -43,8 +44,11 @@ func (self TopupBank) Execute(from domain.Bank, balanceID string, amount int,
 
 	var statements []domain.Statement
 
-	transaction, transactionStatement := createTransaction(self.corporate, self.balance, self.from,
+	transaction, transactionStatement, err := createTransaction(self.corporate, self.balance, self.from,
 		self.to, self.amount, self.reference, gateway)
+	if err != nil {
+		return domain.Transaction{}, domain.Balance{}, err
+	}
 
 	feeStatement, err := self.transactionUsecase.CreateFeeStatement(corporate, balance, transaction)
 	if err != nil {
@@ -64,7 +68,7 @@ func (self TopupBank) Execute(from domain.Bank, balanceID string, amount int,
 		return domain.Transaction{}, domain.Balance{}, err
 	}
 
-	go usecase.PublishTopupCallback(corporate, balance, transaction)
+	go usecase.PublishAcceptPaymentCallback(corporate, balance, transaction)
 
 	return transaction, balance, nil
 }
@@ -108,21 +112,32 @@ func identifyBalance(balanceID string) (domain.Balance, domain.TransactionObject
 	return balance, balanceOwner, corporate, nil
 }
 
-func createTransaction(corporate domain.Corporate, balance domain.Balance, from domain.Bank,
-	to domain.TransactionObject, subAmount int, reference string, gateway gateway.Gateway) (domain.Transaction, domain.Statement) {
+func createTransaction(corporate domain.Corporate, balance domain.Balance, from domain.Card,
+	to domain.TransactionObject, subAmount int, reference string, gateway gateway.Gateway) (domain.Transaction, domain.Statement, error) {
 
 	var totalFee = 0
 	if balance.Owner.Type == domain.ACTOR_TYPE_USER {
-		totalFee = corporate.FeeUser.Topup
+
+		s, err := strconv.ParseFloat(corporate.FeeUser.AcceptPaymentCard, 64)
+		if err != nil {
+			return domain.Transaction{}, domain.Statement{}, utils.ErrorBadRequest(utils.WrongAcceptCardFee, "Cannot convert accept payment card fee")
+		}
+
+		totalFee = int(float64(subAmount) * s)
 	} else {
-		totalFee = corporate.FeeCorporate.Topup
+		s, err := strconv.ParseFloat(corporate.FeeCorporate.AcceptPaymentCard, 64)
+		if err != nil {
+			return domain.Transaction{}, domain.Statement{}, utils.ErrorBadRequest(utils.WrongAcceptCardFee, "Cannot convert accept payment card fee")
+		}
+
+		totalFee = int(float64(subAmount) * s)
 	}
 
 	transcation := domain.Transaction{
 		TransactionCode:  utils.GenerateTransactionCode("2"),
 		CorporateID:      corporate.ID,
-		Type:             domain.TOPUP,
-		Method:           domain.METHOD_VA,
+		Type:             domain.ACCEPT_PAYMENT_CARD,
+		Method:           domain.METHOD_CARD,
 		ToBalanceID:      balance.ID,
 		From:             from.ToTransactionObject(),
 		To:               to,
@@ -142,5 +157,5 @@ func createTransaction(corporate domain.Corporate, balance domain.Balance, from 
 	statement := service.DepositTransactionStatement(
 		balance.ID, transcation.Time, transcation.TransactionCode, subAmount)
 
-	return transcation, statement
+	return transcation, statement, nil
 }

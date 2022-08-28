@@ -17,6 +17,7 @@ type Balance struct {
 	Name        string             `json:"name" bson:"name,omitempty"`
 	Amount      int                `json:"amount" bson:"amount"`
 	VA          []VirtualAccount   `json:"va" bson:"va,omitempty"`
+	Currency    string             `json:"currency" bson:"currency,omitempty"`
 }
 
 type VirtualAccount struct {

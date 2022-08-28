@@ -12,6 +12,7 @@ const (
 	Sprint  = "C"
 	OY      = "D"
 	MMBC    = "E"
+	Stripe  = "F"
 )
 
 type Gateway interface {

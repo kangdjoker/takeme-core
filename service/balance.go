@@ -8,7 +8,7 @@ import (
 )
 
 func BalanceInitialization(id primitive.ObjectID, corporateID primitive.ObjectID, owner domain.ActorObject,
-	name string, session mongo.SessionContext) (domain.Balance, error) {
+	name string, currency string, session mongo.SessionContext) (domain.Balance, error) {
 
 	model := domain.Balance{
 		ID:          id,
@@ -16,6 +16,7 @@ func BalanceInitialization(id primitive.ObjectID, corporateID primitive.ObjectID
 		Owner:       owner,
 		Name:        name,
 		Amount:      0,
+		Currency:    currency,
 	}
 
 	err := BalanceSaveOne(&model, session)
@@ -27,13 +28,14 @@ func BalanceInitialization(id primitive.ObjectID, corporateID primitive.ObjectID
 }
 
 func BalanceCreate(corporateID primitive.ObjectID, owner domain.ActorObject,
-	name string, session mongo.SessionContext) (domain.Balance, error) {
+	name string, currency string, session mongo.SessionContext) (domain.Balance, error) {
 
 	model := domain.Balance{
 		CorporateID: corporateID,
 		Owner:       owner,
 		Name:        name,
 		Amount:      0,
+		Currency:    currency,
 	}
 
 	err := BalanceSaveOne(&model, session)

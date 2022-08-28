@@ -37,6 +37,7 @@ func CreateBalanceUser(user domain.ActorAble, corporate domain.Corporate, balanc
 		balance, err = service.BalanceCreate(corporate.ID,
 			user.ToActorObject(),
 			balanceName,
+			corporate.Currency,
 			session,
 		)
 
@@ -108,6 +109,7 @@ func CreateBalanceCorporate(corp domain.ActorAble, corporate domain.Corporate, b
 			corporate.ID,
 			corp.ToActorObject(),
 			balanceName,
+			corporate.Currency,
 			session,
 		)
 
@@ -175,6 +177,7 @@ func InitializeBalanceUser(user domain.ActorAble, corporate domain.Corporate, ba
 			corporate.ID,
 			user.ToActorObject(),
 			balanceName,
+			corporate.Currency,
 			session,
 		)
 
@@ -243,6 +246,7 @@ func InitializeBalanceCorporate(corp domain.ActorAble, corporate domain.Corporat
 			corporate.ID,
 			corp.ToActorObject(),
 			balanceName,
+			corporate.Currency,
 			session,
 		)
 

@@ -65,6 +65,9 @@ const (
 	AccountNotFound                    = 894
 	InvalidBalanceScope                = 895
 	FaceNotRecognize                   = 896
+	CurrencyError                      = 897
+	OnlySupportOnIDR                   = 898
+	WrongAcceptCardFee                 = 899
 
 	// Internal server
 	QueryFailed               = 901

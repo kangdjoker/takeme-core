@@ -77,6 +77,11 @@ func (self DeductCorporate) Execute(corporate domain.Corporate, actor domain.Act
 		return domain.Transaction{}, err
 	}
 
+	err = validateCurrency(fromBalance, toBalance)
+	if err != nil {
+		return domain.Transaction{}, err
+	}
+
 	err = validationTransaction(transaction)
 	if err != nil {
 		return domain.Transaction{}, err
@@ -121,6 +126,7 @@ func createTransaction(corporate domain.Corporate, fromBalance domain.Balance, a
 		Status:          domain.COMPLETED_STATUS,
 		Unpaid:          false,
 		ExternalID:      externalID,
+		Currency:        corporate.Currency,
 	}
 
 	var statements []domain.Statement

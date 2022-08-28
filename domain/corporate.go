@@ -26,41 +26,44 @@ type Corporate struct {
 	// BasicFeePay      int `json:"basic_fee_pay" bson:"basic_fee_pay,omitempty"`
 	// FeePay           int `json:"fee_pay" bson:"fee_pay,omitempty"`
 
-	Level                   string               `json:"level" bson:"level,omitempty"`
-	PhoneNumber             string               `json:"phone_number" bson:"phone_number,omitempty"`
-	Address                 string               `json:"address" bson:"address,omitempty"`
-	AccountNumber           string               `json:"account_number" bson:"account_number,omitempty"`
-	BankCode                string               `json:"bank_code" bson:"bank_code,omitempty"`
-	Active                  bool                 `json:"active" bson:"active"`
-	VACallbackURL           string               `json:"va_callback_url" bson:"va_callback_url"`
-	DeductCallbackURL       string               `json:"deduct_callback_url" bson:"deduct_callback_url"`
-	TransferCallbackURL     string               `json:"transfer_callback_url" bson:"transfer_callback_url"`
-	BulkTransferCallbackURL string               `json:"bulk_transfer_callback_url" bson:"bulk_transfer_callback_url"`
-	BulkInquiryCallbackURL  string               `json:"bulk_inquiry_callback_url" bson:"bulk_inquiry_callback_url"`
-	DashboardTrxCallbackURL string               `json:"dashboard_trx_callback_url" bson:"dashboard_trx_callback_url"`
-	WhitelistIP             string               `json:"whitelist_ip" bson:"whitelist_ip"`
-	TokenExpired            int                  `json:"token_expired" bson:"token_expired"`
-	AccessAttempt           int                  `json:"access_attempt" bson:"access_attempt"`
-	DashboardURL            string               `json:"dashboard_url" bson:"dashboard_url"`
-	Children                []primitive.ObjectID `json:"children" bson:"children,omitempty"`
-	CallbackToken           string               `json:"callback_token" bson:"callback_token"`
-	Parent                  primitive.ObjectID   `json:"parent" bson:"parent,omitempty"`
-	PIN                     string               `json:"-" bson:"pin,omitempty"`
-	ChangePIN               string               `json:"change_pin" bson:"change_pin,omitempty"`
-	ChangePINCode           string               `json:"change_pin_code" bson:"change_pin_code,omitempty"`
-	VACode                  string               `json:"va_code" bson:"va_code,omitempty"`
-	Code                    string               `json:"_" bson:"code,omitempty"`
-	Products                []string             `json:"products" bson:"products,omitempty"`
-	SAAS                    bool                 `json:"saas" bson:"saas,omitempty"`
+	Level                     string               `json:"level" bson:"level,omitempty"`
+	PhoneNumber               string               `json:"phone_number" bson:"phone_number,omitempty"`
+	Address                   string               `json:"address" bson:"address,omitempty"`
+	AccountNumber             string               `json:"account_number" bson:"account_number,omitempty"`
+	BankCode                  string               `json:"bank_code" bson:"bank_code,omitempty"`
+	Active                    bool                 `json:"active" bson:"active"`
+	VACallbackURL             string               `json:"va_callback_url" bson:"va_callback_url"`
+	DeductCallbackURL         string               `json:"deduct_callback_url" bson:"deduct_callback_url"`
+	TransferCallbackURL       string               `json:"transfer_callback_url" bson:"transfer_callback_url"`
+	BulkTransferCallbackURL   string               `json:"bulk_transfer_callback_url" bson:"bulk_transfer_callback_url"`
+	BulkInquiryCallbackURL    string               `json:"bulk_inquiry_callback_url" bson:"bulk_inquiry_callback_url"`
+	AccecptPaymentCallbackURL string               `json:"accept_payment_callback_url" bson:"accept_payment_callback_url"`
+	DashboardTrxCallbackURL   string               `json:"dashboard_trx_callback_url" bson:"dashboard_trx_callback_url"`
+	WhitelistIP               string               `json:"whitelist_ip" bson:"whitelist_ip"`
+	TokenExpired              int                  `json:"token_expired" bson:"token_expired"`
+	AccessAttempt             int                  `json:"access_attempt" bson:"access_attempt"`
+	DashboardURL              string               `json:"dashboard_url" bson:"dashboard_url"`
+	Children                  []primitive.ObjectID `json:"children" bson:"children,omitempty"`
+	CallbackToken             string               `json:"callback_token" bson:"callback_token"`
+	Parent                    primitive.ObjectID   `json:"parent" bson:"parent,omitempty"`
+	PIN                       string               `json:"-" bson:"pin,omitempty"`
+	ChangePIN                 string               `json:"change_pin" bson:"change_pin,omitempty"`
+	ChangePINCode             string               `json:"change_pin_code" bson:"change_pin_code,omitempty"`
+	VACode                    string               `json:"va_code" bson:"va_code,omitempty"`
+	Code                      string               `json:"_" bson:"code,omitempty"`
+	Products                  []string             `json:"products" bson:"products,omitempty"`
+	SAAS                      bool                 `json:"saas" bson:"saas,omitempty"`
+	Currency                  string               `json:"currency" bson:"currency,omitempty"`
 }
 
 type Fee struct {
-	Topup           int `json:"topup" bson:"topup,omitempty"`
-	Deduct          int `json:"deduct" bson:"deduct,omitempty"`
-	TransferBalance int `json:"transfer_balance" bson:"transfer_balance,omitempty"`
-	TransferBank    int `json:"transfer_bank" bson:"transfer_bank,omitempty"`
-	Pay             int `json:"pay" bson:"pay,omitempty"`
-	Biller          int `json:"biller" bson:"biller,omitempty"`
+	Topup             int    `json:"topup" bson:"topup,omitempty"`
+	Deduct            int    `json:"deduct" bson:"deduct,omitempty"`
+	TransferBalance   int    `json:"transfer_balance" bson:"transfer_balance,omitempty"`
+	TransferBank      int    `json:"transfer_bank" bson:"transfer_bank,omitempty"`
+	AcceptPaymentCard string `json:"accept_payment_card" bson:"accept_payment_card,omitempty"`
+	Pay               int    `json:"pay" bson:"pay,omitempty"`
+	Biller            int    `json:"biller" bson:"biller,omitempty"`
 }
 
 // Interface for mongo document result

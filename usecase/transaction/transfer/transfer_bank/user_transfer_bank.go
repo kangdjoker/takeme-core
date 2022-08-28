@@ -61,6 +61,11 @@ func (self UserTransferBank) Execute(corporate domain.Corporate, actor domain.Ac
 	statements = append(statements, transactionStatement)
 	statements = append(statements, feeStatement...)
 
+	err = validateCurrency(transaction, corporate)
+	if err != nil {
+		return domain.Transaction{}, err
+	}
+
 	err = validationActor(self.actor, self.fromBalance.ID.Hex(), self.pin)
 	if err != nil {
 		return domain.Transaction{}, err
@@ -120,6 +125,7 @@ func createTransaction(corporate domain.Corporate, balance domain.Balance, actor
 		Status:          domain.PENDING_STATUS,
 		Unpaid:          false,
 		ExternalID:      externalID,
+		Currency:        corporate.Currency,
 	}
 
 	statement := service.WithdrawTransactionStatement(

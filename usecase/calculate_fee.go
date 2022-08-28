@@ -2,10 +2,12 @@ package usecase
 
 import (
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/takeme-id/core/domain"
 	"github.com/takeme-id/core/service"
+	"github.com/takeme-id/core/utils"
 )
 
 // source = user
@@ -114,6 +116,13 @@ func (self *CalculateFee) balanceUser(corporate domain.Corporate, userBalance do
 		}
 
 		self.result = a
+	} else if self.transactionType == domain.ACCEPT_PAYMENT_CARD {
+		a, err := balanceUserAcceptPaymentCard(corporate, userBalance, transaction)
+		if err != nil {
+			return err
+		}
+
+		self.result = a
 	}
 
 	return nil
@@ -143,6 +152,13 @@ func (self *CalculateFee) balanceCorporate(corporate domain.Corporate, corporate
 		self.result = a
 	} else if self.transactionType == domain.DEDUCT {
 		a, err := balanceCorporateDeductBalance(corporate, corporateBalance, transaction)
+		if err != nil {
+			return err
+		}
+
+		self.result = a
+	} else if self.transactionType == domain.ACCEPT_PAYMENT_CARD {
+		a, err := balanceCorporateAcceptPaymentCard(corporate, corporateBalance, transaction)
 		if err != nil {
 			return err
 		}
@@ -333,10 +349,90 @@ func balanceCorporateDeductBalance(corporate domain.Corporate, corporateBalance 
 	return result, nil
 }
 
+// TODO PROVIDE LOGIC FOR PRINCIPAL CAN ACCEPT MONEY FROM MULTICURRENCY TRANSACTION
+func balanceCorporateAcceptPaymentCard(corporate domain.Corporate, corporateBalance domain.Balance, transaction domain.Transaction) ([]domain.Statement, error) {
+	var result []domain.Statement
+	if IsNotPrincipal(corporate) && IsNotIDRCurrency(transaction.Currency) {
+		principal, err := service.CorporateByIDNoSession(corporate.Parent.Hex())
+		if err != nil {
+			return result, err
+		}
+
+		percentageFee, err := strconv.ParseFloat(corporate.FeeCorporate.AcceptPaymentCard, 64)
+		if err != nil {
+			return result, utils.ErrorBadRequest(utils.WrongAcceptCardFee, "Cannot convert accept payment card fee")
+		}
+
+		corporateFee := int(float64(transaction.SubAmount) * percentageFee)
+
+		corporateBalanceID := corporate.MainBalance
+		principalBalanceID := principal.MainBalance
+
+		withdrawCorporate := service.WithdrawFeeStatement(corporateBalanceID, transaction.Time, transaction.TransactionCode, corporateFee)
+		depositPrincipal := service.DepositFeeStatement(principalBalanceID, transaction.Time, transaction.TransactionCode, corporateFee)
+		result = append(result, withdrawCorporate)
+		result = append(result, depositPrincipal)
+	}
+
+	return result, nil
+}
+
+// TODO PROVIDE LOGIC FOR PRINCIPAL CAN ACCEPT MONEY FROM MULTICURRENCY TRANSACTION
+func balanceUserAcceptPaymentCard(corporate domain.Corporate, userBalance domain.Balance, transaction domain.Transaction) ([]domain.Statement, error) {
+	var result []domain.Statement
+	percentageFee, err := strconv.ParseFloat(corporate.FeeUser.AcceptPaymentCard, 64)
+	if err != nil {
+		return result, utils.ErrorBadRequest(utils.WrongAcceptCardFee, "Cannot convert accept payment card fee")
+	}
+
+	userFee := int(float64(transaction.SubAmount) * percentageFee)
+
+	userBalanceID := userBalance.ID
+	corporateBalanceID := corporate.MainBalance
+
+	withdrawUser := service.WithdrawFeeStatement(userBalanceID, transaction.Time, transaction.TransactionCode, userFee)
+	depositCorporate := service.DepositFeeStatement(corporateBalanceID, transaction.Time, transaction.TransactionCode, userFee)
+
+	result = append(result, withdrawUser)
+	result = append(result, depositCorporate)
+
+	if IsNotPrincipal(corporate) && IsNotIDRCurrency(transaction.Currency) {
+
+		percentageFee, err := strconv.ParseFloat(corporate.FeeCorporate.AcceptPaymentCard, 64)
+		if err != nil {
+			return result, utils.ErrorBadRequest(utils.WrongAcceptCardFee, "Cannot convert accept payment card fee")
+		}
+
+		principal, err := service.CorporateByIDNoSession(corporate.Parent.Hex())
+		if err != nil {
+			return result, err
+		}
+
+		corporateFee := int(float64(transaction.SubAmount) * percentageFee)
+		principalBalanceID := principal.MainBalance
+
+		withdrawCorporate := service.WithdrawFeeStatement(corporateBalanceID, transaction.Time, transaction.TransactionCode, corporateFee)
+		depositPrincipal := service.DepositFeeStatement(principalBalanceID, transaction.Time, transaction.TransactionCode, corporateFee)
+
+		result = append(result, withdrawCorporate)
+		result = append(result, depositPrincipal)
+	}
+
+	return result, nil
+}
+
 func IsNotPrincipal(corporate domain.Corporate) bool {
 	if corporate.Parent.Hex() == "000000000000000000000000" {
 		return false
 	}
 
 	return true
+}
+
+func IsNotIDRCurrency(currency string) bool {
+	if currency != "idr" {
+		return true
+	}
+
+	return false
 }

@@ -77,8 +77,29 @@ func PublishTransferCallback(corporate domain.Corporate, transaction domain.Tran
 	}
 }
 
+func PublishAcceptPaymentCallback(corporate domain.Corporate, balance domain.Balance, transaction domain.Transaction) {
+	minute := 1
+
+	for {
+		payload := createAcceptPaymentPayload(corporate, balance, transaction)
+		err := callbackAcceptPaymentHTTP(corporate, transaction, payload)
+		if err != nil {
+			minute = minute * 5
+			time.Sleep(time.Duration(minute) * time.Minute)
+			continue
+		}
+
+		return
+	}
+}
+
 func callbackTopupHTTP(corporate domain.Corporate, transaction domain.Transaction, payload TopupCallbackPayload) error {
 	url := corporate.VACallbackURL
+
+	if url == "" {
+		return nil
+	}
+
 	callbackToken := corporate.CallbackToken
 
 	client := resty.New().SetTimeout(30 * time.Second)
@@ -105,6 +126,11 @@ func callbackTopupHTTP(corporate domain.Corporate, transaction domain.Transactio
 
 func callbackDeductHTTP(corporate domain.Corporate, transaction domain.Transaction, payload DeductCallbackPayload) error {
 	url := corporate.DeductCallbackURL
+
+	if url == "" {
+		return nil
+	}
+
 	callbackToken := corporate.CallbackToken
 
 	client := resty.New().SetTimeout(30 * time.Second)
@@ -131,6 +157,11 @@ func callbackDeductHTTP(corporate domain.Corporate, transaction domain.Transacti
 
 func callbackTransferHTTP(corporate domain.Corporate, transaction domain.Transaction, payload TransferCallbackPayload) error {
 	url := corporate.TransferCallbackURL
+
+	if url == "" {
+		return nil
+	}
+
 	callbackToken := corporate.CallbackToken
 
 	client := resty.New().SetTimeout(30 * time.Second)
@@ -156,6 +187,10 @@ func callbackTransferHTTP(corporate domain.Corporate, transaction domain.Transac
 }
 
 func callbackBulkHTTP(corporate domain.Corporate, payload interface{}, url string) error {
+	if url == "" {
+		return nil
+	}
+
 	callbackToken := corporate.CallbackToken
 
 	client := resty.New().SetTimeout(30 * time.Second)
@@ -170,6 +205,37 @@ func callbackBulkHTTP(corporate domain.Corporate, payload interface{}, url strin
 	if resp.StatusCode() != 200 || err != nil {
 		return utils.ErrorInternalServer(utils.CallbackError, "Callback bulk corporate connection refused or Timeout")
 	}
+
+	return nil
+}
+
+func callbackAcceptPaymentHTTP(corporate domain.Corporate, transaction domain.Transaction, payload AcceptPaymentCallbackPayload) error {
+	url := corporate.AccecptPaymentCallbackURL
+
+	if url == "" {
+		return nil
+	}
+
+	callbackToken := corporate.CallbackToken
+
+	client := resty.New().SetTimeout(30 * time.Second)
+	resp, err := client.R().
+		SetHeaders(map[string]string{
+			"Content-Type":   "application/json",
+			"callback-token": callbackToken,
+		}).SetBody(payload).Post(url)
+
+	utils.LoggingAPICall(resp.StatusCode(), payload, resp.Request.Body, "Callback topup corporate")
+
+	reqBody, _ := json.Marshal(payload)
+
+	if resp.StatusCode() != 200 || err != nil {
+		go service.CreateCallbackHistoryRefused(transaction.TransactionCode, url, string(reqBody))
+		return utils.ErrorInternalServer(utils.CallbackError, "Callback topup corporate connection refused or Timeout")
+	}
+
+	go service.CreateCallbackHistory(transaction.TransactionCode, url,
+		string(reqBody), string(resp.Body()), strconv.Itoa(resp.StatusCode()))
 
 	return nil
 }
@@ -226,6 +292,19 @@ func createBulkPayload(corporate domain.Corporate, actor domain.ActorObject, bul
 	}
 }
 
+func createAcceptPaymentPayload(corporate domain.Corporate, balance domain.Balance,
+	transaction domain.Transaction) AcceptPaymentCallbackPayload {
+
+	return AcceptPaymentCallbackPayload{
+		BalanceID:       balance.ID.Hex(),
+		Owner:           balance.Owner,
+		CorporateID:     corporate.ID.Hex(),
+		TransactionCode: transaction.TransactionCode,
+		Amount:          transaction.Amount,
+		Time:            time.Now().Format(os.Getenv("TIME_FORMAT")),
+	}
+}
+
 type TopupCallbackPayload struct {
 	BalanceID       string             `json:"balance_id" bson:"balance_id,omitempty"`
 	Owner           domain.ActorObject `json:"owner" bson:"owner,omitempty"`
@@ -264,4 +343,13 @@ type BulkCallbackPayload struct {
 type Actor struct {
 	ID   string `json:"id" bson:"id,omitempty"`
 	Type string `json:"type" bson:"type,omitempty"`
+}
+
+type AcceptPaymentCallbackPayload struct {
+	BalanceID       string             `json:"balance_id" bson:"balance_id,omitempty"`
+	Owner           domain.ActorObject `json:"owner" bson:"owner,omitempty"`
+	CorporateID     string             `json:"corporate_id" bson:"corporate_id,omitempty"`
+	TransactionCode string             `json:"transaction_code" bson:"transaction_code,omitempty"`
+	Amount          int                `json:"amount" bson:"amount,omitempty"`
+	Time            string             `json:"time" bson:"time,omitempty"`
 }
