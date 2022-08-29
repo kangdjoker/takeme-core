@@ -124,6 +124,7 @@ func createTransaction(corporate domain.Corporate, balance domain.Balance, from 
 		Type:             domain.TOPUP,
 		Method:           domain.METHOD_VA,
 		ToBalanceID:      balance.ID,
+		FromBalanceID:    balance.ID,
 		From:             from.ToTransactionObject(),
 		To:               to,
 		TotalFee:         totalFee,

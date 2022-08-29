@@ -152,6 +152,7 @@ func createTransaction(corporate domain.Corporate, balance domain.Balance, from 
 		Type:             domain.ACCEPT_PAYMENT_CARD,
 		Method:           domain.METHOD_CARD,
 		ToBalanceID:      balance.ID,
+		FromBalanceID:    balance.ID,
 		From:             from.ToTransactionObject(),
 		To:               to,
 		TotalFee:         totalFee,
