@@ -29,7 +29,7 @@ func (self AcceptCard) Initialize(from domain.Card, balanceID string, amount int
 
 	gateway := gateway.StripeGateway{}
 
-	status, authURL, err := gateway.ChargeCard(balanceID, returnURL, from)
+	status, authURL, err := gateway.ChargeCard(balanceID, amount, returnURL, from)
 	if err != nil {
 		return "", "", err
 	}
