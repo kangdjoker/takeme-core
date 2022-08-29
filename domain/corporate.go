@@ -85,7 +85,7 @@ func (model Corporate) GetType() string {
 }
 
 func (model Corporate) GetInstitutionCode() string {
-	return model.Parent.Hex()
+	return model.ID.Hex()
 }
 
 func (model Corporate) GetName() string {
