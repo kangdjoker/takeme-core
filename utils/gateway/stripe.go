@@ -47,7 +47,7 @@ func (gateway StripeGateway) Inquiry(bankCode string, accountNumber string) (str
 	return "", nil
 }
 
-func (gateway StripeGateway) ChargeCard(balanceID string, returnURL string, card domain.Card) (string, string, error) {
+func (gateway StripeGateway) ChargeCard(balanceID string, amount int, returnURL string, card domain.Card) (string, string, error) {
 	stripe.Key = os.Getenv("STRIPE_SECRET")
 
 	params := &stripe.PaymentMethodParams{
@@ -66,7 +66,7 @@ func (gateway StripeGateway) ChargeCard(balanceID string, returnURL string, card
 	reference := balanceID
 
 	params2 := &stripe.PaymentIntentParams{
-		Amount:      stripe.Int64(2000),
+		Amount:      stripe.Int64(int64(amount)),
 		Currency:    stripe.String(string(stripe.CurrencyUSD)),
 		Description: &reference,
 		PaymentMethodTypes: []*string{

@@ -26,7 +26,7 @@ const (
 
 const (
 	METHOD_VA      = "Virtual Account"
-	METHOD_CARD    = "Card Method"
+	METHOD_CARD    = "Credit Card"
 	METHOD_BALANCE = "Wallet Balance"
 )
 
