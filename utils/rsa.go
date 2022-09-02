@@ -51,7 +51,7 @@ func RSAEncrypt(encryptedString string) (string, error) {
 	}
 
 	pubString := base64.StdEncoding.EncodeToString(pubKeyFileByte)
-	pubString = "-----BEGIN RSA PRIVATE KEY-----\n" + pubString + "\n-----END RSA PRIVATE KEY-----"
+	pubString = "-----BEGIN RSA PUBLIC KEY-----\n" + pubString + "\n-----END RSA PUBLIC KEY-----"
 
 	b, _ := pem.Decode([]byte(pubString))
 
