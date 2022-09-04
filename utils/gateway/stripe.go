@@ -205,7 +205,7 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 
 	status := CHARGE_CARD_STATUS_PENDING
 	authURL := ""
-	if string(pi.Status) == "requires_action" {
+	if string(pi.Status) == "requires_confirmation" {
 		authURL = pi.NextAction.RedirectToURL.URL
 	} else {
 		status = CHARGE_CARD_STATUS_COMPLETED
