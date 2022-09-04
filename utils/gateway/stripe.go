@@ -116,7 +116,8 @@ func (gateway StripeGateway) ChargeCard(balanceID string, amount int, returnURL 
 	return status, authURL, nil
 }
 
-func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, returnURL string, card domain.Card, externalID string, interval string) (string, string, error) {
+func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, returnURL string, card domain.Card, externalID string, interval string) (
+	string, string, string, error) {
 	stripe.Key = os.Getenv("STRIPE_SECRET")
 	reference := balanceID
 
@@ -134,7 +135,7 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 	params.AddMetadata("reference", reference)
 	pm, err := paymentmethod.New(params)
 	if err != nil {
-		return "", "", utils.ErrorInternalServer(utils.StripeAPICallFail, "Stripe API call fail")
+		return "", "", "", utils.ErrorInternalServer(utils.StripeAPICallFail, "Stripe API call fail")
 	}
 
 	paymentMethodID := pm.ID
@@ -181,6 +182,8 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 		PaymentBehavior: &behaviour,
 	}
 	s, err := subscription.New(subParam)
+
+	subscriptionID := s.ID
 	invoiceID := s.ID
 
 	in, _ := invoice.Get(
@@ -203,7 +206,21 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 		status = CHARGE_CARD_STATUS_COMPLETED
 	}
 
-	return status, authURL, nil
+	return status, authURL, subscriptionID, nil
+}
+
+func (gateway StripeGateway) CancelSubscribe(subsID string) error {
+	stripe.Key = os.Getenv("STRIPE_SECRET")
+
+	_, err := subscription.Cancel(
+		subsID,
+		nil,
+	)
+	if err != nil {
+		return utils.ErrorInternalServer(utils.StripeAPICallFail, "Stripe API call fail")
+	}
+
+	return nil
 }
 
 func (gateway StripeGateway) CallbackAcceptPaymentCard(w http.ResponseWriter, r *http.Request) (string, int, domain.Card, string, string, error) {
@@ -244,9 +261,9 @@ func (gateway StripeGateway) CallbackAcceptPaymentCard(w http.ResponseWriter, r 
 	}
 
 	amount := int(paymentIntent.Amount)
-	reference := paymentIntent.PaymentMethod.ID
-	balanceID := paymentIntent.PaymentMethod.Metadata["reference"]
-	externalID := paymentIntent.PaymentMethod.Metadata["external_id"]
+	reference := paymentIntent.ID
+	balanceID := paymentIntent.Metadata["reference"]
+	externalID := paymentIntent.Metadata["external_id"]
 
 	return balanceID, amount, card, reference, externalID, nil
 }
