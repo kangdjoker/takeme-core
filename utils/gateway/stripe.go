@@ -203,10 +203,24 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 		nil,
 	)
 
+	params3 := &stripe.PaymentIntentConfirmParams{
+		UseStripeSDK: stripe.Bool(false),
+		ReturnURL:    &returnURL,
+	}
+
+	pi2, err := paymentintent.Confirm(
+		pi.ID,
+		params3,
+	)
+
+	if err != nil {
+		return "", "", "", utils.ErrorInternalServer(utils.StripeAPICallFail, "Stripe API call fail")
+	}
+
 	status := CHARGE_CARD_STATUS_PENDING
 	authURL := ""
-	if string(pi.Status) == "requires_action" {
-		authURL = pi.NextAction.RedirectToURL.URL
+	if string(pi2.Status) == "requires_action" {
+		authURL = pi2.NextAction.RedirectToURL.URL
 	} else {
 		status = CHARGE_CARD_STATUS_COMPLETED
 	}
