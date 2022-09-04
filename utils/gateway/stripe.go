@@ -153,7 +153,7 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 		Recurring: &stripe.PriceRecurringParams{
 			Interval: &interval,
 		},
-		UnitAmount: stripe.Int64(2000),
+		UnitAmount: stripe.Int64(int64(amount)),
 	}
 	pr, _ := price.New(priceParam)
 	priceID := pr.ID
