@@ -203,7 +203,8 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 		nil,
 	)
 	paramsX := &stripe.PaymentIntentParams{}
-	paramsX.AddMetadata("order_id", "6735")
+	paramsX.AddMetadata("reference", balanceID)
+	paramsX.AddMetadata("external_id", externalID)
 
 	pi, _ = paymentintent.Update(
 		pi.ID,
@@ -214,9 +215,6 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 		UseStripeSDK: stripe.Bool(false),
 		ReturnURL:    &returnURL,
 	}
-
-	params3.AddMetadata("reference", balanceID)
-	params3.AddMetadata("external_id", externalID)
 
 	pi2, err := paymentintent.Confirm(
 		pi.ID,
@@ -293,14 +291,6 @@ func (gateway StripeGateway) CallbackAcceptPaymentCard(w http.ResponseWriter, r 
 	reference := paymentIntent.ID
 	balanceID := paymentIntent.Metadata["reference"]
 	externalID := paymentIntent.Metadata["external_id"]
-
-	if balanceID == "" {
-		balanceID = paymentIntent.PaymentMethod.Metadata["reference"]
-	}
-
-	if externalID == "" {
-		externalID = paymentIntent.PaymentMethod.Metadata["external_id"]
-	}
 
 	return balanceID, amount, card, reference, externalID, nil
 }
