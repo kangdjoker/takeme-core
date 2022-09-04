@@ -158,14 +158,12 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 	pr, _ := price.New(priceParam)
 	priceID := pr.ID
 
-	testClock := "clock_1LeJqDCmgDdSA7MEZHbCgmab"
 	custParams := &stripe.CustomerParams{
 		Description:   stripe.String(balanceID),
 		PaymentMethod: &paymentMethodID,
 		InvoiceSettings: &stripe.CustomerInvoiceSettingsParams{
 			DefaultPaymentMethod: &paymentMethodID,
 		},
-		TestClock: &testClock,
 	}
 
 	c, err := customer.New(custParams)
