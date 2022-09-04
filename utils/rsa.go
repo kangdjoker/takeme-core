@@ -43,38 +43,6 @@ func RSADecrypt(encryptedString string) (string, error) {
 	return string(decryptedData), nil
 }
 
-func RSAEncrypt(encryptedString string) (string, error) {
-
-	pubKeyFileByte, err := ioutil.ReadFile("public.der")
-	if err != nil {
-		fmt.Println("Error")
-	}
-
-	pubString := base64.StdEncoding.EncodeToString(pubKeyFileByte)
-	pubString = "-----BEGIN RSA PUBLIC KEY-----\n" + pubString + "\n-----END RSA PUBLIC KEY-----"
-
-	b, _ := pem.Decode([]byte(pubString))
-
-	pubKey, error := x509.ParsePKCS8PrivateKey(b.Bytes)
-	if error != nil {
-		return "", err
-	}
-
-	actualPublicKey := pubKey.(*rsa.PrivateKey)
-
-	base64DecodeBytes, err := base64.StdEncoding.DecodeString(encryptedString)
-	if err != nil {
-		return "", err
-	}
-
-	encryptData, decryptErr := rsa.EncryptOAEP(sha1.New(), rand.Reader, &actualPublicKey.PublicKey, base64DecodeBytes, nil)
-	if decryptErr != nil {
-		return "", decryptErr
-	}
-
-	return string(encryptData), nil
-}
-
 func RSADecrypDashboard(encryptedString string) (string, error) {
 
 	privateKeyFileByte, err := ioutil.ReadFile("rsa_1024_priv.pem")

@@ -7,10 +7,15 @@ import (
 	"strconv"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/stripe/stripe-go"
-	"github.com/stripe/stripe-go/paymentintent"
-	"github.com/stripe/stripe-go/paymentmethod"
-	"github.com/stripe/stripe-go/webhook"
+	"github.com/stripe/stripe-go/invoice"
+	"github.com/stripe/stripe-go/v73"
+	"github.com/stripe/stripe-go/v73/customer"
+	"github.com/stripe/stripe-go/v73/paymentintent"
+	"github.com/stripe/stripe-go/v73/paymentmethod"
+	"github.com/stripe/stripe-go/v73/price"
+	"github.com/stripe/stripe-go/v73/product"
+	"github.com/stripe/stripe-go/v73/subscription"
+	"github.com/stripe/stripe-go/v73/webhook"
 	"github.com/takeme-id/core/domain"
 	"github.com/takeme-id/core/utils"
 )
@@ -47,14 +52,16 @@ func (gateway StripeGateway) Inquiry(bankCode string, accountNumber string) (str
 	return "", nil
 }
 
-func (gateway StripeGateway) ChargeCard(balanceID string, amount int, returnURL string, card domain.Card) (string, string, error) {
+func (gateway StripeGateway) ChargeCard(balanceID string, amount int, returnURL string, card domain.Card, externalID string) (string, string, error) {
 	stripe.Key = os.Getenv("STRIPE_SECRET")
 
+	expM, err := strconv.ParseInt(card.ExpMonth, 10, 64)
+	expY, err := strconv.ParseInt(card.ExpYear, 10, 64)
 	params := &stripe.PaymentMethodParams{
 		Card: &stripe.PaymentMethodCardParams{
 			Number:   &card.AccountNumber,
-			ExpMonth: &card.ExpMonth,
-			ExpYear:  &card.ExpYear,
+			ExpMonth: &expM,
+			ExpYear:  &expY,
 			CVC:      &card.CVC,
 		},
 		Type: stripe.String("card"),
@@ -66,15 +73,17 @@ func (gateway StripeGateway) ChargeCard(balanceID string, amount int, returnURL 
 	reference := balanceID
 
 	params2 := &stripe.PaymentIntentParams{
-		Amount:      stripe.Int64(int64(amount)),
-		Currency:    stripe.String(string(stripe.CurrencyUSD)),
-		Description: &reference,
+		Amount:   stripe.Int64(int64(amount)),
+		Currency: stripe.String(string(stripe.CurrencyUSD)),
 		PaymentMethodTypes: []*string{
 			stripe.String("card"),
 		},
 		UseStripeSDK:  stripe.Bool(false),
 		PaymentMethod: &paymentMethodID,
 	}
+
+	params2.AddMetadata("reference", reference)
+	params2.AddMetadata("external_id", externalID)
 
 	pi, err := paymentintent.New(params2)
 
@@ -107,7 +116,97 @@ func (gateway StripeGateway) ChargeCard(balanceID string, amount int, returnURL 
 	return status, authURL, nil
 }
 
-func (gateway StripeGateway) CallbackAcceptPaymentCard(w http.ResponseWriter, r *http.Request) (string, int, domain.Card, string, error) {
+func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, returnURL string, card domain.Card, externalID string) (string, string, error) {
+	stripe.Key = os.Getenv("STRIPE_SECRET")
+	reference := balanceID
+
+	expM, err := strconv.ParseInt(card.ExpMonth, 10, 64)
+	expY, err := strconv.ParseInt(card.ExpYear, 10, 64)
+	params := &stripe.PaymentMethodParams{
+		Card: &stripe.PaymentMethodCardParams{
+			Number:   &card.AccountNumber,
+			ExpMonth: &expM,
+			ExpYear:  &expY,
+			CVC:      &card.CVC,
+		},
+		Type: stripe.String("card"),
+	}
+	params.AddMetadata("reference", reference)
+	pm, err := paymentmethod.New(params)
+	if err != nil {
+		return "", "", utils.ErrorInternalServer(utils.StripeAPICallFail, "Stripe API call fail")
+	}
+
+	paymentMethodID := pm.ID
+
+	params2 := &stripe.ProductParams{
+		Name: stripe.String("Gold Special"),
+	}
+	pro, err := product.New(params2)
+
+	productID := pro.ID
+
+	priceParam := &stripe.PriceParams{
+		Currency: stripe.String(string(stripe.CurrencyUSD)),
+		Product:  &productID,
+		Recurring: &stripe.PriceRecurringParams{
+			Interval: stripe.String("month"),
+		},
+		UnitAmount: stripe.Int64(2000),
+	}
+	pr, _ := price.New(priceParam)
+	priceID := pr.ID
+
+	testClock := "clock_1LeJqDCmgDdSA7MEZHbCgmab"
+	custParams := &stripe.CustomerParams{
+		Description:   stripe.String(balanceID),
+		PaymentMethod: &paymentMethodID,
+		InvoiceSettings: &stripe.CustomerInvoiceSettingsParams{
+			DefaultPaymentMethod: &paymentMethodID,
+		},
+		TestClock: &testClock,
+	}
+
+	c, _ := customer.New(custParams)
+	customerID := c.ID
+
+	behaviour := "default_incomplete"
+	subParam := &stripe.SubscriptionParams{
+		Customer: &customerID,
+		Items: []*stripe.SubscriptionItemsParams{
+			{
+				Price: &priceID,
+			},
+		},
+		PaymentBehavior: &behaviour,
+	}
+	s, err := subscription.New(subParam)
+	invoiceID := s.ID
+
+	in, _ := invoice.Get(
+		invoiceID,
+		nil,
+	)
+
+	paymentIntentID := in.PaymentIntent.ID
+
+	pi, _ := paymentintent.Get(
+		paymentIntentID,
+		nil,
+	)
+
+	status := CHARGE_CARD_STATUS_PENDING
+	authURL := ""
+	if string(pi.Status) == "requires_action" {
+		authURL = pi.NextAction.RedirectToURL.URL
+	} else {
+		status = CHARGE_CARD_STATUS_COMPLETED
+	}
+
+	return status, authURL, nil
+}
+
+func (gateway StripeGateway) CallbackAcceptPaymentCard(w http.ResponseWriter, r *http.Request) (string, int, domain.Card, string, string, error) {
 
 	log.Info("------------------------ Stripe hit callback card ------------------------")
 
@@ -124,17 +223,17 @@ func (gateway StripeGateway) CallbackAcceptPaymentCard(w http.ResponseWriter, r 
 		endpointSecret)
 
 	if err != nil {
-		return "", 0, domain.Card{}, "", utils.ErrorBadRequest(utils.InvalidSignature, "Invalid signature stripe callback")
+		return "", 0, domain.Card{}, "", "", utils.ErrorBadRequest(utils.InvalidSignature, "Invalid signature stripe callback")
 	}
 
 	if event.Type != "payment_intent.succeeded" {
-		return "", 0, domain.Card{}, "", nil
+		return "", 0, domain.Card{}, "", "", nil
 	}
 
 	var paymentIntent stripe.PaymentIntent
 	err = json.Unmarshal(event.Data.Raw, &paymentIntent)
 	if err != nil {
-		return "", 0, domain.Card{}, "", utils.ErrorBadRequest(utils.InvalidRequestPayload, "Invalid payload stripe callback")
+		return "", 0, domain.Card{}, "", "", utils.ErrorBadRequest(utils.InvalidRequestPayload, "Invalid payload stripe callback")
 	}
 
 	card := domain.Card{
@@ -146,7 +245,8 @@ func (gateway StripeGateway) CallbackAcceptPaymentCard(w http.ResponseWriter, r 
 
 	amount := int(paymentIntent.Amount)
 	reference := paymentIntent.PaymentMethod.ID
-	balanceID := paymentIntent.Description
+	balanceID := paymentIntent.PaymentMethod.Metadata["reference"]
+	externalID := paymentIntent.PaymentMethod.Metadata["external_id"]
 
-	return balanceID, amount, card, reference, nil
+	return balanceID, amount, card, reference, externalID, nil
 }
