@@ -208,6 +208,9 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 		ReturnURL:    &returnURL,
 	}
 
+	params3.AddMetadata("reference", balanceID)
+	params.AddMetadata("external_id", externalID)
+
 	pi2, err := paymentintent.Confirm(
 		pi.ID,
 		params3,
