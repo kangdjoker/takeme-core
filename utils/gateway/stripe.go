@@ -265,5 +265,13 @@ func (gateway StripeGateway) CallbackAcceptPaymentCard(w http.ResponseWriter, r 
 	balanceID := paymentIntent.Metadata["reference"]
 	externalID := paymentIntent.Metadata["external_id"]
 
+	if balanceID == "" {
+		balanceID = paymentIntent.PaymentMethod.Metadata["reference"]
+	}
+
+	if externalID == "" {
+		externalID = paymentIntent.PaymentMethod.Metadata["external_id"]
+	}
+
 	return balanceID, amount, card, reference, externalID, nil
 }
