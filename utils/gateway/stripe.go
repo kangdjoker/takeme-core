@@ -186,7 +186,7 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 	s, err := subscription.New(subParam)
 
 	subscriptionID := s.ID
-	invoiceID := s.ID
+	invoiceID := s.LatestInvoice.ID
 
 	in, _ := invoice.Get(
 		invoiceID,
