@@ -116,7 +116,7 @@ func (gateway StripeGateway) ChargeCard(balanceID string, amount int, returnURL 
 	return status, authURL, nil
 }
 
-func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, returnURL string, card domain.Card, externalID string) (string, string, error) {
+func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, returnURL string, card domain.Card, externalID string, interval string) (string, string, error) {
 	stripe.Key = os.Getenv("STRIPE_SECRET")
 	reference := balanceID
 
@@ -150,7 +150,7 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 		Currency: stripe.String(string(stripe.CurrencyUSD)),
 		Product:  &productID,
 		Recurring: &stripe.PriceRecurringParams{
-			Interval: stripe.String("month"),
+			Interval: &interval,
 		},
 		UnitAmount: stripe.Int64(2000),
 	}

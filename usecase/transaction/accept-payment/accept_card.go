@@ -37,6 +37,19 @@ func (self AcceptCard) Initialize(from domain.Card, balanceID string, amount int
 	return status, authURL, nil
 }
 
+func (self AcceptCard) InitializeSubscribe(from domain.Card, balanceID string, amount int,
+	reference string, currency string, returnURL string, externalID string, interval string) (string, string, error) {
+
+	gateway := gateway.StripeGateway{}
+
+	status, authURL, err := gateway.ChargeCardSubscribe(balanceID, amount, returnURL, from, externalID, interval)
+	if err != nil {
+		return "", "", err
+	}
+
+	return status, authURL, nil
+}
+
 func (self AcceptCard) Execute(from domain.Card, balanceID string, amount int,
 	reference string, currency string, externalID string) (domain.Transaction, domain.Balance, error) {
 
