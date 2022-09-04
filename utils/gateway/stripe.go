@@ -173,7 +173,7 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 
 	customerID := c.ID
 
-	behaviour := "default_incomplete"
+	behaviour := "allow_incomplete"
 	subParam := &stripe.SubscriptionParams{
 		Customer: &customerID,
 		Items: []*stripe.SubscriptionItemsParams{
