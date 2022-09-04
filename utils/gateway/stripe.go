@@ -168,7 +168,11 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 		TestClock: &testClock,
 	}
 
-	c, _ := customer.New(custParams)
+	c, err := customer.New(custParams)
+	if err != nil {
+		return "", "", "", utils.ErrorInternalServer(utils.StripeAPICallFail, "Stripe API call fail")
+	}
+
 	customerID := c.ID
 
 	behaviour := "default_incomplete"
