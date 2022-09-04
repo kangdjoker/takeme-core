@@ -188,10 +188,13 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 	subscriptionID := s.ID
 	invoiceID := s.LatestInvoice.ID
 
-	in, _ := invoice.Get(
+	in, err := invoice.Get(
 		invoiceID,
 		nil,
 	)
+	if err != nil {
+		return "", "", "", utils.ErrorInternalServer(utils.StripeAPICallFail, "Stripe API call fail")
+	}
 
 	paymentIntentID := in.PaymentIntent.ID
 
