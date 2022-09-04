@@ -296,6 +296,7 @@ func createAcceptPaymentPayload(corporate domain.Corporate, balance domain.Balan
 	transaction domain.Transaction) AcceptPaymentCallbackPayload {
 
 	return AcceptPaymentCallbackPayload{
+		ExternalID:      transaction.ExternalID,
 		BalanceID:       balance.ID.Hex(),
 		Owner:           balance.Owner,
 		CorporateID:     corporate.ID.Hex(),
@@ -346,6 +347,7 @@ type Actor struct {
 }
 
 type AcceptPaymentCallbackPayload struct {
+	ExternalID      string             `json:"external_id" bson:"external_id,omitempty"`
 	BalanceID       string             `json:"balance_id" bson:"balance_id,omitempty"`
 	Owner           domain.ActorObject `json:"owner" bson:"owner,omitempty"`
 	CorporateID     string             `json:"corporate_id" bson:"corporate_id,omitempty"`
