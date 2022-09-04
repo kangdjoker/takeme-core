@@ -202,6 +202,13 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 		paymentIntentID,
 		nil,
 	)
+	paramsX := &stripe.PaymentIntentParams{}
+	paramsX.AddMetadata("order_id", "6735")
+
+	pi, _ = paymentintent.Update(
+		pi.ID,
+		paramsX,
+	)
 
 	params3 := &stripe.PaymentIntentConfirmParams{
 		UseStripeSDK: stripe.Bool(false),
@@ -209,7 +216,7 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 	}
 
 	params3.AddMetadata("reference", balanceID)
-	params.AddMetadata("external_id", externalID)
+	params3.AddMetadata("external_id", externalID)
 
 	pi2, err := paymentintent.Confirm(
 		pi.ID,
