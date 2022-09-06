@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -267,6 +268,7 @@ func (gateway StripeGateway) CallbackAcceptPaymentCard(w http.ResponseWriter, r 
 		endpointSecret)
 
 	if err != nil {
+		fmt.Println(err.Error())
 		return "", 0, domain.Card{}, "", "", utils.ErrorBadRequest(utils.InvalidSignature, "Invalid signature stripe callback")
 	}
 
