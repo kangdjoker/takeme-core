@@ -52,7 +52,7 @@ func (gateway XenditGateway) CreateVA(balanceID string, nameVA string, bankCode 
 	}, result, "Xendit Create VA API ")
 
 	if err != nil || resp.StatusCode() != 200 {
-		return "", utils.ErrorInternalServer(utils.XenditApiCallFailed, err.Error())
+		return "", utils.ErrorInternalServer(utils.XenditApiCallFailed, "Failed call xendit")
 	}
 
 	return result.AccountNumber, nil
