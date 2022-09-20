@@ -411,7 +411,7 @@ func ShareBalance(corporate domain.Corporate, balanceID string, access string, a
 	return nil
 }
 
-func RevokeBalance(corporate domain.Corporate, balanceID string, actorID string, pin string) error {
+func RevokeBalance(corporate domain.Corporate, balanceID string, revokeFrom string, pin string) error {
 
 	err := ValidateActorPIN(corporate, pin)
 	if err != nil {
@@ -423,7 +423,7 @@ func RevokeBalance(corporate domain.Corporate, balanceID string, actorID string,
 		return utils.ErrorBadRequest(utils.InvalidBalanceID, "Balance not found")
 	}
 
-	actor, err := ActorByID(actorID)
+	actor, err := ActorByID(revokeFrom)
 	if err != nil {
 		return err
 	}

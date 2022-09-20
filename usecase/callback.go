@@ -244,6 +244,7 @@ func createTopupPayload(corporate domain.Corporate, balance domain.Balance,
 	transaction domain.Transaction) TopupCallbackPayload {
 
 	return TopupCallbackPayload{
+		ExternalID:      transaction.ExternalID,
 		BalanceID:       balance.ID.Hex(),
 		Owner:           balance.Owner,
 		CorporateID:     corporate.ID.Hex(),
@@ -257,6 +258,7 @@ func createDeductPayload(corporate domain.Corporate, balance domain.Balance,
 	transaction domain.Transaction) DeductCallbackPayload {
 
 	return DeductCallbackPayload{
+		ExternalID:      transaction.ExternalID,
 		BalanceID:       balance.ID.Hex(),
 		Owner:           balance.Owner,
 		CorporateID:     corporate.ID.Hex(),
@@ -307,6 +309,7 @@ func createAcceptPaymentPayload(corporate domain.Corporate, balance domain.Balan
 }
 
 type TopupCallbackPayload struct {
+	ExternalID      string             `json:"external_id" bson:"external_id,omitempty"`
 	BalanceID       string             `json:"balance_id" bson:"balance_id,omitempty"`
 	Owner           domain.ActorObject `json:"owner" bson:"owner,omitempty"`
 	CorporateID     string             `json:"corporate_id" bson:"corporate_id,omitempty"`
@@ -316,6 +319,7 @@ type TopupCallbackPayload struct {
 }
 
 type DeductCallbackPayload struct {
+	ExternalID      string             `json:"external_id" bson:"external_id,omitempty"`
 	BalanceID       string             `json:"balance_id" bson:"balance_id,omitempty"`
 	Owner           domain.ActorObject `json:"owner" bson:"owner,omitempty"`
 	CorporateID     string             `json:"corporate_id" bson:"corporate_id,omitempty"`

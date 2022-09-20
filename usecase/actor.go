@@ -49,7 +49,11 @@ func ActorRemoveBalance(actor domain.ActorAble, balanceID string) error {
 
 	var newAccessBalance []domain.AccessBalance
 	for _, element := range accessBalance {
-		if balanceID != element.BalanceID.Hex() {
+		if balanceID == element.BalanceID.Hex() && element.Access == domain.ACCESS_BALANCE_OWNER {
+			return utils.ErrorBadRequest(utils.InvalidLevelAccessRevoke, "Invalid level access revoke")
+		}
+
+		if balanceID != element.BalanceID.Hex() && element.Access != domain.ACCESS_BALANCE_OWNER {
 			newAccessBalance = append(newAccessBalance, element)
 		}
 	}

@@ -48,6 +48,7 @@ const (
 	NationalIdentityRequired           = 832
 	InvalidReceiverType                = 833
 	ExternalIDNotFound                 = 834
+	InvalidLevelAccessRevoke           = 835
 	SprintParamError                   = 880
 	SprintDeletedVA                    = 881
 	InvalidNameFormat                  = 882
