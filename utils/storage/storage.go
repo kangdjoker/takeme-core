@@ -34,14 +34,14 @@ func SetupStorage() error {
 	return nil
 }
 
-func SaveFile(file io.Reader, fileHeader multipart.FileHeader) error {
+func SaveFile(file io.Reader, fileHeader multipart.FileHeader) (error, string) {
 	bucketName := os.Getenv("MINIO_BUCKET")
 	objectName := utils.GenerateMediumCode() + fileHeader.Filename
 
 	_, err := StorageClient.PutObject(context.Background(), bucketName, objectName, file, fileHeader.Size, minio.PutObjectOptions{ContentType: "application/octet-stream"})
 	if err != nil {
-		return utils.ErrorInternalServer(utils.SaveFileFailed, err.Error())
+		return utils.ErrorInternalServer(utils.SaveFileFailed, err.Error()), ""
 	}
 
-	return nil
+	return nil, objectName
 }
