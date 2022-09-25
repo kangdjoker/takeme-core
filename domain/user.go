@@ -4,6 +4,9 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 
 const USER_COLLECTION string = "user"
 
+const VERIFY_PERSONAL_TYPE string = "personal"
+const VERIFY_ORGANIZATION_TYPE string = "organization"
+
 type User struct {
 	ID               primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	CorporateID      primitive.ObjectID `json:"corporate_id" bson:"corporate_id,omitempty"`
@@ -51,6 +54,7 @@ type User struct {
 }
 
 type VerifyData struct {
+	Type          string `json:"type" bson:"type,omitempty"`
 	LegalName     string `json:"legal_name" bson:"legal_name,omitempty"`
 	LegalAddress  string `json:"legal_address" bson:"legal_address,omitempty"`
 	NIK           string `json:"nik" bson:"nik,omitempty"`

@@ -82,48 +82,6 @@ func UserUpgrade(user domain.User, nik string, faceImage string, deviceID string
 	return nil
 }
 
-func UserVerifyOrganization(userID string, aktaImage multipart.File, aktaHeader *multipart.FileHeader, npwpImage multipart.File, npwpHeader *multipart.FileHeader, nibImage multipart.File, nibHeader *multipart.FileHeader, identityImage multipart.File, identityHeader *multipart.FileHeader, nik, legalName, legalAddress) error {
-
-	user, err := service.UserByIDNoSession(userID)
-	if err != nil {
-		return err
-	}
-
-	err, akta := storage.SaveFile(aktaImage, *aktaHeader)
-	if err != nil {
-		return err
-	}
-
-	err, npwp := storage.SaveFile(npwpImage, *npwpHeader)
-	if err != nil {
-		return err
-	}
-
-	err, nib := storage.SaveFile(nibImage, *nibHeader)
-	if err != nil {
-		return err
-	}
-
-	err, identity := storage.SaveFile(identityImage, *identityHeader)
-	if err != nil {
-		return err
-	}
-
-	user.VerifyData.AktaImage = akta
-	user.VerifyData.NPWPImage = npwp
-	user.VerifyData.NIBImage = nib
-	user.VerifyData.IdentityImage = identity
-	user.VerifyData.NIK = nik
-	user.VerifyData.LegalName = legalName
-	user.VerifyData.LegalAddress = legalAddress
-
-	err = service.UserUpdateOneNoSession(&user)
-	if err != nil {
-		return err
-	}
-
-}
-
 func UserSaveBankAccount(user domain.User, name string, bankCode string, accountNumber string) error {
 	account := domain.Bank{
 		Name:          name,
@@ -582,6 +540,53 @@ func UserTemporaryPIN(faceImage string, user domain.User) (string, error) {
 	go removeTemporaryPIN(user)
 
 	return temporaryPIN, nil
+}
+
+func UserVerify(aktaImage multipart.File, aktaHeader *multipart.FileHeader,
+	npwpImage multipart.File, npwpHeader *multipart.FileHeader, nibImage multipart.File,
+	nibHeader *multipart.FileHeader, identityImage multipart.File, identityHeader *multipart.FileHeader,
+	nik string, legalName string, legalAddress string, userID string, verifyType string) error {
+
+	user, err := service.UserByIDNoSession(userID)
+	if err != nil {
+		return err
+	}
+
+	err, akta := storage.SaveFile(aktaImage, *aktaHeader)
+	if err != nil {
+		return err
+	}
+
+	err, npwp := storage.SaveFile(npwpImage, *npwpHeader)
+	if err != nil {
+		return err
+	}
+
+	err, nib := storage.SaveFile(nibImage, *nibHeader)
+	if err != nil {
+		return err
+	}
+
+	err, identity := storage.SaveFile(identityImage, *identityHeader)
+	if err != nil {
+		return err
+	}
+
+	user.VerifyData.AktaImage = akta
+	user.VerifyData.NPWPImage = npwp
+	user.VerifyData.NIBImage = nib
+	user.VerifyData.IdentityImage = identity
+	user.VerifyData.NIK = nik
+	user.VerifyData.LegalName = legalName
+	user.VerifyData.LegalAddress = legalAddress
+	user.VerifyData.Type = verifyType
+
+	err = service.UserUpdateOneNoSession(&user)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func removeForgotPINCode(userID string, code string) {
