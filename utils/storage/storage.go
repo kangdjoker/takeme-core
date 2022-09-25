@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"io"
+	"mime/multipart"
 	"os"
 
 	"github.com/minio/minio-go/v7"
@@ -33,8 +34,11 @@ func SetupStorage() error {
 	return nil
 }
 
-func SaveFile(bucketName string, objectName string, file io.Reader, fileSize int64) error {
-	_, err := StorageClient.PutObject(context.Background(), bucketName, objectName, file, fileSize, minio.PutObjectOptions{ContentType: "application/octet-stream"})
+func SaveFile(file io.Reader, fileHeader multipart.FileHeader) error {
+	bucketName := os.Getenv("MINIO_BUCKET")
+	objectName := utils.GenerateMediumCode() + fileHeader.Filename
+
+	_, err := StorageClient.PutObject(context.Background(), bucketName, objectName, file, fileHeader.Size, minio.PutObjectOptions{ContentType: "application/octet-stream"})
 	if err != nil {
 		return utils.ErrorInternalServer(utils.SaveFileFailed, err.Error())
 	}
