@@ -47,6 +47,17 @@ type User struct {
 	Remittance       RemitAccount `json:"remittance" bson:"remittance"`
 	IsRemittance     bool         `json:"is_remittance" bson:"is_remittance"`
 	IsAgent          bool         `json:"is_agent" bson:"is_agent"`
+	VerifyData       VerifyData   `json:"verify_data" bson:"verify_data"`
+}
+
+type VerifyData struct {
+	LegalName     string `json:"legal_name" bson:"legal_name,omitempty"`
+	LegalAddress  string `json:"legal_address" bson:"legal_address,omitempty"`
+	NIK           string `json:"nik" bson:"nik,omitempty"`
+	AktaImage     string `json:"akta_image" bson:"akta_image,omitempty"`
+	NPWPImage     string `json:"npwp_image" bson:"npwp_image,omitempty"`
+	NIBImage      string `json:"nib_image" bson:"nib_image,omitempty"`
+	IdentityImage string `json:"identity_image" bson:"identity_image,omitempty"`
 }
 
 func (domain *User) SetDocumentID(ID primitive.ObjectID) {

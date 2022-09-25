@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"mime/multipart"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -11,6 +12,7 @@ import (
 	"github.com/takeme-id/core/service"
 	"github.com/takeme-id/core/utils"
 	"github.com/takeme-id/core/utils/database"
+	"github.com/takeme-id/core/utils/storage"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -78,6 +80,48 @@ func UserUpgrade(user domain.User, nik string, faceImage string, deviceID string
 	}
 
 	return nil
+}
+
+func UserVerifyOrganization(userID string, aktaImage multipart.File, aktaHeader *multipart.FileHeader, npwpImage multipart.File, npwpHeader *multipart.FileHeader, nibImage multipart.File, nibHeader *multipart.FileHeader, identityImage multipart.File, identityHeader *multipart.FileHeader, nik, legalName, legalAddress) error {
+
+	user, err := service.UserByIDNoSession(userID)
+	if err != nil {
+		return err
+	}
+
+	err, akta := storage.SaveFile(aktaImage, *aktaHeader)
+	if err != nil {
+		return err
+	}
+
+	err, npwp := storage.SaveFile(npwpImage, *npwpHeader)
+	if err != nil {
+		return err
+	}
+
+	err, nib := storage.SaveFile(nibImage, *nibHeader)
+	if err != nil {
+		return err
+	}
+
+	err, identity := storage.SaveFile(identityImage, *identityHeader)
+	if err != nil {
+		return err
+	}
+
+	user.VerifyData.AktaImage = akta
+	user.VerifyData.NPWPImage = npwp
+	user.VerifyData.NIBImage = nib
+	user.VerifyData.IdentityImage = identity
+	user.VerifyData.NIK = nik
+	user.VerifyData.LegalName = legalName
+	user.VerifyData.LegalAddress = legalAddress
+
+	err = service.UserUpdateOneNoSession(&user)
+	if err != nil {
+		return err
+	}
+
 }
 
 func UserSaveBankAccount(user domain.User, name string, bankCode string, accountNumber string) error {
