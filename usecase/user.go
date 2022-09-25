@@ -580,6 +580,7 @@ func UserVerify(aktaImage multipart.File, aktaHeader *multipart.FileHeader,
 	user.VerifyData.LegalName = legalName
 	user.VerifyData.LegalAddress = legalAddress
 	user.VerifyData.Type = verifyType
+	user.Verified = true
 
 	err = service.UserUpdateOneNoSession(&user)
 	if err != nil {
