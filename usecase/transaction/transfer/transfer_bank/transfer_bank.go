@@ -40,6 +40,13 @@ func (self TransferBank) SetupGateway(transaction *domain.Transaction) {
 				IsExecuted: false,
 			},
 		}
+	} else if transaction.To.InstitutionCode == utils.ALADIN {
+		transaction.GatewayStrategies = []domain.GatewayStrategy{
+			{
+				Code:       gateway.Xendit,
+				IsExecuted: false,
+			},
+		}
 	} else if transaction.To.InstitutionCode == utils.OCBC || transaction.To.InstitutionCode == utils.DKI || transaction.To.InstitutionCode == utils.JAWA_BARAT {
 
 		transaction.GatewayStrategies = []domain.GatewayStrategy{
