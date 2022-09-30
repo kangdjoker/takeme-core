@@ -114,6 +114,7 @@ const (
 	SHOPEEPAY                   = "SHOPEEPAY"
 	OVO                         = "OVO"
 	LINK_AJA                    = "LINK_AJA"
+	ALADIN                      = "ALADIN"
 )
 
 func ConvertBankCodeOY(bankName string) string {
@@ -453,6 +454,9 @@ func ConvertBankCodeOY(bankName string) string {
 	}
 	if bankName == LINK_AJA {
 		return "linkaja"
+	}
+	if bankName == ALADIN {
+		return "947"
 	}
 
 	return ""
@@ -800,6 +804,10 @@ func ConvertBankCodeMMBC(bankName string) string {
 
 	if bankName == LINK_AJA {
 		return "LINKAJA"
+	}
+
+	if bankName == ALADIN {
+		return "947"
 	}
 
 	return ""
