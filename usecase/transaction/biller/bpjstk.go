@@ -128,6 +128,7 @@ func createTransaction(corporate domain.Corporate, balance domain.Balance, from 
 		Status:          domain.COMPLETED_STATUS,
 		Unpaid:          false,
 		ExternalID:      externalID,
+		Currency:        "idr",
 	}
 
 	statement := service.WithdrawTransactionStatement(
