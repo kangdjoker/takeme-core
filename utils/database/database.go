@@ -90,6 +90,31 @@ func Find(colName string, query bson.M, page string, limit string) (*mongo.Curso
 	return cursor, nil
 }
 
+func FindOrderByID(colName string, query bson.M, page string, limit string) (*mongo.Cursor, error) {
+
+	opts := options.Find()
+	opts.SetSort(bson.D{{"_id", -1}})
+
+	if page != "" && limit != "" {
+		p, _ := strconv.Atoi(page)
+		l, _ := strconv.Atoi(limit)
+		opts.SetSkip(int64((p - 1) * l))
+		opts.SetLimit(int64(l))
+	}
+
+	collection := DBClient.Database(os.Getenv("MONGO_DB_NAME")).Collection(colName)
+	cursor, err := collection.Find(
+		context.TODO(),
+		query,
+		opts,
+	)
+	if err != nil {
+		return nil, utils.ErrorInternalServer(utils.QueryFailed, err.Error())
+	}
+
+	return cursor, nil
+}
+
 func Aggregate(colName string, query []bson.M) (*mongo.Cursor, error) {
 	collection := DBClient.Database(os.Getenv("MONGO_DB_NAME")).Collection(colName)
 	cursor, err := collection.Aggregate(
