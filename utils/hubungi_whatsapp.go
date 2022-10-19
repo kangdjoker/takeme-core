@@ -16,7 +16,7 @@ func SendWAHubungi(to string, message string) error {
 
 	phoneNumber := to[1:]
 	payload := HubungiSendPayload{
-		Sender:            "6281362928576",
+		Sender:            "6285811682968",
 		Receiver:          phoneNumber,
 		MessageTemplateID: "7cf43df2-15d8-4380-8d0b-b02bb9efd83e",
 		Payload: Payload{
