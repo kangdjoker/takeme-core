@@ -291,7 +291,7 @@ func UserPreForgotPIN(user domain.User, encryptedPIN string, OTPChannel string) 
 		if OTPChannel == SMS_CHANNEL {
 			go utils.SendSMS(phoneNumber, message)
 		} else {
-			go utils.SendWA(phoneNumber, message)
+			go utils.SendWAHubungi(phoneNumber, changePINCode)
 		}
 
 		go removeForgotPINCode(userID, changePINCode)

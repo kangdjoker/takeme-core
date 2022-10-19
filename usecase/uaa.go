@@ -73,7 +73,7 @@ func UserSignup(fullName string, email string, phoneNumber string, corporate dom
 		if OTPChannel == SMS_CHANNEL {
 			go utils.SendSMS(phoneNumber, message)
 		} else {
-			go utils.SendWA(phoneNumber, message)
+			go utils.SendWAHubungi(phoneNumber, user.ActivationCode)
 		}
 
 		go deleteInactiveUser(user.ID.Hex())
@@ -214,7 +214,7 @@ func UserPrelogin(phoneNumber string, corporate domain.Corporate, OTPChannel str
 		if OTPChannel == SMS_CHANNEL {
 			go utils.SendSMS(phoneNumber, message)
 		} else {
-			go utils.SendWA(phoneNumber, message)
+			go utils.SendWAHubungi(phoneNumber, user.LoginCode)
 		}
 
 		go userRemoveLoginCode(user.ID.Hex(), user.LoginCode)
