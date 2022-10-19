@@ -18,9 +18,9 @@ func SendWAHubungi(to string, message string) error {
 	payload := HubungiSendPayload{
 		Sender:            "6285811682968",
 		Receiver:          phoneNumber,
-		MessageTemplateID: "7cf43df2-15d8-4380-8d0b-b02bb9efd83e",
+		MessageTemplateID: "239d6e40-db67-48e9-a1f2-6fbe6d107f55",
 		Payload: Payload{
-			Name: "hellotakeme",
+			Name: "takemesuper",
 			Language: LanguageObject{
 				Code: "id",
 			},
@@ -42,7 +42,7 @@ func SendWAHubungi(to string, message string) error {
 	resp, err := client.R().
 		SetHeaders(map[string]string{
 			"Content-Type": "application/json",
-			"XToken":       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJicmFuZF9pZCI6IjJiZmNjNmVkLWI0OGUtNDU0My1iNWYzLTZkNDI1MDJmZTY4NSIsImV4cCI6MTY2NjIyNzc3OCwicm9sZXMiOlsiYWRtaW4iXSwidXNlcl9pZCI6M30.TFlg3EsWNc_XGW_nmmfJvz13er0txz-xCyDtwqNreTg",
+			"XToken":       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJicmFuZF9pZCI6IjJiZmNjNmVkLWI0OGUtNDU0My1iNWYzLTZkNDI1MDJmZTY4NSIsImV4cCI6MTY2NjMwODQ5NCwicm9sZXMiOlsiYWRtaW4iXSwidXNlcl9pZCI6M30.MUwlHMYLn4P-lh07hx24QQyzBdK2vhPBfiCpFK7RA-M",
 		}).SetBody(payload).
 		SetResult(&result).Post(url)
 
