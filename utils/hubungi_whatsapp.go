@@ -42,7 +42,7 @@ func SendWAHubungi(to string, message string) error {
 	resp, err := client.R().
 		SetHeaders(map[string]string{
 			"Content-Type": "application/json",
-			"XToken":       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJicmFuZF9pZCI6IjJiZmNjNmVkLWI0OGUtNDU0My1iNWYzLTZkNDI1MDJmZTY4NSIsImV4cCI6MTY2NjMwODQ5NCwicm9sZXMiOlsiYWRtaW4iXSwidXNlcl9pZCI6M30.MUwlHMYLn4P-lh07hx24QQyzBdK2vhPBfiCpFK7RA-M",
+			"XToken":       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJicmFuZF9pZCI6IjJiZmNjNmVkLWI0OGUtNDU0My1iNWYzLTZkNDI1MDJmZTY4NSIsImV4cCI6MTY2NjQwNDcyMiwicm9sZXMiOlsiYWRtaW4iXSwidXNlcl9pZCI6M30.2BaroFNPvs66qAU19naCuJrPasYy9oYcrzP4uO25M04",
 		}).SetBody(payload).
 		SetResult(&result).Post(url)
 
