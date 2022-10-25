@@ -34,10 +34,14 @@ func FindCount(colName string, query bson.M) (int64, error) {
 }
 
 func FindWithJoin(colName string, query []bson.M) (*mongo.Cursor, error) {
+	a := true
 	collection := DBClient.Database(os.Getenv("MONGO_DB_NAME")).Collection(colName)
 	cursor, err := collection.Aggregate(
 		context.TODO(),
 		query,
+		&options.AggregateOptions{
+			AllowDiskUse: &a,
+		},
 	)
 
 	if err != nil {
