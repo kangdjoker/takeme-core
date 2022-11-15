@@ -47,7 +47,8 @@ func (self TransferBank) SetupGateway(transaction *domain.Transaction) {
 				IsExecuted: false,
 			},
 		}
-	} else if transaction.To.InstitutionCode == utils.OCBC || transaction.To.InstitutionCode == utils.DKI || transaction.To.InstitutionCode == utils.JAWA_BARAT {
+	} else if transaction.To.InstitutionCode == utils.OCBC || transaction.To.InstitutionCode == utils.DKI ||
+		transaction.To.InstitutionCode == utils.JAWA_BARAT || transaction.To.InstitutionCode == utils.BTN {
 
 		transaction.GatewayStrategies = []domain.GatewayStrategy{
 			{
