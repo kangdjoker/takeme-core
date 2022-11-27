@@ -244,8 +244,12 @@ func createTopupPayload(corporate domain.Corporate, balance domain.Balance,
 	transaction domain.Transaction) TopupCallbackPayload {
 
 	return TopupCallbackPayload{
-		ExternalID:      transaction.ExternalID,
-		BalanceID:       balance.ID.Hex(),
+		ExternalID: transaction.ExternalID,
+		BalanceID:  balance.ID.Hex(),
+		VA: VACBPayload{
+			BankCode: transaction.From.InstitutionCode,
+			Number:   transaction.From.AccountNumber,
+		},
 		Owner:           balance.Owner,
 		CorporateID:     corporate.ID.Hex(),
 		TransactionCode: transaction.TransactionCode,
@@ -311,11 +315,17 @@ func createAcceptPaymentPayload(corporate domain.Corporate, balance domain.Balan
 type TopupCallbackPayload struct {
 	ExternalID      string             `json:"external_id" bson:"external_id,omitempty"`
 	BalanceID       string             `json:"balance_id" bson:"balance_id,omitempty"`
+	VA              VACBPayload        `json:"va" bson:"va"`
 	Owner           domain.ActorObject `json:"owner" bson:"owner,omitempty"`
 	CorporateID     string             `json:"corporate_id" bson:"corporate_id,omitempty"`
 	TransactionCode string             `json:"transaction_code" bson:"transaction_code,omitempty"`
 	Amount          int                `json:"amount" bson:"amount,omitempty"`
 	Time            string             `json:"time" bson:"time,omitempty"`
+}
+
+type VACBPayload struct {
+	BankCode string `json:"bank_code" bson:"bank_code"`
+	Number   string `json:"number" bson:"number"`
 }
 
 type DeductCallbackPayload struct {
