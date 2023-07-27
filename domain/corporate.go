@@ -54,6 +54,11 @@ type Corporate struct {
 	Products                  []string             `json:"products" bson:"products,omitempty"`
 	SAAS                      bool                 `json:"saas" bson:"saas,omitempty"`
 	Currency                  string               `json:"currency" bson:"currency,omitempty"`
+	TaxID                     string               `json:"tax_id" bson:"tax_id,omitempty"`
+	BasicFeeTopup             int                  `json:"basic_fee_topup" bson:"basic_fee_topup,omitempty"`
+	BasicFeeTransfer          int                  `json:"basic_fee_transfer" bson:"basic_fee_transfer,omitempty"`
+	FeeTopup                  int                  `json:"fee_topup" bson:"fee_topup,omitempty"`
+	FeeTransfer               int                  `json:"fee_transfer" bson:"fee_transfer,omitempty"`
 }
 
 type Fee struct {
