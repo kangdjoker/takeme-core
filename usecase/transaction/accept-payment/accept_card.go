@@ -5,12 +5,12 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/takeme-id/core/domain"
-	"github.com/takeme-id/core/service"
-	"github.com/takeme-id/core/usecase"
-	"github.com/takeme-id/core/usecase/transaction"
-	"github.com/takeme-id/core/utils"
-	"github.com/takeme-id/core/utils/gateway"
+	"github.com/kangdjoker/takeme-core/domain"
+	"github.com/kangdjoker/takeme-core/service"
+	"github.com/kangdjoker/takeme-core/usecase"
+	"github.com/kangdjoker/takeme-core/usecase/transaction"
+	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/gateway"
 )
 
 type AcceptCard struct {

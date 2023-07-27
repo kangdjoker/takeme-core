@@ -9,10 +9,10 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/kangdjoker/takeme-core/domain"
+	"github.com/kangdjoker/takeme-core/service"
+	"github.com/kangdjoker/takeme-core/utils"
 	log "github.com/sirupsen/logrus"
-	"github.com/takeme-id/core/domain"
-	"github.com/takeme-id/core/service"
-	"github.com/takeme-id/core/utils"
 )
 
 func Middleware(h http.HandlerFunc, secure bool) http.HandlerFunc {

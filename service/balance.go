@@ -1,8 +1,8 @@
 package service
 
 import (
-	"github.com/takeme-id/core/domain"
-	"github.com/takeme-id/core/utils/database"
+	"github.com/kangdjoker/takeme-core/domain"
+	"github.com/kangdjoker/takeme-core/utils/database"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )

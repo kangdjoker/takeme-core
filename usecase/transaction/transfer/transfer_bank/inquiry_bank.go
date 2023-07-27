@@ -1,8 +1,8 @@
 package transfer_bank
 
 import (
-	"github.com/takeme-id/core/domain"
-	"github.com/takeme-id/core/utils/gateway"
+	"github.com/kangdjoker/takeme-core/domain"
+	"github.com/kangdjoker/takeme-core/utils/gateway"
 )
 
 func InquiryBankAccount(accountNumber string, bankCode string) (domain.Bank, error) {

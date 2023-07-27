@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/takeme-id/core/domain"
-	"github.com/takeme-id/core/service"
-	"github.com/takeme-id/core/utils"
+	"github.com/kangdjoker/takeme-core/domain"
+	"github.com/kangdjoker/takeme-core/service"
+	"github.com/kangdjoker/takeme-core/utils"
 )
 
 func PublishBulkCallback(corporate domain.Corporate, actor domain.ActorObject, bulkID string,

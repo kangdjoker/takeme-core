@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/takeme-id/core/domain"
+	"github.com/kangdjoker/takeme-core/domain"
 )
 
 func JWTDecode(tokenString string) (domain.Claims, error) {

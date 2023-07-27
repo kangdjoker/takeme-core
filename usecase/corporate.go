@@ -3,11 +3,11 @@ package usecase
 import (
 	"context"
 
-	"github.com/takeme-id/core/domain"
-	"github.com/takeme-id/core/domain/dto"
-	"github.com/takeme-id/core/service"
-	"github.com/takeme-id/core/utils"
-	"github.com/takeme-id/core/utils/database"
+	"github.com/kangdjoker/takeme-core/domain"
+	"github.com/kangdjoker/takeme-core/domain/dto"
+	"github.com/kangdjoker/takeme-core/service"
+	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/database"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readconcern"

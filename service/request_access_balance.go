@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/takeme-id/core/domain"
-	"github.com/takeme-id/core/utils"
-	"github.com/takeme-id/core/utils/database"
+	"github.com/kangdjoker/takeme-core/domain"
+	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/database"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

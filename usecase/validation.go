@@ -1,9 +1,9 @@
 package usecase
 
 import (
-	"github.com/takeme-id/core/domain"
-	"github.com/takeme-id/core/usecase/security"
-	"github.com/takeme-id/core/utils"
+	"github.com/kangdjoker/takeme-core/domain"
+	"github.com/kangdjoker/takeme-core/usecase/security"
+	"github.com/kangdjoker/takeme-core/utils"
 )
 
 func ValidateFormatPIN(pin string) error {

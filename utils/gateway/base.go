@@ -3,7 +3,7 @@ package gateway
 import (
 	"net/http"
 
-	"github.com/takeme-id/core/domain"
+	"github.com/kangdjoker/takeme-core/domain"
 )
 
 const (

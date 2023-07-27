@@ -4,8 +4,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/takeme-id/core/domain"
-	"github.com/takeme-id/core/utils/database"
+	"github.com/kangdjoker/takeme-core/domain"
+	"github.com/kangdjoker/takeme-core/utils/database"
 )
 
 func CreateCallbackHistoryRefused(transactionCode string, url string, requestBody string) (domain.CallbackHistory, error) {

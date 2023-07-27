@@ -9,8 +9,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/takeme-id/core/domain"
-	"github.com/takeme-id/core/utils"
+	"github.com/kangdjoker/takeme-core/domain"
+	"github.com/kangdjoker/takeme-core/utils"
 )
 
 type BillerBase struct {

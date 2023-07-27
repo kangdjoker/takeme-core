@@ -1,8 +1,8 @@
 package acceptpayment
 
 import (
-	"github.com/takeme-id/core/domain"
-	"github.com/takeme-id/core/utils"
+	"github.com/kangdjoker/takeme-core/domain"
+	"github.com/kangdjoker/takeme-core/utils"
 )
 
 func validateCurrency(incomeCurrency string, balance domain.Balance) error {

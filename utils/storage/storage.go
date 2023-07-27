@@ -6,9 +6,9 @@ import (
 	"mime/multipart"
 	"os"
 
+	"github.com/kangdjoker/takeme-core/utils"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/takeme-id/core/utils"
 )
 
 var StorageClient *minio.Client

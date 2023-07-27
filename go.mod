@@ -1,4 +1,4 @@
-module github.com/takeme-id/core
+module github.com/kangdjoker/takeme-core
 
 go 1.18
 

@@ -3,10 +3,10 @@ package transfer_bank
 import (
 	"fmt"
 
-	"github.com/takeme-id/core/domain"
-	"github.com/takeme-id/core/service"
-	"github.com/takeme-id/core/usecase"
-	"github.com/takeme-id/core/utils"
+	"github.com/kangdjoker/takeme-core/domain"
+	"github.com/kangdjoker/takeme-core/service"
+	"github.com/kangdjoker/takeme-core/usecase"
+	"github.com/kangdjoker/takeme-core/utils"
 )
 
 func CreateBulkInquiry(corporate domain.Corporate, reference string, banks []domain.Bank,

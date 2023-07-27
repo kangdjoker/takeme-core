@@ -4,8 +4,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/takeme-id/core/domain"
-	"github.com/takeme-id/core/utils"
+	"github.com/kangdjoker/takeme-core/domain"
+	"github.com/kangdjoker/takeme-core/utils"
 )
 
 func validateMinimum(transaction domain.Transaction) error {

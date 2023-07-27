@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/kangdjoker/takeme-core/domain"
+	"github.com/kangdjoker/takeme-core/utils"
 	log "github.com/sirupsen/logrus"
-	"github.com/takeme-id/core/domain"
-	"github.com/takeme-id/core/utils"
 )
 
 type OYGateway struct {

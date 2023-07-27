@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"github.com/takeme-id/core/domain"
+	"github.com/kangdjoker/takeme-core/domain"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 

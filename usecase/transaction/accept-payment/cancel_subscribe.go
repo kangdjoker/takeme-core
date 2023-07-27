@@ -1,7 +1,7 @@
 package acceptpayment
 
 import (
-	"github.com/takeme-id/core/utils/gateway"
+	"github.com/kangdjoker/takeme-core/utils/gateway"
 )
 
 func CancelSubscribe(subscribeCode string) error {
