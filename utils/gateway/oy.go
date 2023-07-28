@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"encoding/json"
 	"net/http"
 	"os"
 	"time"
@@ -104,15 +105,19 @@ func (gateway OYGateway) Inquiry(bankCode string, accountNumber string) (string,
 		BankCode:      bankCode,
 	}
 
+	header := map[string]string{
+		"Content-Type":  "application/json",
+		"x-oy-username": os.Getenv("OY_PUBLIC_KEY"),
+		"x-api-key":     os.Getenv("OY_API_KEY"),
+	}
 	resp, err := client.R().
-		SetHeaders(map[string]string{
-			"Content-Type":  "application/json",
-			"x-oy-username": os.Getenv("OY_PUBLIC_KEY"),
-			"x-api-key":     os.Getenv("OY_API_KEY"),
-		}).
+		SetHeaders(header).
 		SetBody(payload).
 		SetResult(&result).Post(url)
 
+	log.Info("url:" + url)
+	bh, _ := json.Marshal(header)
+	log.Info("header:" + string(bh))
 	utils.LoggingAPICall(resp.StatusCode(), payload, result, "OY Inquiry API Call ")
 
 	if err != nil {
