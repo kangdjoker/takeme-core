@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/sirupsen/logrus"
 )
 
 type BillerBase struct {
@@ -26,10 +27,14 @@ func (self BillerBase) BillerPayBPJSTKPMI(transaction domain.Transaction, paymen
 func (billerBase BillerBase) BillerInquiryBPJSTKPMI(paymentCode string, currency string) (FusBPJSInqResponse, error) {
 	//CURL HERE
 	paramB, _ := json.Marshal(CreateBillerBPJSPMIInquiryRequest(paymentCode, currency))
+	paramS := string(paramB)
+	url := os.Getenv("FUSINDO_BILLER_URL")
+	logrus.Info("url:" + url)
+	logrus.Info("param:" + paramS)
 	res := FusBPJSInqResponse{}
 	client := &http.Client{}
-	var data = strings.NewReader(`req=` + string(paramB))
-	req, err := http.NewRequest("POST", os.Getenv("FUSINDO_BILLER_URL"), data)
+	var data = strings.NewReader(`req=` + paramS)
+	req, err := http.NewRequest("POST", url, data)
 	if err != nil {
 		return res, err
 	}
@@ -43,6 +48,7 @@ func (billerBase BillerBase) BillerInquiryBPJSTKPMI(paymentCode string, currency
 	if err != nil {
 		return res, err
 	}
+	logrus.Info("bodyResponse:" + string(bodyText))
 	err = xml.Unmarshal(bodyText, &res)
 	return res, err
 }
