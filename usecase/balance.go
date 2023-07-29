@@ -3,12 +3,14 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/service"
 	"github.com/kangdjoker/takeme-core/utils"
 	"github.com/kangdjoker/takeme-core/utils/database"
 	"github.com/kangdjoker/takeme-core/utils/gateway"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readconcern"
@@ -307,7 +309,7 @@ func WithdrawBalance(statement domain.Statement, session mongo.SessionContext) e
 	if err != nil {
 		return err
 	}
-
+	log.Info("balance.Amount: " + strconv.Itoa(balance.Amount) + ", " + strconv.Itoa(amount))
 	if balance.Amount < amount {
 		return utils.ErrorBadRequest(utils.InsufficientBalance, "Insufficient balance")
 	}
