@@ -56,6 +56,12 @@ func (self BPJSTKBiller) Execute(corporate domain.Corporate, actor domain.ActorA
 	if err != nil {
 		return domain.Transaction{}, nil, err
 	}
+	if resInquiry.Status == "1" {
+		return domain.Transaction{}, nil, errors.New(resInquiry.Data1)
+	} else if resInquiry.Status != "0" {
+		return domain.Transaction{}, nil, errors.New("unknown error")
+	}
+
 	to.Name = resInquiry.Data2
 	totalBayar, err := strconv.Atoi(resInquiry.TotalBayarRupiah)
 	if err != nil {
@@ -83,6 +89,11 @@ func (self BPJSTKBiller) Execute(corporate domain.Corporate, actor domain.ActorA
 	resPayment, err := self.billerBase.BillerPayBPJSTKPMI(transaction, paymentCode, currency)
 	if err != nil {
 		return domain.Transaction{}, nil, err
+	}
+	if resPayment.Status == "1" {
+		return domain.Transaction{}, nil, errors.New(resPayment.Data1)
+	} else if resPayment.Status != "0" {
+		return domain.Transaction{}, nil, errors.New("unknown error")
 	}
 
 	transaction.GatewayReference = resPayment.Reff
