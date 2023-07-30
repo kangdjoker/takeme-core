@@ -1,7 +1,9 @@
 package biller
 
 import (
+	"errors"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/kangdjoker/takeme-core/domain"
@@ -49,7 +51,20 @@ func (self BPJSTKBiller) Execute(corporate domain.Corporate, actor domain.ActorA
 
 	var statements []domain.Statement
 
-	transaction, transactionStatement := createTransaction(self.corporate, self.fromBalance, self.actor, to, 80000, externalID)
+	//Ambil data Inqiry dulu
+	resInquiry, err := self.billerBase.BillerInquiryBPJSTKPMI(paymentCode, currency)
+	if err != nil {
+		return domain.Transaction{}, nil, err
+	}
+	totalBayar, err := strconv.Atoi(resInquiry.TotalBayarRupiah)
+	if err != nil {
+		return domain.Transaction{}, nil, err
+	}
+	if totalBayar == 0 {
+		return domain.Transaction{}, nil, errors.New("tidak mendapatkan data inquiry")
+	}
+
+	transaction, transactionStatement := createTransaction(self.corporate, self.fromBalance, self.actor, to, totalBayar, externalID)
 
 	feeStatement, err := self.transactionUsecase.CreateFeeStatement(corporate, self.fromBalance, transaction)
 	if err != nil {
@@ -64,12 +79,12 @@ func (self BPJSTKBiller) Execute(corporate domain.Corporate, actor domain.ActorA
 		return domain.Transaction{}, nil, err
 	}
 
-	err, ref := self.billerBase.BillerPayBPJSTKPMI(transaction, paymentCode, currency)
+	resPayment, err := self.billerBase.BillerPayBPJSTKPMI(transaction, paymentCode, currency)
 	if err != nil {
 		return domain.Transaction{}, nil, err
 	}
 
-	transaction.GatewayReference = ref
+	transaction.GatewayReference = resPayment.Reff
 
 	err = self.transactionUsecase.Commit(statements, &transaction)
 	if err != nil {
@@ -77,21 +92,21 @@ func (self BPJSTKBiller) Execute(corporate domain.Corporate, actor domain.ActorA
 	}
 
 	return transaction, dto.BPJSTKPMI{
-		Name:              "Laura Basuki",
-		KPJNumber:         "4837824782378",
-		DateOfBirth:       "02-05-1984",
+		Name:              resPayment.Data2,
+		KPJNumber:         resPayment.Data1,
+		DateOfBirth:       resInquiry.Data3,
 		PaymentCode:       paymentCode,
-		MonthOfProtection: "14-07-2022 s/d 14-08-2022",
-		Reference:         "2056080",
-		JKK:               "30000",
-		JKM:               "50000",
-		JHT:               "0",
-		SubAmount:         "80000",
-		TotalFee:          "3500",
-		Amount:            "83500",
+		MonthOfProtection: resPayment.Blth,
+		Reference:         resPayment.Reff,
+		JKK:               resInquiry.Jkk,
+		JKM:               resInquiry.Jkm,
+		JHT:               resInquiry.Jht,
+		SubAmount:         resInquiry.Tagihan,
+		TotalFee:          resInquiry.Admin,
+		Amount:            resInquiry.TotalBayarRupiah,
 		CurrencyCode:      currency,
-		FixedRate:         "0.00031",
-		LocalInvoice:      "24.8",
+		FixedRate:         "0.0",
+		LocalInvoice:      "0.0",
 	}, err
 }
 
