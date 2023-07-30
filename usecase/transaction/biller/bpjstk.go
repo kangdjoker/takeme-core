@@ -33,7 +33,7 @@ func (biller BPJSTKBiller) Inquiry(paymentCode string, currency string) (FusBPJS
 }
 func (self BPJSTKBiller) Execute(corporate domain.Corporate, actor domain.ActorAble,
 	to domain.TransactionObject, balanceID string, encryptedPIN string, externalID string,
-	paymentCode string, currency string) (domain.Transaction, interface{}, error) {
+	paymentCode string, currency string, requestId string) (domain.Transaction, interface{}, error) {
 
 	balance, err := identifyBalance(balanceID)
 	if err != nil {
@@ -71,7 +71,7 @@ func (self BPJSTKBiller) Execute(corporate domain.Corporate, actor domain.ActorA
 		return domain.Transaction{}, nil, errors.New("tidak mendapatkan data inquiry")
 	}
 
-	transaction, transactionStatement := createTransaction(self.corporate, self.fromBalance, self.actor, to, totalBayar, externalID)
+	transaction, transactionStatement := createTransaction(self.corporate, self.fromBalance, self.actor, to, totalBayar, externalID, requestId)
 
 	feeStatement, err := self.transactionUsecase.CreateFeeStatement(corporate, self.fromBalance, transaction)
 	if err != nil {
@@ -132,7 +132,7 @@ func identifyBalance(balanceID string) (domain.Balance, error) {
 }
 
 func createTransaction(corporate domain.Corporate, balance domain.Balance, from domain.ActorAble,
-	to domain.TransactionObject, subAmount int, externalID string) (domain.Transaction, domain.Statement) {
+	to domain.TransactionObject, subAmount int, externalID string, requestId string) (domain.Transaction, domain.Statement) {
 
 	totalFee := 0
 	if from.GetActorType() == domain.ACTOR_TYPE_USER {
@@ -159,6 +159,7 @@ func createTransaction(corporate domain.Corporate, balance domain.Balance, from 
 		Unpaid:          false,
 		ExternalID:      externalID,
 		Currency:        "idr",
+		RequestId:       requestId,
 	}
 
 	statement := service.WithdrawTransactionStatement(

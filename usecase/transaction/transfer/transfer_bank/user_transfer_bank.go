@@ -26,7 +26,7 @@ type UserTransferBank struct {
 }
 
 func (self UserTransferBank) Execute(corporate domain.Corporate, actor domain.ActorAble,
-	to domain.TransactionObject, balanceID string, subAmount int, encryptedPIN string, externalID string) (domain.Transaction, error) {
+	to domain.TransactionObject, balanceID string, subAmount int, encryptedPIN string, externalID string, requestId string) (domain.Transaction, error) {
 
 	balance, err := identifyBalance(balanceID)
 	if err != nil {
@@ -51,7 +51,7 @@ func (self UserTransferBank) Execute(corporate domain.Corporate, actor domain.Ac
 
 	var statements []domain.Statement
 
-	transaction, transactionStatement := createTransaction(self.corporate, self.fromBalance, self.actor, self.from, to, subAmount, externalID)
+	transaction, transactionStatement := createTransaction(self.corporate, self.fromBalance, self.actor, self.from, to, subAmount, externalID, requestId)
 
 	feeStatement, err := self.transactionUsecase.CreateFeeStatement(corporate, self.fromBalance, transaction)
 	if err != nil {
@@ -98,7 +98,7 @@ func identifyBalance(balanceID string) (domain.Balance, error) {
 }
 
 func createTransaction(corporate domain.Corporate, balance domain.Balance, actor domain.ActorAble, from domain.TransactionObject,
-	to domain.TransactionObject, subAmount int, externalID string) (domain.Transaction, domain.Statement) {
+	to domain.TransactionObject, subAmount int, externalID string, requestId string) (domain.Transaction, domain.Statement) {
 
 	totalFee := 0
 	if actor.GetActorType() == domain.ACTOR_TYPE_USER {
@@ -126,6 +126,7 @@ func createTransaction(corporate domain.Corporate, balance domain.Balance, actor
 		Unpaid:          false,
 		ExternalID:      externalID,
 		Currency:        corporate.Currency,
+		RequestId:       requestId,
 	}
 
 	statement := service.WithdrawTransactionStatement(

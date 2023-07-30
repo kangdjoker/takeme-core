@@ -24,7 +24,7 @@ type TopupBank struct {
 }
 
 func (self TopupBank) Execute(from domain.Bank, balanceID string, amount int,
-	reference string, currency string) (domain.Transaction, domain.Balance, error) {
+	reference string, currency string, requestId string) (domain.Transaction, domain.Balance, error) {
 
 	balance, owner, corporate, err := identifyBalance(balanceID)
 	if err != nil {
@@ -44,7 +44,7 @@ func (self TopupBank) Execute(from domain.Bank, balanceID string, amount int,
 	var statements []domain.Statement
 
 	transaction, transactionStatement := createTransaction(self.corporate, self.balance, self.from,
-		self.to, self.amount, self.reference, gateway)
+		self.to, self.amount, self.reference, gateway, requestId)
 
 	feeStatement, err := self.transactionUsecase.CreateFeeStatement(corporate, balance, transaction)
 	if err != nil {
@@ -109,7 +109,7 @@ func identifyBalance(balanceID string) (domain.Balance, domain.TransactionObject
 }
 
 func createTransaction(corporate domain.Corporate, balance domain.Balance, from domain.Bank,
-	to domain.TransactionObject, subAmount int, reference string, gateway gateway.Gateway) (domain.Transaction, domain.Statement) {
+	to domain.TransactionObject, subAmount int, reference string, gateway gateway.Gateway, requestId string) (domain.Transaction, domain.Statement) {
 
 	var totalFee = 0
 	if balance.Owner.Type == domain.ACTOR_TYPE_USER {
@@ -138,6 +138,7 @@ func createTransaction(corporate domain.Corporate, balance domain.Balance, from 
 		Gateway:          gateway.Name(),
 		GatewayReference: reference,
 		Currency:         corporate.Currency,
+		RequestId:        requestId,
 	}
 
 	statement := service.DepositTransactionStatement(

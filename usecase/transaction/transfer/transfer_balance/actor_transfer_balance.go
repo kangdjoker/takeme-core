@@ -26,7 +26,7 @@ type ActorTransferBalance struct {
 }
 
 func (self ActorTransferBalance) Execute(corporate domain.Corporate, actor domain.ActorAble,
-	toBalanceID string, fromBalanceID string, subAmount int, encryptedPIN string, externalID string, isTopupType bool) (domain.Transaction, error) {
+	toBalanceID string, fromBalanceID string, subAmount int, encryptedPIN string, externalID string, isTopupType bool, requestId string) (domain.Transaction, error) {
 
 	fromBalance, err := identifyBalance(fromBalanceID)
 	if err != nil {
@@ -69,7 +69,7 @@ func (self ActorTransferBalance) Execute(corporate domain.Corporate, actor domai
 	}
 
 	transaction, transactionStatement := createTransaction(self.corporate, self.fromBalance, self.actor, self.from, self.to,
-		self.toBalance, self.subAmount, self.externalID, isTopupType)
+		self.toBalance, self.subAmount, self.externalID, isTopupType, requestId)
 
 	feeStatement, err := self.transactionUsecase.CreateFeeStatement(corporate, self.fromBalance, transaction)
 	if err != nil {
@@ -107,7 +107,7 @@ func (self ActorTransferBalance) Execute(corporate domain.Corporate, actor domai
 }
 
 func createTransaction(corporate domain.Corporate, fromBalance domain.Balance, actor domain.ActorAble, from domain.TransactionObject,
-	to domain.TransactionObject, toBalance domain.Balance, subAmount int, externalID string, isTopupType bool) (domain.Transaction, []domain.Statement) {
+	to domain.TransactionObject, toBalance domain.Balance, subAmount int, externalID string, isTopupType bool, requestId string) (domain.Transaction, []domain.Statement) {
 
 	totalFee := 0
 	if actor.GetActorType() == domain.ACTOR_TYPE_USER {
@@ -141,6 +141,7 @@ func createTransaction(corporate domain.Corporate, fromBalance domain.Balance, a
 		Unpaid:          false,
 		ExternalID:      externalID,
 		Currency:        corporate.Currency,
+		RequestId:       requestId,
 	}
 
 	var statements []domain.Statement

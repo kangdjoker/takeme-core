@@ -100,6 +100,7 @@ type Transaction struct {
 	GatewayStrategies []GatewayStrategy  `json:"gateway_strategies" bson:"gateway_strategies"`
 	GatewayHistories  []GatewayHistory   `json:"gateway_histories" bson:"gateway_histories"`
 	Currency          string             `json:"currency" bson:"currency,omitempty"`
+	RequestId         string             `json:"request_id" bson:"request_id,omitempty"`
 }
 
 // Interface for mongo document result

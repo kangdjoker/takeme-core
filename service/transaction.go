@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/utils"
 	"github.com/kangdjoker/takeme-core/utils/database"
@@ -12,6 +13,9 @@ import (
 )
 
 func TransactionSaveOne(model *domain.Transaction, session mongo.SessionContext) error {
+	if model.RequestId == "" {
+		model.RequestId = uuid.New().String()
+	}
 	err := database.SessionSaveOne(model, session)
 	if err != nil {
 		return err

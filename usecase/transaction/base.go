@@ -58,13 +58,13 @@ func (self Base) Commit(statements []domain.Statement, transaction *domain.Trans
 			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
 		}
 
-		err = adjustBalanceWithStatement(statements, session)
+		err = service.TransactionSaveOne(transaction, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
-		err = service.TransactionSaveOne(transaction, session)
+		err = adjustBalanceWithStatement(statements, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err

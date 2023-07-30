@@ -51,7 +51,7 @@ func (self AcceptCard) InitializeSubscribe(from domain.Card, balanceID string, a
 }
 
 func (self AcceptCard) Execute(from domain.Card, balanceID string, amount int,
-	reference string, currency string, externalID string) (domain.Transaction, domain.Balance, error) {
+	reference string, currency string, externalID string, requestId string) (domain.Transaction, domain.Balance, error) {
 
 	balance, owner, corporate, err := identifyBalance(balanceID)
 	if err != nil {
@@ -71,7 +71,7 @@ func (self AcceptCard) Execute(from domain.Card, balanceID string, amount int,
 	var statements []domain.Statement
 
 	transaction, transactionStatement, err := createTransaction(self.corporate, self.balance, self.from,
-		self.to, self.amount, self.reference, gateway, externalID)
+		self.to, self.amount, self.reference, gateway, externalID, requestId)
 	if err != nil {
 		return domain.Transaction{}, domain.Balance{}, err
 	}
@@ -139,7 +139,7 @@ func identifyBalance(balanceID string) (domain.Balance, domain.TransactionObject
 }
 
 func createTransaction(corporate domain.Corporate, balance domain.Balance, from domain.Card,
-	to domain.TransactionObject, subAmount int, reference string, gateway gateway.Gateway, externalID string) (domain.Transaction, domain.Statement, error) {
+	to domain.TransactionObject, subAmount int, reference string, gateway gateway.Gateway, externalID string, requestId string) (domain.Transaction, domain.Statement, error) {
 
 	var totalFee = 0
 	if balance.Owner.Type == domain.ACTOR_TYPE_USER {
@@ -179,6 +179,7 @@ func createTransaction(corporate domain.Corporate, balance domain.Balance, from 
 		Gateway:          gateway.Name(),
 		GatewayReference: reference,
 		Currency:         corporate.Currency,
+		RequestId:        requestId,
 	}
 
 	statement := service.DepositTransactionStatement(
