@@ -42,6 +42,7 @@ const (
 type TransactionObject struct {
 	Type            string `json:"type" bson:"type,omitempty"`
 	InstitutionCode string `json:"institution_code" bson:"institution_code,omitempty"`
+	InstitutionName string `json:"institution_name" bson:"institution_name,omitempty"`
 	Name            string `json:"name" bson:"name,omitempty"`
 	AccountNumber   string `json:"account_number" bson:"account_number,omitempty"`
 }
