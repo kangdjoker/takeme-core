@@ -56,6 +56,7 @@ func (self BPJSTKBiller) Execute(corporate domain.Corporate, actor domain.ActorA
 	if err != nil {
 		return domain.Transaction{}, nil, err
 	}
+	to.Name = resInquiry.Data2
 	totalBayar, err := strconv.Atoi(resInquiry.TotalBayarRupiah)
 	if err != nil {
 		return domain.Transaction{}, nil, err
