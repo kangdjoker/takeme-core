@@ -4,8 +4,10 @@ import (
 	"errors"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/domain/dto"
 	"github.com/kangdjoker/takeme-core/service"
@@ -29,8 +31,8 @@ type BPJSTKBiller struct {
 	currency           string
 }
 
-func (biller BPJSTKBiller) Inquiry(paymentCode string, currency string) (FusBPJSInqResponse, error) {
-	return biller.billerBase.BillerInquiryBPJSTKPMI(paymentCode, currency)
+func (biller BPJSTKBiller) Inquiry(paymentCode string, currency string, requestId string) (FusBPJSInqResponse, error) {
+	return biller.billerBase.BillerInquiryBPJSTKPMI(paymentCode, currency, requestId)
 }
 func (self BPJSTKBiller) Execute(corporate domain.Corporate, actor domain.ActorAble,
 	to domain.TransactionObject, balanceID string, encryptedPIN string, externalID string,
@@ -53,7 +55,7 @@ func (self BPJSTKBiller) Execute(corporate domain.Corporate, actor domain.ActorA
 	var statements []domain.Statement
 
 	//Ambil data Inqiry dulu
-	resInquiry, err := self.billerBase.BillerInquiryBPJSTKPMI(paymentCode, currency)
+	resInquiry, err := self.billerBase.BillerInquiryBPJSTKPMI(paymentCode, currency, strings.ReplaceAll(uuid.New().String(), "-", ""))
 	if err != nil {
 		return domain.Transaction{}, nil, err
 	}
@@ -93,7 +95,7 @@ func (self BPJSTKBiller) Execute(corporate domain.Corporate, actor domain.ActorA
 		return domain.Transaction{}, nil, err
 	}
 
-	resPayment, err := self.billerBase.BillerPayBPJSTKPMI(transaction, paymentCode, currency)
+	resPayment, err := self.billerBase.BillerPayBPJSTKPMI(transaction, paymentCode, currency, requestId)
 	if err != nil {
 		return domain.Transaction{}, nil, err
 	}
@@ -104,7 +106,7 @@ func (self BPJSTKBiller) Execute(corporate domain.Corporate, actor domain.ActorA
 	}
 
 	//UPDATE Reff
-	transaction.GatewayReference = resPayment.Reff
+	transaction.GatewayReference = resPayment.Ftrxid
 
 	return transaction, dto.BPJSTKPMI{
 		Name:              resPayment.Data2,

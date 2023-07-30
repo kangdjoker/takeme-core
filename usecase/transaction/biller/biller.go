@@ -10,7 +10,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/utils"
 	"github.com/sirupsen/logrus"
@@ -19,9 +18,9 @@ import (
 type BillerBase struct {
 }
 
-func (self BillerBase) BillerPayBPJSTKPMI(transaction domain.Transaction, paymentCode string, currency string) (FusBPJSPayResponse, error) {
+func (self BillerBase) BillerPayBPJSTKPMI(transaction domain.Transaction, paymentCode string, currency string, requestId string) (FusBPJSPayResponse, error) {
 	// CURL HERE
-	paramB, _ := xml.Marshal(CreateBillerBPJSPMIPaymentRequest(paymentCode, currency))
+	paramB, _ := xml.Marshal(CreateBillerBPJSPMIPaymentRequest(paymentCode, currency, requestId))
 	paramS := string(paramB)
 	url := os.Getenv("FUSINDO_BILLER_URL") + "/fush2h/fusindo.php"
 	logrus.Info("url:" + url)
@@ -47,9 +46,9 @@ func (self BillerBase) BillerPayBPJSTKPMI(transaction domain.Transaction, paymen
 	err = xml.Unmarshal(bodyText, &res)
 	return res, err
 }
-func (billerBase BillerBase) BillerInquiryBPJSTKPMI(paymentCode string, currency string) (FusBPJSInqResponse, error) {
+func (billerBase BillerBase) BillerInquiryBPJSTKPMI(paymentCode string, currency string, requestId string) (FusBPJSInqResponse, error) {
 	//CURL HERE
-	paramB, _ := xml.Marshal(CreateBillerBPJSPMIInquiryRequest(paymentCode, currency))
+	paramB, _ := xml.Marshal(CreateBillerBPJSPMIInquiryRequest(paymentCode, currency, requestId))
 	paramS := string(paramB)
 	url := os.Getenv("FUSINDO_BILLER_URL") + "/fush2h/fusindo.php"
 	logrus.Info("url:" + url)
@@ -128,24 +127,22 @@ func CreateBillerRequest(cmd string) Fusindo {
 	return billerPayload
 }
 
-func CreateBillerBPJSPMIInquiryRequest(paymentCode string, currency string) FusBPJSInq {
-	uid := uuid.New().String()
+func CreateBillerBPJSPMIInquiryRequest(paymentCode string, currency string, requestId string) FusBPJSInq {
 	return FusBPJSInq{
 		Fusindo{
 			CMD:      "inq_bpjs_pmi." + paymentCode + "." + strings.ToUpper(currency),
 			Password: os.Getenv("FUSINDO_BILLER_USERNAME"),
-			TRXID:    strings.ReplaceAll(uid, "-", ""),
+			TRXID:    requestId,
 			User:     os.Getenv("FUSINDO_BILLER_PASSWORD"),
 		},
 	}
 }
-func CreateBillerBPJSPMIPaymentRequest(paymentCode string, currency string) FusBPJSPay {
-	uid := uuid.New().String()
+func CreateBillerBPJSPMIPaymentRequest(paymentCode string, currency string, requestId string) FusBPJSPay {
 	return FusBPJSPay{
 		Fusindo{
 			CMD:      "pay_bpjs_pmi." + paymentCode + "." + strings.ToUpper(currency),
 			Password: os.Getenv("FUSINDO_BILLER_USERNAME"),
-			TRXID:    strings.ReplaceAll(uid, "-", ""),
+			TRXID:    requestId,
 			User:     os.Getenv("FUSINDO_BILLER_PASSWORD"),
 		},
 	}
