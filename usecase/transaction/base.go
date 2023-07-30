@@ -105,6 +105,43 @@ func (self Base) Commit(statements []domain.Statement, transaction *domain.Trans
 	return nil
 }
 
+func (self Base) UpdatingTransactionDetail(transaction *domain.Transaction) error {
+	function := func(session mongo.SessionContext) error {
+		err := session.StartTransaction(options.Transaction().
+			SetReadConcern(readconcern.Snapshot()).
+			SetWriteConcern(writeconcern.New(writeconcern.WMajority())),
+		)
+
+		if err != nil {
+			logrus.Info("Error: " + err.Error())
+			session.AbortTransaction(session)
+			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
+		}
+
+		err = service.TransactionUpdateOne(transaction, session)
+		if err != nil {
+			session.AbortTransaction(session)
+			return err
+		}
+
+		return database.CommitWithRetry(session)
+
+	}
+
+	err := database.DBClient.UseSessionWithOptions(
+		context.TODO(), options.Session().SetDefaultReadPreference(readpref.Primary()),
+		func(sctx mongo.SessionContext) error {
+			return database.RunTransactionWithRetry(sctx, function)
+		},
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (self Base) CommitRollback(statements []domain.Statement) error {
 	function := func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().

@@ -107,6 +107,7 @@ func (self BPJSTKBiller) Execute(corporate domain.Corporate, actor domain.ActorA
 
 	//UPDATE Reff
 	transaction.GatewayReference = resPayment.Ftrxid
+	self.transactionUsecase.UpdatingTransactionDetail(&transaction)
 
 	return transaction, dto.BPJSTKPMI{
 		Name:              resPayment.Data2,
