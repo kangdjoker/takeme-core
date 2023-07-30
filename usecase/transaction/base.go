@@ -2,6 +2,10 @@ package transaction
 
 import (
 	"context"
+	"net/http"
+	"os"
+	"strings"
+	"time"
 
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/service"
@@ -64,7 +68,16 @@ func (self Base) Commit(statements []domain.Statement, transaction *domain.Trans
 		if err != nil {
 			logrus.Info("Error: " + err.Error())
 			session.AbortTransaction(session)
-			return err
+			if strings.Contains(err.Error(), "E11000") {
+				return utils.CustomError{
+					HttpStatus:  http.StatusBadRequest,
+					Code:        11000,
+					Description: "Duplicate Request ID",
+					Time:        time.Now().Format(os.Getenv("TIME_FORMAT")),
+				}
+			} else {
+				return err
+			}
 		}
 
 		err = adjustBalanceWithStatement(statements, session)
