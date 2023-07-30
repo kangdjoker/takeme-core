@@ -6,7 +6,8 @@ import (
 )
 
 func InquiryBankAccount(accountNumber string, bankCode string) (domain.Bank, error) {
-	gateway := gateway.OYGateway{}
+	// gateway := gateway.OYGateway{}
+	gateway := gateway.PermataGateway{}
 
 	accountName, err := gateway.Inquiry(bankCode, accountNumber)
 	if err != nil {

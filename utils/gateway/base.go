@@ -13,6 +13,7 @@ const (
 	OY      = "D"
 	MMBC    = "E"
 	Stripe  = "F"
+	Permata = "G"
 )
 
 type Gateway interface {
