@@ -5,11 +5,11 @@ import (
 	"github.com/kangdjoker/takeme-core/utils/gateway"
 )
 
-func InquiryBankAccount(accountNumber string, bankCode string) (domain.Bank, error) {
+func InquiryBankAccount(accountNumber string, bankCode string, requestId string) (domain.Bank, error) {
 	// gateway := gateway.OYGateway{}
 	gateway := gateway.PermataGateway{}
 
-	accountName, err := gateway.Inquiry(bankCode, accountNumber)
+	accountName, err := gateway.Inquiry(bankCode, accountNumber, requestId)
 	if err != nil {
 		return domain.Bank{}, err
 	}
