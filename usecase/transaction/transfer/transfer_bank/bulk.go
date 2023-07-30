@@ -2,7 +2,10 @@ package transfer_bank
 
 import (
 	"fmt"
+	"strconv"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/service"
 	"github.com/kangdjoker/takeme-core/usecase"
@@ -106,11 +109,13 @@ func ViewBulkTransfer(bulkID string) (domain.BulkTransfer, error) {
 
 func executeBulkInquiry(corporate domain.Corporate, actor domain.ActorObject, bulk domain.BulkInquiry) {
 	var result []domain.Inquiry
-	for _, inq := range bulk.List {
-
+	now := time.Now().Format("060102150405")
+	for i, inq := range bulk.List {
+		uuidNew := uuid.New().String()
+		is := strconv.Itoa(i)
 		var a domain.Inquiry
 
-		bank, err := InquiryBankAccount(inq.AccountNumber, inq.BankName)
+		bank, err := InquiryBankAccount(inq.AccountNumber, inq.BankName, (now + is + uuidNew)[:16])
 		if err != nil {
 			a.AccountName = inq.AccountName
 			a.AccountNumber = inq.AccountNumber
