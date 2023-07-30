@@ -36,6 +36,9 @@ type PermataInquiryInterbankPayload struct {
 	PartnerReferenceNo   string `json:"partnerReferenceNo" bson:"partnerReferenceNo"`
 	BeneficiaryAccountNo string `json:"beneficiaryAccountNo" bson:"beneficiaryAccountNo"`
 	BeneficiaryBankCode  string `json:"beneficiaryBankCode" bson:"beneficiaryBankCode"`
+	PurposeOftransfer    string `json:"purposeOftransfer" bson:"purposeOftransfer"`
+	Currency             string `json:"currency" bson:"currency"`
+	Amount               string `json:"amount" bson:"amount"`
 }
 type PermataInquiryIntrabankPayload struct {
 	PartnerReferenceNo   string `json:"partnerReferenceNo" bson:"partnerReferenceNo"`
@@ -76,8 +79,11 @@ func (gw PermataGateway) Inquiry(bankCode string, accountNumber string, requestI
 			BeneficiaryAccountNo: accountNumber,
 			BeneficiaryBankCode:  bankCode,
 			PartnerReferenceNo:   requestId,
+			PurposeOftransfer:    "99",
+			Amount:               "100000.00",
+			Currency:             "IDR",
 		}
-		url = os.Getenv("PERMATA_INQUIRY_INTERBANK_API_URL")
+		url = os.Getenv("PERMATA_INQUIRY_BIFAST_API_URL")
 	}
 
 	header := map[string]string{
