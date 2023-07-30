@@ -27,7 +27,7 @@ func (billerBase BillerBase) BillerInquiryBPJSTKPMI(paymentCode string, currency
 	//CURL HERE
 	paramB, _ := xml.Marshal(CreateBillerBPJSPMIInquiryRequest(paymentCode, currency))
 	paramS := string(paramB)
-	url := os.Getenv("FUSINDO_BILLER_URL")
+	url := os.Getenv("FUSINDO_BILLER_URL") + "/fush2h/fusindo.php"
 	logrus.Info("url:" + url)
 	logrus.Info("param:" + paramS)
 	res := FusBPJSInqResponse{}
