@@ -1,7 +1,6 @@
 package biller
 
 import (
-	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -26,7 +25,7 @@ func (self BillerBase) BillerPayBPJSTKPMI(transaction domain.Transaction, paymen
 }
 func (billerBase BillerBase) BillerInquiryBPJSTKPMI(paymentCode string, currency string) (FusBPJSInqResponse, error) {
 	//CURL HERE
-	paramB, _ := json.Marshal(CreateBillerBPJSPMIInquiryRequest(paymentCode, currency))
+	paramB, _ := xml.Marshal(CreateBillerBPJSPMIInquiryRequest(paymentCode, currency))
 	paramS := string(paramB)
 	url := os.Getenv("FUSINDO_BILLER_URL")
 	logrus.Info("url:" + url)
