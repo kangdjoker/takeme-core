@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/google/uuid"
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/utils"
 	log "github.com/sirupsen/logrus"
@@ -57,7 +56,7 @@ type PermataInquiryResponse struct {
 	BeneficiaryBankName    string `json:"beneficiaryBankName" bson:"beneficiaryBankName"`
 }
 
-func (gw PermataGateway) Inquiry(bankCode string, accountNumber string) (string, error) {
+func (gw PermataGateway) Inquiry(bankCode string, accountNumber string, requestId string) (string, error) {
 	client := resty.New()
 	client.SetTimeout(20 * time.Second)
 	client.SetRetryCount(1)
@@ -69,14 +68,14 @@ func (gw PermataGateway) Inquiry(bankCode string, accountNumber string) (string,
 	if bankCode == "SYBBIDJ1" || bankCode == "BBBAIDJA" {
 		payload = PermataInquiryIntrabankPayload{
 			BeneficiaryAccountNo: accountNumber,
-			PartnerReferenceNo:   uuid.New().String(),
+			PartnerReferenceNo:   requestId,
 		}
 		url = os.Getenv("PERMATA_INQUIRY_INTRABANK_API_URL")
 	} else {
 		payload = PermataInquiryInterbankPayload{
 			BeneficiaryAccountNo: accountNumber,
 			BeneficiaryBankCode:  bankCode,
-			PartnerReferenceNo:   uuid.New().String(),
+			PartnerReferenceNo:   requestId,
 		}
 		url = os.Getenv("PERMATA_INQUIRY_INTERBANK_API_URL")
 	}
