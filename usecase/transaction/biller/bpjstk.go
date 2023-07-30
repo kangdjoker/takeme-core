@@ -12,6 +12,7 @@ import (
 	"github.com/kangdjoker/takeme-core/usecase"
 	"github.com/kangdjoker/takeme-core/usecase/transaction"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/sirupsen/logrus"
 )
 
 type BPJSTKBiller struct {
@@ -86,6 +87,12 @@ func (self BPJSTKBiller) Execute(corporate domain.Corporate, actor domain.ActorA
 		return domain.Transaction{}, nil, err
 	}
 
+	err = self.transactionUsecase.Commit(statements, &transaction)
+	if err != nil {
+		logrus.Info("Error: " + err.Error())
+		return domain.Transaction{}, nil, err
+	}
+
 	resPayment, err := self.billerBase.BillerPayBPJSTKPMI(transaction, paymentCode, currency)
 	if err != nil {
 		return domain.Transaction{}, nil, err
@@ -96,12 +103,8 @@ func (self BPJSTKBiller) Execute(corporate domain.Corporate, actor domain.ActorA
 		return domain.Transaction{}, nil, errors.New("unknown error")
 	}
 
+	//UPDATE Reff
 	transaction.GatewayReference = resPayment.Reff
-
-	err = self.transactionUsecase.Commit(statements, &transaction)
-	if err != nil {
-		return domain.Transaction{}, nil, err
-	}
 
 	return transaction, dto.BPJSTKPMI{
 		Name:              resPayment.Data2,

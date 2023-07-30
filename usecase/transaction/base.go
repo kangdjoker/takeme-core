@@ -8,6 +8,7 @@ import (
 	"github.com/kangdjoker/takeme-core/usecase"
 	"github.com/kangdjoker/takeme-core/utils"
 	"github.com/kangdjoker/takeme-core/utils/database"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readconcern"
@@ -54,18 +55,21 @@ func (self Base) Commit(statements []domain.Statement, transaction *domain.Trans
 		)
 
 		if err != nil {
+			logrus.Info("Error: " + err.Error())
 			session.AbortTransaction(session)
 			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
 		}
 
 		err = service.TransactionSaveOne(transaction, session)
 		if err != nil {
+			logrus.Info("Error: " + err.Error())
 			session.AbortTransaction(session)
 			return err
 		}
 
 		err = adjustBalanceWithStatement(statements, session)
 		if err != nil {
+			logrus.Info("Error: " + err.Error())
 			session.AbortTransaction(session)
 			return err
 		}
