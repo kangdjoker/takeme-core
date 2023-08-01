@@ -23,7 +23,7 @@ type TopupBank struct {
 	transactionUsecase transaction.Base
 }
 
-func (self TopupBank) Execute(from domain.Bank, balanceID string, amount int,
+func (self TopupBank) Execute(tag string, from domain.Bank, balanceID string, amount int,
 	reference string, currency string, requestId string) (domain.Transaction, domain.Balance, error) {
 
 	balance, owner, corporate, err := identifyBalance(balanceID)
@@ -59,7 +59,7 @@ func (self TopupBank) Execute(from domain.Bank, balanceID string, amount int,
 		return domain.Transaction{}, domain.Balance{}, err
 	}
 
-	err = self.transactionUsecase.Commit(statements, &transaction)
+	err = self.transactionUsecase.Commit(tag, statements, &transaction)
 	if err != nil {
 		return domain.Transaction{}, domain.Balance{}, err
 	}

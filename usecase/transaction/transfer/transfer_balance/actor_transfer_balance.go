@@ -25,7 +25,7 @@ type ActorTransferBalance struct {
 	isTopuoType        bool
 }
 
-func (self ActorTransferBalance) Execute(corporate domain.Corporate, actor domain.ActorAble,
+func (self ActorTransferBalance) Execute(tag string, corporate domain.Corporate, actor domain.ActorAble,
 	toBalanceID string, fromBalanceID string, subAmount int, encryptedPIN string, externalID string, isTopupType bool, requestId string) (domain.Transaction, error) {
 
 	fromBalance, err := identifyBalance(fromBalanceID)
@@ -96,7 +96,7 @@ func (self ActorTransferBalance) Execute(corporate domain.Corporate, actor domai
 		return domain.Transaction{}, err
 	}
 
-	err = self.transactionUsecase.Commit(statements, &transaction)
+	err = self.transactionUsecase.Commit(tag, statements, &transaction)
 	if err != nil {
 		return domain.Transaction{}, err
 	}

@@ -21,7 +21,7 @@ type TopupManual struct {
 	transactionUsecase transaction.Base
 }
 
-func (tm TopupManual) Execute(balanceID string, amount int,
+func (tm TopupManual) Execute(tag, balanceID string, amount int,
 	remark string, currency string) (domain.Transaction, domain.Balance, error) {
 
 	balance, owner, corporate, err := identifyBalance(balanceID)
@@ -49,7 +49,7 @@ func (tm TopupManual) Execute(balanceID string, amount int,
 		return domain.Transaction{}, domain.Balance{}, err
 	}
 
-	err = tm.transactionUsecase.Commit(statements, &transaction)
+	err = tm.transactionUsecase.Commit(tag, statements, &transaction)
 	if err != nil {
 		return domain.Transaction{}, domain.Balance{}, err
 	}

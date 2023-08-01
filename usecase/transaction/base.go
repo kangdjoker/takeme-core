@@ -51,7 +51,7 @@ func (self Base) RollbackFeeStatement(corporate domain.Corporate, balance domain
 	return statements, nil
 }
 
-func (self Base) Commit(statements []domain.Statement, transaction *domain.Transaction) error {
+func (self Base) Commit(tag string, statements []domain.Statement, transaction *domain.Transaction) error {
 	function := func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().
 			SetReadConcern(readconcern.Snapshot()).
@@ -80,7 +80,7 @@ func (self Base) Commit(statements []domain.Statement, transaction *domain.Trans
 			}
 		}
 
-		err = adjustBalanceWithStatement(statements, session)
+		err = adjustBalanceWithStatement(tag, statements, session)
 		if err != nil {
 			logrus.Info("Error: " + err.Error())
 			session.AbortTransaction(session)
@@ -142,7 +142,7 @@ func (self Base) UpdatingTransactionDetail(transaction *domain.Transaction) erro
 	return nil
 }
 
-func (self Base) CommitRollback(statements []domain.Statement) error {
+func (self Base) CommitRollback(tag string, statements []domain.Statement) error {
 	function := func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().
 			SetReadConcern(readconcern.Snapshot()).
@@ -154,7 +154,7 @@ func (self Base) CommitRollback(statements []domain.Statement) error {
 			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
 		}
 
-		err = adjustBalanceWithStatement(statements, session)
+		err = adjustBalanceWithStatement(tag, statements, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
@@ -178,7 +178,7 @@ func (self Base) CommitRollback(statements []domain.Statement) error {
 	return nil
 }
 
-func adjustBalanceWithStatement(statements []domain.Statement, session mongo.SessionContext) error {
+func adjustBalanceWithStatement(tag string, statements []domain.Statement, session mongo.SessionContext) error {
 
 	for _, statement := range statements {
 		if statement.Deposit != 0 {
@@ -187,7 +187,7 @@ func adjustBalanceWithStatement(statements []domain.Statement, session mongo.Ses
 				return err
 			}
 		} else if statement.Withdraw != 0 {
-			err := usecase.WithdrawBalance(statement, session)
+			err := usecase.WithdrawBalance(tag, statement, session)
 			if err != nil {
 				return err
 			}

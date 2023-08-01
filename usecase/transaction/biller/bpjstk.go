@@ -34,7 +34,7 @@ type BPJSTKBiller struct {
 func (biller BPJSTKBiller) Inquiry(paymentCode string, currency string, requestId string) (FusBPJSInqResponse, error) {
 	return biller.billerBase.BillerInquiryBPJSTKPMI(paymentCode, currency, requestId)
 }
-func (self BPJSTKBiller) Execute(corporate domain.Corporate, actor domain.ActorAble,
+func (self BPJSTKBiller) Execute(tag string, corporate domain.Corporate, actor domain.ActorAble,
 	to domain.TransactionObject, balanceID string, encryptedPIN string, externalID string,
 	paymentCode string, currency string, requestId string) (domain.Transaction, interface{}, error) {
 
@@ -89,7 +89,7 @@ func (self BPJSTKBiller) Execute(corporate domain.Corporate, actor domain.ActorA
 		return domain.Transaction{}, nil, err
 	}
 
-	err = self.transactionUsecase.Commit(statements, &transaction)
+	err = self.transactionUsecase.Commit(tag, statements, &transaction)
 	if err != nil {
 		logrus.Info("Error: " + err.Error())
 		return domain.Transaction{}, nil, err

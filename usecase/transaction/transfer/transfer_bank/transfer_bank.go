@@ -89,7 +89,7 @@ func (self TransferBank) SetupGateway(transaction *domain.Transaction) {
 	}
 }
 
-func (self TransferBank) CreateTransferGateway(transaction domain.Transaction, requestID string) {
+func (self TransferBank) CreateTransferGateway(tag string, transaction domain.Transaction, requestID string) {
 	oy := gateway.OYGateway{}
 	mmbc := gateway.MMBCGateway{}
 	xendit := gateway.XenditGateway{}
@@ -115,20 +115,20 @@ func (self TransferBank) CreateTransferGateway(transaction domain.Transaction, r
 
 		rollbackUsecase := RollbackTransferBank{}
 		rollbackUsecase.Initialize(transaction)
-		rollbackUsecase.ExecuteRollback()
+		rollbackUsecase.ExecuteRollback(tag)
 	}
 
 	commitTransactionGateway(transaction.ID.Hex(), transaction.Status, gatewayCode, reference, transaction.GatewayStrategies)
 
 	if err != nil {
-		self.CreateTransferGateway(transaction, requestID)
+		self.CreateTransferGateway(tag, transaction, requestID)
 		return
 	}
 
 	return
 }
 
-func (self TransferBank) ProcessCallbackGatewayTransfer(gatewayCode string, transactionCode string, reference string,
+func (self TransferBank) ProcessCallbackGatewayTransfer(tag string, gatewayCode string, transactionCode string, reference string,
 	status string, requestId string) (domain.Transaction, error) {
 
 	var corporate domain.Corporate
@@ -155,7 +155,7 @@ func (self TransferBank) ProcessCallbackGatewayTransfer(gatewayCode string, tran
 	}
 
 	if nextGateway != "" && (status == domain.FAILED_STATUS || status == domain.REFUND_STATUS) {
-		go self.CreateTransferGateway(transaction, requestId)
+		go self.CreateTransferGateway(tag, transaction, requestId)
 		return domain.Transaction{}, nil
 	}
 
@@ -165,7 +165,7 @@ func (self TransferBank) ProcessCallbackGatewayTransfer(gatewayCode string, tran
 
 		rollbackUsecase := RollbackTransferBank{}
 		rollbackUsecase.Initialize(transaction)
-		rollbackUsecase.ExecuteRollback()
+		rollbackUsecase.ExecuteRollback(tag)
 
 		go usecase.PublishTransferCallback(corporate, transaction)
 

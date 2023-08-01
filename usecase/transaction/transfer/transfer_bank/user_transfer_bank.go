@@ -25,7 +25,7 @@ type UserTransferBank struct {
 	transferBankBase   TransferBank
 }
 
-func (self UserTransferBank) Execute(corporate domain.Corporate, actor domain.ActorAble,
+func (self UserTransferBank) Execute(tag string, corporate domain.Corporate, actor domain.ActorAble,
 	to domain.TransactionObject, balanceID string, subAmount int, encryptedPIN string, externalID string, requestId string) (domain.Transaction, error) {
 
 	balance, err := identifyBalance(balanceID)
@@ -78,12 +78,12 @@ func (self UserTransferBank) Execute(corporate domain.Corporate, actor domain.Ac
 
 	self.transferBankBase.SetupGateway(&transaction)
 
-	err = self.transactionUsecase.Commit(statements, &transaction)
+	err = self.transactionUsecase.Commit(tag, statements, &transaction)
 	if err != nil {
 		return domain.Transaction{}, err
 	}
 
-	go self.transferBankBase.CreateTransferGateway(transaction, requestId)
+	go self.transferBankBase.CreateTransferGateway(tag, transaction, requestId)
 
 	return transaction, nil
 }

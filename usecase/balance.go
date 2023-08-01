@@ -10,7 +10,6 @@ import (
 	"github.com/kangdjoker/takeme-core/utils"
 	"github.com/kangdjoker/takeme-core/utils/database"
 	"github.com/kangdjoker/takeme-core/utils/gateway"
-	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readconcern"
@@ -301,7 +300,7 @@ func InitializeBalanceCorporate(corp domain.ActorAble, corporate domain.Corporat
 	return balance, nil
 }
 
-func WithdrawBalance(statement domain.Statement, session mongo.SessionContext) error {
+func WithdrawBalance(tag string, statement domain.Statement, session mongo.SessionContext) error {
 	balanceID := statement.BalanceID.Hex()
 	amount := statement.Withdraw
 
@@ -309,7 +308,7 @@ func WithdrawBalance(statement domain.Statement, session mongo.SessionContext) e
 	if err != nil {
 		return err
 	}
-	log.Info("balance.Amount: " + strconv.Itoa(balance.Amount) + ", " + strconv.Itoa(amount))
+	LogInformation(tag, "balance.Amount: "+strconv.Itoa(balance.Amount)+", "+strconv.Itoa(amount))
 	if balance.Amount < amount {
 		return utils.ErrorBadRequest(utils.InsufficientBalance, "Insufficient balance")
 	}

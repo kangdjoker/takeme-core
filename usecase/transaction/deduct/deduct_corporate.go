@@ -24,7 +24,7 @@ type DeductCorporate struct {
 	transactionUsecase transaction.Base
 }
 
-func (self DeductCorporate) Execute(corporate domain.Corporate, actor domain.ActorAble,
+func (self DeductCorporate) Execute(tag string, corporate domain.Corporate, actor domain.ActorAble,
 	toBalanceID string, fromBalanceID string, subAmount int, encryptedPIN string, externalID string, requestId string) (domain.Transaction, error) {
 
 	fromBalance, err := identifyBalance(fromBalanceID)
@@ -87,7 +87,7 @@ func (self DeductCorporate) Execute(corporate domain.Corporate, actor domain.Act
 		return domain.Transaction{}, err
 	}
 
-	err = self.transactionUsecase.Commit(statements, &transaction)
+	err = self.transactionUsecase.Commit(tag, statements, &transaction)
 	if err != nil {
 		return domain.Transaction{}, err
 	}

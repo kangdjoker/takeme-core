@@ -37,7 +37,7 @@ func (self *RollbackTransferBank) Initialize(rollbackTransaction domain.Transact
 	return nil
 }
 
-func (self *RollbackTransferBank) ExecuteRollback() error {
+func (self *RollbackTransferBank) ExecuteRollback(tag string) error {
 	transactionStatement := service.DepositTransactionStatement(
 		self.balance.ID, time.Now().Format(os.Getenv("TIME_FORMAT")),
 		self.transaction.TransactionCode,
@@ -52,7 +52,7 @@ func (self *RollbackTransferBank) ExecuteRollback() error {
 	statements = append(statements, transactionStatement)
 	statements = append(statements, feeStatements...)
 
-	err = self.transactionUsecase.CommitRollback(statements)
+	err = self.transactionUsecase.CommitRollback(tag, statements)
 	if err != nil {
 		return err
 	}
