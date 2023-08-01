@@ -9,13 +9,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func LogInitialization(id primitive.ObjectID, tag string, data interface{}, session mongo.SessionContext) (domain.Log, error) {
+func LogInitialization(id primitive.ObjectID, isError bool, tag string, data interface{}, session mongo.SessionContext) (domain.Log, error) {
 	now := time.Now().Format("2006-01-02 15:04:05")
 	model := domain.Log{
 		ID:         id,
 		Data:       data,
 		Tag:        tag,
 		TimeCreate: now,
+		IsError:    isError,
 	}
 
 	err := LogSaveOne(&model, session)
@@ -26,12 +27,13 @@ func LogInitialization(id primitive.ObjectID, tag string, data interface{}, sess
 	return model, nil
 }
 
-func LogCreate(tag string, data interface{}, session mongo.SessionContext) (domain.Log, error) {
+func LogCreate(isError bool, tag string, data interface{}, session mongo.SessionContext) (domain.Log, error) {
 	now := time.Now().Format("2006-01-02 15:04:05")
 
 	model := domain.Log{
 		Data:       data,
 		TimeCreate: now,
+		IsError:    isError,
 	}
 
 	err := LogSaveOne(&model, session)
