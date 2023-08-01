@@ -9,11 +9,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func LogInitialization(id primitive.ObjectID, data interface{}, session mongo.SessionContext) (domain.Log, error) {
+func LogInitialization(id primitive.ObjectID, tag string, data interface{}, session mongo.SessionContext) (domain.Log, error) {
 	now := time.Now().Format("2006-01-02 15:04:05")
 	model := domain.Log{
 		ID:         id,
 		Data:       data,
+		Tag:        tag,
 		TimeCreate: now,
 	}
 
@@ -25,7 +26,7 @@ func LogInitialization(id primitive.ObjectID, data interface{}, session mongo.Se
 	return model, nil
 }
 
-func LogCreate(data interface{}, session mongo.SessionContext) (domain.Log, error) {
+func LogCreate(tag string, data interface{}, session mongo.SessionContext) (domain.Log, error) {
 	now := time.Now().Format("2006-01-02 15:04:05")
 
 	model := domain.Log{

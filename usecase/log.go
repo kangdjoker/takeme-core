@@ -15,7 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 )
 
-func LogInformation(data interface{}) (domain.Log, error) {
+func LogInformation(tag string, data interface{}) (domain.Log, error) {
 	var log domain.Log
 
 	createLog := func(session mongo.SessionContext) error {
@@ -28,7 +28,7 @@ func LogInformation(data interface{}) (domain.Log, error) {
 		if err != nil {
 			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
 		}
-		log, err = service.LogCreate(data, session)
+		log, err = service.LogCreate(tag, data, session)
 
 		if err != nil {
 			session.AbortTransaction(session)

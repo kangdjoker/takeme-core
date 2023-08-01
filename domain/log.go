@@ -13,6 +13,7 @@ const (
 type Log struct {
 	ID         primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	TimeCreate string             `json:"time_create" bson:"time_create,omitempty"`
+	Tag        string             `json:"tag" bson:"tag,omitempty"`
 	Data       interface{}        `json:"data" bson:"data"`
 }
 
