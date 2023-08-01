@@ -83,7 +83,7 @@ func (self UserTransferBank) Execute(corporate domain.Corporate, actor domain.Ac
 		return domain.Transaction{}, err
 	}
 
-	go self.transferBankBase.CreateTransferGateway(transaction)
+	go self.transferBankBase.CreateTransferGateway(transaction, requestId)
 
 	return transaction, nil
 }

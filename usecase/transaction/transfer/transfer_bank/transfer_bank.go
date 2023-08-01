@@ -24,8 +24,14 @@ type TransferBank struct {
 }
 
 func (self TransferBank) SetupGateway(transaction *domain.Transaction) {
-
-	if transaction.To.AccountNumber == "8691577392" && transaction.To.InstitutionCode == utils.BCA {
+	if true {
+		transaction.GatewayStrategies = []domain.GatewayStrategy{
+			{
+				Code:       gateway.Permata,
+				IsExecuted: false,
+			},
+		}
+	} else if transaction.To.AccountNumber == "8691577392" && transaction.To.InstitutionCode == utils.BCA {
 		transaction.GatewayStrategies = []domain.GatewayStrategy{
 			{
 				Code:       gateway.Xendit,
@@ -83,10 +89,11 @@ func (self TransferBank) SetupGateway(transaction *domain.Transaction) {
 	}
 }
 
-func (self TransferBank) CreateTransferGateway(transaction domain.Transaction) {
+func (self TransferBank) CreateTransferGateway(transaction domain.Transaction, requestID string) {
 	oy := gateway.OYGateway{}
 	mmbc := gateway.MMBCGateway{}
 	xendit := gateway.XenditGateway{}
+	permata := gateway.PermataGateway{}
 
 	reference := ""
 	var err error
@@ -95,6 +102,8 @@ func (self TransferBank) CreateTransferGateway(transaction domain.Transaction) {
 	switch gatewayCode {
 	case gateway.OY:
 		reference, err = oy.CreateTransfer(transaction)
+	case gateway.Permata:
+		reference, err = permata.CreateTransfer(transaction, requestID)
 	case gateway.MMBC:
 		reference, err = mmbc.CreateTransfer(transaction)
 	case gateway.Xendit:
@@ -112,7 +121,7 @@ func (self TransferBank) CreateTransferGateway(transaction domain.Transaction) {
 	commitTransactionGateway(transaction.ID.Hex(), transaction.Status, gatewayCode, reference, transaction.GatewayStrategies)
 
 	if err != nil {
-		self.CreateTransferGateway(transaction)
+		self.CreateTransferGateway(transaction, requestID)
 		return
 	}
 
@@ -120,7 +129,7 @@ func (self TransferBank) CreateTransferGateway(transaction domain.Transaction) {
 }
 
 func (self TransferBank) ProcessCallbackGatewayTransfer(gatewayCode string, transactionCode string, reference string,
-	status string) (domain.Transaction, error) {
+	status string, requestId string) (domain.Transaction, error) {
 
 	var corporate domain.Corporate
 	var transaction domain.Transaction
@@ -146,7 +155,7 @@ func (self TransferBank) ProcessCallbackGatewayTransfer(gatewayCode string, tran
 	}
 
 	if nextGateway != "" && (status == domain.FAILED_STATUS || status == domain.REFUND_STATUS) {
-		go self.CreateTransferGateway(transaction)
+		go self.CreateTransferGateway(transaction, requestId)
 		return domain.Transaction{}, nil
 	}
 
