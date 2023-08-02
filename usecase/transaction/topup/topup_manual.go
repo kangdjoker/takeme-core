@@ -22,7 +22,7 @@ type TopupManual struct {
 	transactionUsecase transaction.Base
 }
 
-func (tm TopupManual) Execute(paramLog basic.ParamLog, balanceID string, amount int,
+func (tm TopupManual) Execute(paramLog *basic.ParamLog, balanceID string, amount int,
 	remark string, currency string) (domain.Transaction, domain.Balance, error) {
 
 	balance, owner, corporate, err := identifyBalance(balanceID)

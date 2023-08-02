@@ -90,7 +90,7 @@ func (self TransferBank) SetupGateway(transaction *domain.Transaction) {
 	}
 }
 
-func (self TransferBank) CreateTransferGateway(paramLog basic.ParamLog, transaction domain.Transaction, requestID string) {
+func (self TransferBank) CreateTransferGateway(paramLog *basic.ParamLog, transaction domain.Transaction, requestID string) {
 	oy := gateway.OYGateway{}
 	mmbc := gateway.MMBCGateway{}
 	xendit := gateway.XenditGateway{}
@@ -129,7 +129,7 @@ func (self TransferBank) CreateTransferGateway(paramLog basic.ParamLog, transact
 	return
 }
 
-func (self TransferBank) ProcessCallbackGatewayTransfer(paramLog basic.ParamLog, gatewayCode string, transactionCode string, reference string,
+func (self TransferBank) ProcessCallbackGatewayTransfer(paramLog *basic.ParamLog, gatewayCode string, transactionCode string, reference string,
 	status string, requestId string) (domain.Transaction, error) {
 
 	var corporate domain.Corporate

@@ -56,7 +56,7 @@ func ResponseError(errr error, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(err.HttpStatus)
 	w.Write(body)
 
-	basic.LogInformation(basic.ParamLog{Tag: tag, TrCloser: trCloser, Span: span}, "----------------------------- REQUEST END -----------------------------")
+	basic.LogInformation(&basic.ParamLog{Tag: tag, TrCloser: trCloser, Span: span}, "----------------------------- REQUEST END -----------------------------")
 }
 
 func ResponseSuccessCustom(data interface{}, w http.ResponseWriter, r *http.Request) {
@@ -72,7 +72,7 @@ func ResponseSuccessCustom(data interface{}, w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 
-	basic.LogInformation(basic.ParamLog{Tag: tag, TrCloser: trCloser, Span: span}, "----------------------------- REQUEST END -----------------------------")
+	basic.LogInformation(&basic.ParamLog{Tag: tag, TrCloser: trCloser, Span: span}, "----------------------------- REQUEST END -----------------------------")
 }
 
 func ResponseSuccess(data interface{}, w http.ResponseWriter, r *http.Request) {
@@ -103,7 +103,7 @@ func ResponseSuccess(data interface{}, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 
-	basic.LogInformation(basic.ParamLog{Tag: tag, TrCloser: trCloser, Span: span}, "----------------------------- REQUEST END -----------------------------")
+	basic.LogInformation(&basic.ParamLog{Tag: tag, TrCloser: trCloser, Span: span}, "----------------------------- REQUEST END -----------------------------")
 }
 
 type ErrorDescription map[string]string

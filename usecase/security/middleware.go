@@ -13,6 +13,7 @@ import (
 	"github.com/kangdjoker/takeme-core/service"
 	"github.com/kangdjoker/takeme-core/utils"
 	"github.com/kangdjoker/takeme-core/utils/basic"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -28,7 +29,8 @@ func Middleware(h http.HandlerFunc, secure bool) http.HandlerFunc {
 		ctx = context.WithValue(ctx, "TAG", requestID)
 		paramLog := basic.ParamLog{Tag: requestID, TrCloser: trCloser, Span: span}
 		ctx = context.WithValue(ctx, "TRLOG", paramLog)
-		basic.LogInformation(paramLog, "----------------------------- REQUEST START -----------------------------")
+		logrus.Println("JAEGER.MIDDLEWARE.REQUESTSTART")
+		basic.LogInformation(&paramLog, "----------------------------- REQUEST START -----------------------------")
 
 		var corporate domain.Corporate
 		var claims domain.Claims
@@ -80,6 +82,7 @@ func Middleware(h http.HandlerFunc, secure bool) http.HandlerFunc {
 
 		ctx = context.WithValue(r.Context(), "data", data)
 		h.ServeHTTP(w, r.WithContext(ctx))
+		logrus.Println("JAEGER.MIDDLEWARE.END.WILLCLOSE")
 	})
 }
 

@@ -25,7 +25,7 @@ func (gateway XenditGateway) Name() string {
 	return Xendit
 }
 
-func (gateway XenditGateway) CreateVA(paramLog basic.ParamLog, balanceID string, nameVA string, bankCode string) (string, error) {
+func (gateway XenditGateway) CreateVA(paramLog *basic.ParamLog, balanceID string, nameVA string, bankCode string) (string, error) {
 	client := resty.New().SetTimeout(60 * time.Second)
 	url := os.Getenv("XENDIT_VA_API_URL")
 

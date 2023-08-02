@@ -13,7 +13,7 @@ import (
 	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
-func CreateBulkInquiry(paramLog basic.ParamLog, corporate domain.Corporate, reference string, banks []domain.Bank,
+func CreateBulkInquiry(paramLog *basic.ParamLog, corporate domain.Corporate, reference string, banks []domain.Bank,
 	actor domain.ActorObject) (domain.BulkInquiry, error) {
 
 	totalBulk := len(banks)
@@ -59,7 +59,7 @@ func CreateBulkTransfer(corporate domain.Corporate, reference string, transfers 
 	return bulk, nil
 }
 
-func ActorExecuteBulkTransfer(paramLog basic.ParamLog, corporate domain.Corporate, user domain.ActorAble, pin string,
+func ActorExecuteBulkTransfer(paramLog *basic.ParamLog, corporate domain.Corporate, user domain.ActorAble, pin string,
 	bulkID string, requestId string) (domain.BulkTransfer, error) {
 
 	bulk, err := service.BulkTransferByID(bulkID)
@@ -108,7 +108,7 @@ func ViewBulkTransfer(bulkID string) (domain.BulkTransfer, error) {
 	return bulk, nil
 }
 
-func executeBulkInquiry(paramLog basic.ParamLog, corporate domain.Corporate, actor domain.ActorObject, bulk domain.BulkInquiry) {
+func executeBulkInquiry(paramLog *basic.ParamLog, corporate domain.Corporate, actor domain.ActorObject, bulk domain.BulkInquiry) {
 	var result []domain.Inquiry
 	now := time.Now().Format("060102150405")
 	for i, inq := range bulk.List {
@@ -147,7 +147,7 @@ func executeBulkInquiry(paramLog basic.ParamLog, corporate domain.Corporate, act
 	go usecase.PublishBulkCallback(paramLog, corporate, actor, bulk.ID.Hex(), bulk.Status, corporate.BulkInquiryCallbackURL)
 }
 
-func executeBulkTransfer(paramLog basic.ParamLog, corporate domain.Corporate, user domain.ActorAble, pin string, bulk domain.BulkTransfer, requestId string) {
+func executeBulkTransfer(paramLog *basic.ParamLog, corporate domain.Corporate, user domain.ActorAble, pin string, bulk domain.BulkTransfer, requestId string) {
 
 	bulk.Status = domain.BULK_PROGRESS_STATUS
 	service.BulkTransferUpdateOne(&bulk)

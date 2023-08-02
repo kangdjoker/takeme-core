@@ -27,7 +27,7 @@ func (gateway OYGateway) CallbackVA(w http.ResponseWriter, r *http.Request) (str
 	return "", 0, domain.Bank{}, "", nil
 }
 
-func (gateway OYGateway) CreateTransfer(paramLog basic.ParamLog, transaction domain.Transaction) (string, error) {
+func (gateway OYGateway) CreateTransfer(paramLog *basic.ParamLog, transaction domain.Transaction) (string, error) {
 	client := resty.New()
 	client.SetTimeout(10 * time.Minute)
 	url := os.Getenv("OY_TRANSFER_API_URL")
@@ -87,7 +87,7 @@ func (gateway OYGateway) CallbackTransfer(w http.ResponseWriter, r *http.Request
 	return transactionCode, reference, status, nil
 }
 
-func (gateway OYGateway) Inquiry(paramLog basic.ParamLog, bankCode string, accountNumber string) (string, error) {
+func (gateway OYGateway) Inquiry(paramLog *basic.ParamLog, bankCode string, accountNumber string) (string, error) {
 
 	client := resty.New()
 	client.SetTimeout(20 * time.Second)

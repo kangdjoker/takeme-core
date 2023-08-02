@@ -59,7 +59,7 @@ func (domain *Log) CollectionName() string {
 	return LOG_COLLECTION
 }
 
-func LogCreate(isError bool, paramLog ParamLog, data interface{}, session mongo.SessionContext) (Log, error) {
+func LogCreate(isError bool, paramLog *ParamLog, data interface{}, session mongo.SessionContext) (Log, error) {
 	now := time.Now().Format("2006-01-02 15:04:05")
 
 	model := Log{
@@ -125,7 +125,7 @@ func LogUpdate(model Log, session mongo.SessionContext) error {
 	return nil
 }
 
-func logInformation(isError bool, paramLog ParamLog, data interface{}) (Log, error) {
+func logInformation(isError bool, paramLog *ParamLog, data interface{}) (Log, error) {
 	if paramLog.Span != nil {
 		logrus.Info("JAEGER.logInformation")
 		(*paramLog.Span).LogFields(opentracingLog.Object("logInformation", data))
@@ -165,13 +165,13 @@ func logInformation(isError bool, paramLog ParamLog, data interface{}) (Log, err
 
 	return log, nil
 }
-func LogError(paramLog ParamLog, data interface{}) (Log, error) {
+func LogError(paramLog *ParamLog, data interface{}) (Log, error) {
 	if DBClient == nil {
 		return Log{}, errors.New("No DB Client")
 	}
 	return logInformation(true, paramLog, data)
 }
-func LogInformation(paramLog ParamLog, data interface{}) (Log, error) {
+func LogInformation(paramLog *ParamLog, data interface{}) (Log, error) {
 	if DBClient == nil {
 		logrus.Info("NODBCLIENT")
 		return Log{}, errors.New("No DB Client")

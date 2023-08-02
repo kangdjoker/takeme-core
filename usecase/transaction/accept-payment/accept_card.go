@@ -51,7 +51,7 @@ func (self AcceptCard) InitializeSubscribe(from domain.Card, balanceID string, a
 	return status, authURL, subsID, nil
 }
 
-func (self AcceptCard) Execute(paramLog basic.ParamLog, from domain.Card, balanceID string, amount int,
+func (self AcceptCard) Execute(paramLog *basic.ParamLog, from domain.Card, balanceID string, amount int,
 	reference string, currency string, externalID string, requestId string) (domain.Transaction, domain.Balance, error) {
 
 	balance, owner, corporate, err := identifyBalance(balanceID)

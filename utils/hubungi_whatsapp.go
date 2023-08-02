@@ -11,7 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func SendWAHubungi(paramLog basic.ParamLog, to string, message string) error {
+func SendWAHubungi(paramLog *basic.ParamLog, to string, message string) error {
 	client := resty.New().SetTimeout(20 * time.Second)
 	url := os.Getenv("HUBUNGI_URUL")
 	var result HubungiResponse

@@ -35,7 +35,7 @@ type BPJSTKBiller struct {
 func (biller BPJSTKBiller) Inquiry(paymentCode string, currency string, requestId string) (FusBPJSInqResponse, error) {
 	return biller.billerBase.BillerInquiryBPJSTKPMI(paymentCode, currency, requestId)
 }
-func (self BPJSTKBiller) Execute(paramLog basic.ParamLog, corporate domain.Corporate, actor domain.ActorAble,
+func (self BPJSTKBiller) Execute(paramLog *basic.ParamLog, corporate domain.Corporate, actor domain.ActorAble,
 	to domain.TransactionObject, balanceID string, encryptedPIN string, externalID string,
 	paymentCode string, currency string, requestId string) (domain.Transaction, interface{}, error) {
 

@@ -38,7 +38,7 @@ func (self *RollbackTransferBank) Initialize(rollbackTransaction domain.Transact
 	return nil
 }
 
-func (self *RollbackTransferBank) ExecuteRollback(paramLog basic.ParamLog) error {
+func (self *RollbackTransferBank) ExecuteRollback(paramLog *basic.ParamLog) error {
 	transactionStatement := service.DepositTransactionStatement(
 		self.balance.ID, time.Now().Format(os.Getenv("TIME_FORMAT")),
 		self.transaction.TransactionCode,

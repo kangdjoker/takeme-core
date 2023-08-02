@@ -34,7 +34,7 @@ func (gateway StripeGateway) Name() string {
 	return Stripe
 }
 
-func (gateway StripeGateway) CreateVA(paramLog basic.ParamLog, balanceID string, nameVA string, bankCode string) (string, error) {
+func (gateway StripeGateway) CreateVA(paramLog *basic.ParamLog, balanceID string, nameVA string, bankCode string) (string, error) {
 	return "", nil
 }
 

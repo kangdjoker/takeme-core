@@ -9,7 +9,7 @@ import (
 	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
-func LoggingAPICall(paramLog basic.ParamLog, statusCode int, request interface{}, response interface{}, message string) {
+func LoggingAPICall(paramLog *basic.ParamLog, statusCode int, request interface{}, response interface{}, message string) {
 	a, _ := json.Marshal(request)
 	basic.LogInformation(paramLog, "Request body to "+message+" : "+string(a))
 

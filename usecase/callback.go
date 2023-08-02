@@ -13,7 +13,7 @@ import (
 	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
-func PublishBulkCallback(paramLog basic.ParamLog, corporate domain.Corporate, actor domain.ActorObject, bulkID string,
+func PublishBulkCallback(paramLog *basic.ParamLog, corporate domain.Corporate, actor domain.ActorObject, bulkID string,
 	bulkStatus string, url string) {
 	minute := 1
 
@@ -30,7 +30,7 @@ func PublishBulkCallback(paramLog basic.ParamLog, corporate domain.Corporate, ac
 	}
 }
 
-func PublishTopupCallback(paramLog basic.ParamLog, corporate domain.Corporate, balance domain.Balance, transaction domain.Transaction) {
+func PublishTopupCallback(paramLog *basic.ParamLog, corporate domain.Corporate, balance domain.Balance, transaction domain.Transaction) {
 	minute := 1
 
 	for {
@@ -46,7 +46,7 @@ func PublishTopupCallback(paramLog basic.ParamLog, corporate domain.Corporate, b
 	}
 }
 
-func PublishDeductCallback(paramLog basic.ParamLog, corporate domain.Corporate, balance domain.Balance, transaction domain.Transaction) {
+func PublishDeductCallback(paramLog *basic.ParamLog, corporate domain.Corporate, balance domain.Balance, transaction domain.Transaction) {
 	minute := 1
 
 	for {
@@ -62,7 +62,7 @@ func PublishDeductCallback(paramLog basic.ParamLog, corporate domain.Corporate, 
 	}
 }
 
-func PublishTransferCallback(paramLog basic.ParamLog, corporate domain.Corporate, transaction domain.Transaction) {
+func PublishTransferCallback(paramLog *basic.ParamLog, corporate domain.Corporate, transaction domain.Transaction) {
 	minute := 1
 
 	for {
@@ -78,7 +78,7 @@ func PublishTransferCallback(paramLog basic.ParamLog, corporate domain.Corporate
 	}
 }
 
-func PublishAcceptPaymentCallback(paramLog basic.ParamLog, corporate domain.Corporate, balance domain.Balance, transaction domain.Transaction) {
+func PublishAcceptPaymentCallback(paramLog *basic.ParamLog, corporate domain.Corporate, balance domain.Balance, transaction domain.Transaction) {
 	minute := 1
 
 	for {
@@ -94,7 +94,7 @@ func PublishAcceptPaymentCallback(paramLog basic.ParamLog, corporate domain.Corp
 	}
 }
 
-func callbackTopupHTTP(paramLog basic.ParamLog, corporate domain.Corporate, transaction domain.Transaction, payload TopupCallbackPayload) error {
+func callbackTopupHTTP(paramLog *basic.ParamLog, corporate domain.Corporate, transaction domain.Transaction, payload TopupCallbackPayload) error {
 	url := corporate.VACallbackURL
 
 	if url == "" {
@@ -125,7 +125,7 @@ func callbackTopupHTTP(paramLog basic.ParamLog, corporate domain.Corporate, tran
 	return nil
 }
 
-func callbackDeductHTTP(paramLog basic.ParamLog, corporate domain.Corporate, transaction domain.Transaction, payload DeductCallbackPayload) error {
+func callbackDeductHTTP(paramLog *basic.ParamLog, corporate domain.Corporate, transaction domain.Transaction, payload DeductCallbackPayload) error {
 	url := corporate.DeductCallbackURL
 
 	if url == "" {
@@ -156,7 +156,7 @@ func callbackDeductHTTP(paramLog basic.ParamLog, corporate domain.Corporate, tra
 	return nil
 }
 
-func callbackTransferHTTP(paramLog basic.ParamLog, corporate domain.Corporate, transaction domain.Transaction, payload TransferCallbackPayload) error {
+func callbackTransferHTTP(paramLog *basic.ParamLog, corporate domain.Corporate, transaction domain.Transaction, payload TransferCallbackPayload) error {
 	url := corporate.TransferCallbackURL
 
 	if url == "" {
@@ -187,7 +187,7 @@ func callbackTransferHTTP(paramLog basic.ParamLog, corporate domain.Corporate, t
 	return nil
 }
 
-func callbackBulkHTTP(paramLog basic.ParamLog, corporate domain.Corporate, payload interface{}, url string) error {
+func callbackBulkHTTP(paramLog *basic.ParamLog, corporate domain.Corporate, payload interface{}, url string) error {
 	if url == "" {
 		return nil
 	}
@@ -210,7 +210,7 @@ func callbackBulkHTTP(paramLog basic.ParamLog, corporate domain.Corporate, paylo
 	return nil
 }
 
-func callbackAcceptPaymentHTTP(paramLog basic.ParamLog, corporate domain.Corporate, transaction domain.Transaction, payload AcceptPaymentCallbackPayload) error {
+func callbackAcceptPaymentHTTP(paramLog *basic.ParamLog, corporate domain.Corporate, transaction domain.Transaction, payload AcceptPaymentCallbackPayload) error {
 	url := corporate.AccecptPaymentCallbackURL
 
 	if url == "" {

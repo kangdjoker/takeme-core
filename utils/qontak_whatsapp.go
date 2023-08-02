@@ -10,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func SendWA(paramLog basic.ParamLog, to string, message string) error {
+func SendWA(paramLog *basic.ParamLog, to string, message string) error {
 	client := resty.New().SetTimeout(20 * time.Second)
 	url := os.Getenv("QONTAK_URL")
 	var result QontakResponse

@@ -18,7 +18,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 )
 
-func CreateBalanceUser(paramLog basic.ParamLog, user domain.ActorAble, corporate domain.Corporate, balanceName string) (domain.Balance, error) {
+func CreateBalanceUser(paramLog *basic.ParamLog, user domain.ActorAble, corporate domain.Corporate, balanceName string) (domain.Balance, error) {
 	var balance domain.Balance
 
 	if utils.IsContainSpecialCharacter(balanceName) {
@@ -90,7 +90,7 @@ func CreateBalanceUser(paramLog basic.ParamLog, user domain.ActorAble, corporate
 	return balance, nil
 }
 
-func CreateBalanceCorporate(paramLog basic.ParamLog, corp domain.ActorAble, corporate domain.Corporate, balanceName string) (domain.Balance, error) {
+func CreateBalanceCorporate(paramLog *basic.ParamLog, corp domain.ActorAble, corporate domain.Corporate, balanceName string) (domain.Balance, error) {
 	var balance domain.Balance
 
 	if utils.IsContainSpecialCharacter(balanceName) {
@@ -162,7 +162,7 @@ func CreateBalanceCorporate(paramLog basic.ParamLog, corp domain.ActorAble, corp
 	return balance, nil
 }
 
-func InitializeBalanceUser(paramLog basic.ParamLog, user domain.ActorAble, corporate domain.Corporate, balanceName string) (domain.Balance, error) {
+func InitializeBalanceUser(paramLog *basic.ParamLog, user domain.ActorAble, corporate domain.Corporate, balanceName string) (domain.Balance, error) {
 	var balance domain.Balance
 	createBalanceForUser := func(session mongo.SessionContext) error {
 
@@ -232,7 +232,7 @@ func InitializeBalanceUser(paramLog basic.ParamLog, user domain.ActorAble, corpo
 	return balance, nil
 }
 
-func InitializeBalanceCorporate(paramLog basic.ParamLog, corp domain.ActorAble, corporate domain.Corporate, balanceName string) (domain.Balance, error) {
+func InitializeBalanceCorporate(paramLog *basic.ParamLog, corp domain.ActorAble, corporate domain.Corporate, balanceName string) (domain.Balance, error) {
 	var balance domain.Balance
 	createBalanceForCorporate := func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().
@@ -301,7 +301,7 @@ func InitializeBalanceCorporate(paramLog basic.ParamLog, corp domain.ActorAble, 
 	return balance, nil
 }
 
-func WithdrawBalance(paramLog basic.ParamLog, statement domain.Statement, session mongo.SessionContext) error {
+func WithdrawBalance(paramLog *basic.ParamLog, statement domain.Statement, session mongo.SessionContext) error {
 	balanceID := statement.BalanceID.Hex()
 	amount := statement.Withdraw
 
@@ -538,7 +538,7 @@ func ProccedRAB(requestID string, status string, owner domain.ActorAble, pin str
 	return request, nil
 }
 
-func createVABalance(paramLog basic.ParamLog, balance *domain.Balance, ownerName string) {
+func createVABalance(paramLog *basic.ParamLog, balance *domain.Balance, ownerName string) {
 
 	balanceName := ownerName + " " + balance.Name
 	gatewayXendit := gateway.XenditGateway{}

@@ -26,7 +26,7 @@ type ActorTransferBalance struct {
 	isTopuoType        bool
 }
 
-func (self ActorTransferBalance) Execute(paramLog basic.ParamLog, corporate domain.Corporate, actor domain.ActorAble,
+func (self ActorTransferBalance) Execute(paramLog *basic.ParamLog, corporate domain.Corporate, actor domain.ActorAble,
 	toBalanceID string, fromBalanceID string, subAmount int, encryptedPIN string, externalID string, isTopupType bool, requestId string) (domain.Transaction, error) {
 
 	fromBalance, err := identifyBalance(fromBalanceID)

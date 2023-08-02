@@ -6,7 +6,7 @@ import (
 	"github.com/kangdjoker/takeme-core/utils/gateway"
 )
 
-func InquiryBankAccount(paramLog basic.ParamLog, accountNumber string, bankCode string, requestId string) (domain.Bank, error) {
+func InquiryBankAccount(paramLog *basic.ParamLog, accountNumber string, bankCode string, requestId string) (domain.Bank, error) {
 	// gateway := gateway.OYGateway{}
 	gateway := gateway.PermataGateway{}
 

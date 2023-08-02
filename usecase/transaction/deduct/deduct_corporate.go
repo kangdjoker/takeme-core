@@ -25,7 +25,7 @@ type DeductCorporate struct {
 	transactionUsecase transaction.Base
 }
 
-func (self DeductCorporate) Execute(paramLog basic.ParamLog, corporate domain.Corporate, actor domain.ActorAble,
+func (self DeductCorporate) Execute(paramLog *basic.ParamLog, corporate domain.Corporate, actor domain.ActorAble,
 	toBalanceID string, fromBalanceID string, subAmount int, encryptedPIN string, externalID string, requestId string) (domain.Transaction, error) {
 
 	fromBalance, err := identifyBalance(fromBalanceID)

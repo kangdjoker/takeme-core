@@ -52,7 +52,7 @@ func (self Base) RollbackFeeStatement(corporate domain.Corporate, balance domain
 	return statements, nil
 }
 
-func (self Base) Commit(paramLog basic.ParamLog, statements []domain.Statement, transaction *domain.Transaction) error {
+func (self Base) Commit(paramLog *basic.ParamLog, statements []domain.Statement, transaction *domain.Transaction) error {
 	function := func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().
 			SetReadConcern(readconcern.Snapshot()).
@@ -143,7 +143,7 @@ func (self Base) UpdatingTransactionDetail(transaction *domain.Transaction) erro
 	return nil
 }
 
-func (self Base) CommitRollback(paramLog basic.ParamLog, statements []domain.Statement) error {
+func (self Base) CommitRollback(paramLog *basic.ParamLog, statements []domain.Statement) error {
 	function := func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().
 			SetReadConcern(readconcern.Snapshot()).
@@ -179,7 +179,7 @@ func (self Base) CommitRollback(paramLog basic.ParamLog, statements []domain.Sta
 	return nil
 }
 
-func adjustBalanceWithStatement(paramLog basic.ParamLog, statements []domain.Statement, session mongo.SessionContext) error {
+func adjustBalanceWithStatement(paramLog *basic.ParamLog, statements []domain.Statement, session mongo.SessionContext) error {
 
 	for _, statement := range statements {
 		if statement.Deposit != 0 {

@@ -254,7 +254,7 @@ func UserSavePIN(user domain.User, encryptedPIN string) error {
 	return nil
 }
 
-func UserPreForgotPIN(paramLog basic.ParamLog, user domain.User, encryptedPIN string, OTPChannel string) error {
+func UserPreForgotPIN(paramLog *basic.ParamLog, user domain.User, encryptedPIN string, OTPChannel string) error {
 
 	preForgotPIN := func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().

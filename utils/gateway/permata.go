@@ -27,7 +27,7 @@ func (gw PermataGateway) CreateVA(balanceID string, nameVA string, bankCode stri
 func (gw PermataGateway) CallbackVA(w http.ResponseWriter, r *http.Request) (string, int, domain.Bank, string, error) {
 	return "", 0, domain.Bank{}, "", nil
 }
-func (gw PermataGateway) CreateTransfer(paramLog basic.ParamLog, transaction domain.Transaction, requestId string) (string, error) {
+func (gw PermataGateway) CreateTransfer(paramLog *basic.ParamLog, transaction domain.Transaction, requestId string) (string, error) {
 	client := resty.New()
 	client.SetTimeout(20 * time.Second)
 	client.SetRetryCount(1)
@@ -169,7 +169,7 @@ type PermataPaymentResponse struct {
 	ReferenceNo          string `json:"referenceNo" bson:"referenceNo"`
 }
 
-func (gw PermataGateway) Inquiry(paramLog basic.ParamLog, bankCode string, accountNumber string, requestId string) (string, error) {
+func (gw PermataGateway) Inquiry(paramLog *basic.ParamLog, bankCode string, accountNumber string, requestId string) (string, error) {
 	client := resty.New()
 	client.SetTimeout(20 * time.Second)
 	client.SetRetryCount(1)

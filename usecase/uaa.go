@@ -23,7 +23,7 @@ const (
 	WA_CHANNEL  = "wa"
 )
 
-func UserSignup(paramLog basic.ParamLog, fullName string, email string, phoneNumber string, corporate domain.Corporate, OTPChannel string) error {
+func UserSignup(paramLog *basic.ParamLog, fullName string, email string, phoneNumber string, corporate domain.Corporate, OTPChannel string) error {
 
 	userSignup := func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().
@@ -95,7 +95,7 @@ func UserSignup(paramLog basic.ParamLog, fullName string, email string, phoneNum
 	return nil
 }
 
-func UserActivation(paramLog basic.ParamLog, phoneNumber string, corporate domain.Corporate, code string) (string, error) {
+func UserActivation(paramLog *basic.ParamLog, phoneNumber string, corporate domain.Corporate, code string) (string, error) {
 	token := ""
 
 	userActivation := func(session mongo.SessionContext) error {
@@ -162,7 +162,7 @@ func UserActivation(paramLog basic.ParamLog, phoneNumber string, corporate domai
 	return token, nil
 }
 
-func UserPrelogin(paramLog basic.ParamLog, phoneNumber string, corporate domain.Corporate, OTPChannel string) error {
+func UserPrelogin(paramLog *basic.ParamLog, phoneNumber string, corporate domain.Corporate, OTPChannel string) error {
 
 	userPrelogin := func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().
@@ -373,7 +373,7 @@ func UserFaceLogin(phoneNumber string, corporate domain.Corporate, faceImage str
 	return token, nil
 }
 
-func userRemoveLoginCode(paramLog basic.ParamLog, userID string, loginCode string) {
+func userRemoveLoginCode(paramLog *basic.ParamLog, userID string, loginCode string) {
 	time.Sleep(120 * time.Second)
 	userRemoveLogin := func(session mongo.SessionContext) error {
 
@@ -417,7 +417,7 @@ func userRemoveLoginCode(paramLog basic.ParamLog, userID string, loginCode strin
 	}
 }
 
-func deleteInactiveUser(paramLog basic.ParamLog, userID string) {
+func deleteInactiveUser(paramLog *basic.ParamLog, userID string) {
 	time.Sleep(120 * time.Second)
 	userRemoveLogin := func(session mongo.SessionContext) error {
 

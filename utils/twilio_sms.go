@@ -10,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func SendSMS(paramLog basic.ParamLog, to string, message string) error {
+func SendSMS(paramLog *basic.ParamLog, to string, message string) error {
 	client := resty.New().SetTimeout(20 * time.Second)
 	url := os.Getenv("TWILIO_SMS_URL_API")
 

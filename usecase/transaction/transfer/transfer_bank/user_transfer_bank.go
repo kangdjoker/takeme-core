@@ -26,7 +26,7 @@ type UserTransferBank struct {
 	transferBankBase   TransferBank
 }
 
-func (self UserTransferBank) Execute(paramLog basic.ParamLog, corporate domain.Corporate, actor domain.ActorAble,
+func (self UserTransferBank) Execute(paramLog *basic.ParamLog, corporate domain.Corporate, actor domain.ActorAble,
 	to domain.TransactionObject, balanceID string, subAmount int, encryptedPIN string, externalID string, requestId string) (domain.Transaction, error) {
 
 	balance, err := identifyBalance(balanceID)

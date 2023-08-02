@@ -24,7 +24,7 @@ type TopupBank struct {
 	transactionUsecase transaction.Base
 }
 
-func (self TopupBank) Execute(paramLog basic.ParamLog, from domain.Bank, balanceID string, amount int,
+func (self TopupBank) Execute(paramLog *basic.ParamLog, from domain.Bank, balanceID string, amount int,
 	reference string, currency string, requestId string) (domain.Transaction, domain.Balance, error) {
 
 	balance, owner, corporate, err := identifyBalance(balanceID)
