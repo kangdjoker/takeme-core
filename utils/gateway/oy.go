@@ -9,6 +9,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -26,7 +27,7 @@ func (gateway OYGateway) CallbackVA(w http.ResponseWriter, r *http.Request) (str
 	return "", 0, domain.Bank{}, "", nil
 }
 
-func (gateway OYGateway) CreateTransfer(transaction domain.Transaction) (string, error) {
+func (gateway OYGateway) CreateTransfer(paramLog basic.ParamLog, transaction domain.Transaction) (string, error) {
 	client := resty.New()
 	client.SetTimeout(10 * time.Minute)
 	url := os.Getenv("OY_TRANSFER_API_URL")
@@ -54,7 +55,7 @@ func (gateway OYGateway) CreateTransfer(transaction domain.Transaction) (string,
 		SetBody(payload).
 		SetResult(&result).Post(url)
 
-	utils.LoggingAPICall(resp.StatusCode(), payload, result, "OY Transfer API Call ")
+	utils.LoggingAPICall(paramLog, resp.StatusCode(), payload, result, "OY Transfer API Call ")
 
 	if err != nil {
 		return "TIMEOUT", utils.ErrorInternalServer(utils.OYApiCallFailed, err.Error())
@@ -86,7 +87,7 @@ func (gateway OYGateway) CallbackTransfer(w http.ResponseWriter, r *http.Request
 	return transactionCode, reference, status, nil
 }
 
-func (gateway OYGateway) Inquiry(bankCode string, accountNumber string) (string, error) {
+func (gateway OYGateway) Inquiry(paramLog basic.ParamLog, bankCode string, accountNumber string) (string, error) {
 
 	client := resty.New()
 	client.SetTimeout(20 * time.Second)
@@ -118,7 +119,7 @@ func (gateway OYGateway) Inquiry(bankCode string, accountNumber string) (string,
 	log.Info("url:" + url)
 	bh, _ := json.Marshal(header)
 	log.Info("header:" + string(bh))
-	utils.LoggingAPICall(resp.StatusCode(), payload, result, "OY Inquiry API Call ")
+	utils.LoggingAPICall(paramLog, resp.StatusCode(), payload, result, "OY Inquiry API Call ")
 
 	if err != nil {
 		return "", utils.ErrorInternalServer(utils.OYApiCallFailed, err.Error())

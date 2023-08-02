@@ -93,7 +93,7 @@ func (self DeductCorporate) Execute(paramLog basic.ParamLog, corporate domain.Co
 		return domain.Transaction{}, err
 	}
 
-	go usecase.PublishDeductCallback(corporate, fromBalance, transaction)
+	go usecase.PublishDeductCallback(paramLog, corporate, fromBalance, transaction)
 
 	return transaction, nil
 }

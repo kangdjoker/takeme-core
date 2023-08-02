@@ -102,9 +102,9 @@ func (self TransferBank) CreateTransferGateway(paramLog basic.ParamLog, transact
 
 	switch gatewayCode {
 	case gateway.OY:
-		reference, err = oy.CreateTransfer(transaction)
+		reference, err = oy.CreateTransfer(paramLog, transaction)
 	case gateway.Permata:
-		reference, err = permata.CreateTransfer(transaction, requestID)
+		reference, err = permata.CreateTransfer(paramLog, transaction, requestID)
 	case gateway.MMBC:
 		reference, err = mmbc.CreateTransfer(transaction)
 	case gateway.Xendit:
@@ -168,7 +168,7 @@ func (self TransferBank) ProcessCallbackGatewayTransfer(paramLog basic.ParamLog,
 		rollbackUsecase.Initialize(transaction)
 		rollbackUsecase.ExecuteRollback(paramLog)
 
-		go usecase.PublishTransferCallback(corporate, transaction)
+		go usecase.PublishTransferCallback(paramLog, corporate, transaction)
 
 		return domain.Transaction{}, nil
 	}
@@ -176,7 +176,7 @@ func (self TransferBank) ProcessCallbackGatewayTransfer(paramLog basic.ParamLog,
 	transaction.Status = domain.COMPLETED_STATUS
 	commitTransactionGateway(transaction.ID.Hex(), transaction.Status, gatewayCode, reference, transaction.GatewayStrategies)
 
-	go usecase.PublishTransferCallback(corporate, transaction)
+	go usecase.PublishTransferCallback(paramLog, corporate, transaction)
 
 	return transaction, nil
 }

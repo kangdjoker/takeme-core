@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	log "github.com/sirupsen/logrus"
 )
 
-func SendWAHubungi(to string, message string) error {
+func SendWAHubungi(paramLog basic.ParamLog, to string, message string) error {
 	client := resty.New().SetTimeout(20 * time.Second)
 	url := os.Getenv("HUBUNGI_URUL")
 	var result HubungiResponse
@@ -47,7 +48,7 @@ func SendWAHubungi(to string, message string) error {
 		}).SetBody(payload).
 		SetResult(&result).Post(url)
 
-	LoggingAPICall(resp.StatusCode(), payload, result, "Hubungi WA API ")
+	LoggingAPICall(paramLog, resp.StatusCode(), payload, result, "Hubungi WA API ")
 
 	if err != nil {
 		log.Info(fmt.Sprintf("Hubungi API Call failed"))

@@ -13,7 +13,7 @@ import (
 	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
-func CreateBulkInquiry(corporate domain.Corporate, reference string, banks []domain.Bank,
+func CreateBulkInquiry(paramLog basic.ParamLog, corporate domain.Corporate, reference string, banks []domain.Bank,
 	actor domain.ActorObject) (domain.BulkInquiry, error) {
 
 	totalBulk := len(banks)
@@ -28,7 +28,7 @@ func CreateBulkInquiry(corporate domain.Corporate, reference string, banks []dom
 		return domain.BulkInquiry{}, err
 	}
 
-	go executeBulkInquiry(corporate, actor, bulk)
+	go executeBulkInquiry(paramLog, corporate, actor, bulk)
 
 	return bulk, nil
 }
@@ -108,7 +108,7 @@ func ViewBulkTransfer(bulkID string) (domain.BulkTransfer, error) {
 	return bulk, nil
 }
 
-func executeBulkInquiry(corporate domain.Corporate, actor domain.ActorObject, bulk domain.BulkInquiry) {
+func executeBulkInquiry(paramLog basic.ParamLog, corporate domain.Corporate, actor domain.ActorObject, bulk domain.BulkInquiry) {
 	var result []domain.Inquiry
 	now := time.Now().Format("060102150405")
 	for i, inq := range bulk.List {
@@ -116,7 +116,7 @@ func executeBulkInquiry(corporate domain.Corporate, actor domain.ActorObject, bu
 		is := strconv.Itoa(i)
 		var a domain.Inquiry
 
-		bank, err := InquiryBankAccount(inq.AccountNumber, inq.BankName, (now + is + uuidNew)[:16])
+		bank, err := InquiryBankAccount(paramLog, inq.AccountNumber, inq.BankName, (now + is + uuidNew)[:16])
 		if err != nil {
 			a.AccountName = inq.AccountName
 			a.AccountNumber = inq.AccountNumber
@@ -144,7 +144,7 @@ func executeBulkInquiry(corporate domain.Corporate, actor domain.ActorObject, bu
 	bulk.Status = domain.BULK_COMPLETED_STATUS
 	go service.BulkInquiryUpdateOne(&bulk)
 
-	go usecase.PublishBulkCallback(corporate, actor, bulk.ID.Hex(), bulk.Status, corporate.BulkInquiryCallbackURL)
+	go usecase.PublishBulkCallback(paramLog, corporate, actor, bulk.ID.Hex(), bulk.Status, corporate.BulkInquiryCallbackURL)
 }
 
 func executeBulkTransfer(paramLog basic.ParamLog, corporate domain.Corporate, user domain.ActorAble, pin string, bulk domain.BulkTransfer, requestId string) {
@@ -174,5 +174,5 @@ func executeBulkTransfer(paramLog basic.ParamLog, corporate domain.Corporate, us
 
 	bulk.Status = domain.BULK_COMPLETED_STATUS
 	service.BulkTransferUpdateOne(&bulk)
-	go usecase.PublishBulkCallback(corporate, bulk.Owner, bulk.ID.Hex(), bulk.Status, corporate.BulkTransferCallbackURL)
+	go usecase.PublishBulkCallback(paramLog, corporate, bulk.Owner, bulk.ID.Hex(), bulk.Status, corporate.BulkTransferCallbackURL)
 }

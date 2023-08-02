@@ -95,7 +95,7 @@ func (self AcceptCard) Execute(paramLog basic.ParamLog, from domain.Card, balanc
 		return domain.Transaction{}, domain.Balance{}, err
 	}
 
-	go usecase.PublishAcceptPaymentCallback(corporate, balance, transaction)
+	go usecase.PublishAcceptPaymentCallback(paramLog, corporate, balance, transaction)
 
 	return transaction, balance, nil
 }

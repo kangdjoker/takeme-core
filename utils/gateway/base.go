@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/kangdjoker/takeme-core/domain"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
 const (
@@ -18,7 +19,7 @@ const (
 
 type Gateway interface {
 	Name() string
-	CreateVA(balanceID string, nameVA string, bankCode string) (string, error)
+	CreateVA(paramLog basic.ParamLog, balanceID string, nameVA string, bankCode string) (string, error)
 	CallbackVA(w http.ResponseWriter, r *http.Request) (string, int, domain.Bank, string, error)
 	CreateTransfer(transaction domain.Transaction) (string, error)
 	CallbackTransfer(w http.ResponseWriter, r *http.Request) (string, string, string, error)

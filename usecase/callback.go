@@ -10,15 +10,16 @@ import (
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/service"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
-func PublishBulkCallback(corporate domain.Corporate, actor domain.ActorObject, bulkID string,
+func PublishBulkCallback(paramLog basic.ParamLog, corporate domain.Corporate, actor domain.ActorObject, bulkID string,
 	bulkStatus string, url string) {
 	minute := 1
 
 	for {
 		payload := createBulkPayload(corporate, actor, bulkID, bulkStatus)
-		err := callbackBulkHTTP(corporate, payload, url)
+		err := callbackBulkHTTP(paramLog, corporate, payload, url)
 		if err != nil {
 			minute = minute * 5
 			time.Sleep(time.Duration(minute) * time.Minute)
@@ -29,12 +30,12 @@ func PublishBulkCallback(corporate domain.Corporate, actor domain.ActorObject, b
 	}
 }
 
-func PublishTopupCallback(corporate domain.Corporate, balance domain.Balance, transaction domain.Transaction) {
+func PublishTopupCallback(paramLog basic.ParamLog, corporate domain.Corporate, balance domain.Balance, transaction domain.Transaction) {
 	minute := 1
 
 	for {
 		payload := createTopupPayload(corporate, balance, transaction)
-		err := callbackTopupHTTP(corporate, transaction, payload)
+		err := callbackTopupHTTP(paramLog, corporate, transaction, payload)
 		if err != nil {
 			minute = minute * 5
 			time.Sleep(time.Duration(minute) * time.Minute)
@@ -45,12 +46,12 @@ func PublishTopupCallback(corporate domain.Corporate, balance domain.Balance, tr
 	}
 }
 
-func PublishDeductCallback(corporate domain.Corporate, balance domain.Balance, transaction domain.Transaction) {
+func PublishDeductCallback(paramLog basic.ParamLog, corporate domain.Corporate, balance domain.Balance, transaction domain.Transaction) {
 	minute := 1
 
 	for {
 		payload := createDeductPayload(corporate, balance, transaction)
-		err := callbackDeductHTTP(corporate, transaction, payload)
+		err := callbackDeductHTTP(paramLog, corporate, transaction, payload)
 		if err != nil {
 			minute = minute * 5
 			time.Sleep(time.Duration(minute) * time.Minute)
@@ -61,12 +62,12 @@ func PublishDeductCallback(corporate domain.Corporate, balance domain.Balance, t
 	}
 }
 
-func PublishTransferCallback(corporate domain.Corporate, transaction domain.Transaction) {
+func PublishTransferCallback(paramLog basic.ParamLog, corporate domain.Corporate, transaction domain.Transaction) {
 	minute := 1
 
 	for {
 		payload := createTransferPayload(corporate, transaction)
-		err := callbackTransferHTTP(corporate, transaction, payload)
+		err := callbackTransferHTTP(paramLog, corporate, transaction, payload)
 		if err != nil {
 			minute = minute * 5
 			time.Sleep(time.Duration(minute) * time.Minute)
@@ -77,12 +78,12 @@ func PublishTransferCallback(corporate domain.Corporate, transaction domain.Tran
 	}
 }
 
-func PublishAcceptPaymentCallback(corporate domain.Corporate, balance domain.Balance, transaction domain.Transaction) {
+func PublishAcceptPaymentCallback(paramLog basic.ParamLog, corporate domain.Corporate, balance domain.Balance, transaction domain.Transaction) {
 	minute := 1
 
 	for {
 		payload := createAcceptPaymentPayload(corporate, balance, transaction)
-		err := callbackAcceptPaymentHTTP(corporate, transaction, payload)
+		err := callbackAcceptPaymentHTTP(paramLog, corporate, transaction, payload)
 		if err != nil {
 			minute = minute * 5
 			time.Sleep(time.Duration(minute) * time.Minute)
@@ -93,7 +94,7 @@ func PublishAcceptPaymentCallback(corporate domain.Corporate, balance domain.Bal
 	}
 }
 
-func callbackTopupHTTP(corporate domain.Corporate, transaction domain.Transaction, payload TopupCallbackPayload) error {
+func callbackTopupHTTP(paramLog basic.ParamLog, corporate domain.Corporate, transaction domain.Transaction, payload TopupCallbackPayload) error {
 	url := corporate.VACallbackURL
 
 	if url == "" {
@@ -109,7 +110,7 @@ func callbackTopupHTTP(corporate domain.Corporate, transaction domain.Transactio
 			"callback-token": callbackToken,
 		}).SetBody(payload).Post(url)
 
-	utils.LoggingAPICall(resp.StatusCode(), payload, resp.Request.Body, "Callback topup corporate")
+	utils.LoggingAPICall(paramLog, resp.StatusCode(), payload, resp.Request.Body, "Callback topup corporate")
 
 	reqBody, _ := json.Marshal(payload)
 
@@ -124,7 +125,7 @@ func callbackTopupHTTP(corporate domain.Corporate, transaction domain.Transactio
 	return nil
 }
 
-func callbackDeductHTTP(corporate domain.Corporate, transaction domain.Transaction, payload DeductCallbackPayload) error {
+func callbackDeductHTTP(paramLog basic.ParamLog, corporate domain.Corporate, transaction domain.Transaction, payload DeductCallbackPayload) error {
 	url := corporate.DeductCallbackURL
 
 	if url == "" {
@@ -140,7 +141,7 @@ func callbackDeductHTTP(corporate domain.Corporate, transaction domain.Transacti
 			"callback-token": callbackToken,
 		}).SetBody(payload).Post(url)
 
-	utils.LoggingAPICall(resp.StatusCode(), payload, resp.Request.Body, "Callback deduct corporate")
+	utils.LoggingAPICall(paramLog, resp.StatusCode(), payload, resp.Request.Body, "Callback deduct corporate")
 
 	reqBody, _ := json.Marshal(payload)
 
@@ -155,7 +156,7 @@ func callbackDeductHTTP(corporate domain.Corporate, transaction domain.Transacti
 	return nil
 }
 
-func callbackTransferHTTP(corporate domain.Corporate, transaction domain.Transaction, payload TransferCallbackPayload) error {
+func callbackTransferHTTP(paramLog basic.ParamLog, corporate domain.Corporate, transaction domain.Transaction, payload TransferCallbackPayload) error {
 	url := corporate.TransferCallbackURL
 
 	if url == "" {
@@ -171,7 +172,7 @@ func callbackTransferHTTP(corporate domain.Corporate, transaction domain.Transac
 			"callback-token": callbackToken,
 		}).SetBody(payload).Post(url)
 
-	utils.LoggingAPICall(resp.StatusCode(), payload, resp.Body, "Callback transfer corporate")
+	utils.LoggingAPICall(paramLog, resp.StatusCode(), payload, resp.Body, "Callback transfer corporate")
 
 	reqBody, _ := json.Marshal(payload)
 
@@ -186,7 +187,7 @@ func callbackTransferHTTP(corporate domain.Corporate, transaction domain.Transac
 	return nil
 }
 
-func callbackBulkHTTP(corporate domain.Corporate, payload interface{}, url string) error {
+func callbackBulkHTTP(paramLog basic.ParamLog, corporate domain.Corporate, payload interface{}, url string) error {
 	if url == "" {
 		return nil
 	}
@@ -200,7 +201,7 @@ func callbackBulkHTTP(corporate domain.Corporate, payload interface{}, url strin
 			"callback-token": callbackToken,
 		}).SetBody(payload).Post(url)
 
-	utils.LoggingAPICall(resp.StatusCode(), payload, resp.Body, "Callback bulk corporate")
+	utils.LoggingAPICall(paramLog, resp.StatusCode(), payload, resp.Body, "Callback bulk corporate")
 
 	if resp.StatusCode() != 200 || err != nil {
 		return utils.ErrorInternalServer(utils.CallbackError, "Callback bulk corporate connection refused or Timeout")
@@ -209,7 +210,7 @@ func callbackBulkHTTP(corporate domain.Corporate, payload interface{}, url strin
 	return nil
 }
 
-func callbackAcceptPaymentHTTP(corporate domain.Corporate, transaction domain.Transaction, payload AcceptPaymentCallbackPayload) error {
+func callbackAcceptPaymentHTTP(paramLog basic.ParamLog, corporate domain.Corporate, transaction domain.Transaction, payload AcceptPaymentCallbackPayload) error {
 	url := corporate.AccecptPaymentCallbackURL
 
 	if url == "" {
@@ -225,7 +226,7 @@ func callbackAcceptPaymentHTTP(corporate domain.Corporate, transaction domain.Tr
 			"callback-token": callbackToken,
 		}).SetBody(payload).Post(url)
 
-	utils.LoggingAPICall(resp.StatusCode(), payload, resp.Request.Body, "Callback topup corporate")
+	utils.LoggingAPICall(paramLog, resp.StatusCode(), payload, resp.Request.Body, "Callback topup corporate")
 
 	reqBody, _ := json.Marshal(payload)
 

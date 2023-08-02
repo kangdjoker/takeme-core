@@ -18,7 +18,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 )
 
-func CreateBalanceUser(user domain.ActorAble, corporate domain.Corporate, balanceName string) (domain.Balance, error) {
+func CreateBalanceUser(paramLog basic.ParamLog, user domain.ActorAble, corporate domain.Corporate, balanceName string) (domain.Balance, error) {
 	var balance domain.Balance
 
 	if utils.IsContainSpecialCharacter(balanceName) {
@@ -65,7 +65,7 @@ func CreateBalanceUser(user domain.ActorAble, corporate domain.Corporate, balanc
 			return err
 		}
 
-		createVABalance(&balance, user.FullName)
+		createVABalance(paramLog, &balance, user.FullName)
 		err = service.BalanceUpdate(balance, session)
 		if err != nil {
 			session.AbortTransaction(session)
@@ -90,7 +90,7 @@ func CreateBalanceUser(user domain.ActorAble, corporate domain.Corporate, balanc
 	return balance, nil
 }
 
-func CreateBalanceCorporate(corp domain.ActorAble, corporate domain.Corporate, balanceName string) (domain.Balance, error) {
+func CreateBalanceCorporate(paramLog basic.ParamLog, corp domain.ActorAble, corporate domain.Corporate, balanceName string) (domain.Balance, error) {
 	var balance domain.Balance
 
 	if utils.IsContainSpecialCharacter(balanceName) {
@@ -137,7 +137,7 @@ func CreateBalanceCorporate(corp domain.ActorAble, corporate domain.Corporate, b
 			return err
 		}
 
-		createVABalance(&balance, corporate.Name)
+		createVABalance(paramLog, &balance, corporate.Name)
 		err = service.BalanceUpdate(balance, session)
 		if err != nil {
 			session.AbortTransaction(session)
@@ -162,7 +162,7 @@ func CreateBalanceCorporate(corp domain.ActorAble, corporate domain.Corporate, b
 	return balance, nil
 }
 
-func InitializeBalanceUser(user domain.ActorAble, corporate domain.Corporate, balanceName string) (domain.Balance, error) {
+func InitializeBalanceUser(paramLog basic.ParamLog, user domain.ActorAble, corporate domain.Corporate, balanceName string) (domain.Balance, error) {
 	var balance domain.Balance
 	createBalanceForUser := func(session mongo.SessionContext) error {
 
@@ -207,7 +207,7 @@ func InitializeBalanceUser(user domain.ActorAble, corporate domain.Corporate, ba
 			return err
 		}
 
-		createVABalance(&balance, user.FullName)
+		createVABalance(paramLog, &balance, user.FullName)
 		err = service.BalanceUpdate(balance, session)
 		if err != nil {
 			session.AbortTransaction(session)
@@ -232,7 +232,7 @@ func InitializeBalanceUser(user domain.ActorAble, corporate domain.Corporate, ba
 	return balance, nil
 }
 
-func InitializeBalanceCorporate(corp domain.ActorAble, corporate domain.Corporate, balanceName string) (domain.Balance, error) {
+func InitializeBalanceCorporate(paramLog basic.ParamLog, corp domain.ActorAble, corporate domain.Corporate, balanceName string) (domain.Balance, error) {
 	var balance domain.Balance
 	createBalanceForCorporate := func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().
@@ -276,7 +276,7 @@ func InitializeBalanceCorporate(corp domain.ActorAble, corporate domain.Corporat
 			return err
 		}
 
-		createVABalance(&balance, corporate.Name)
+		createVABalance(paramLog, &balance, corporate.Name)
 		err = service.BalanceUpdate(balance, session)
 		if err != nil {
 			session.AbortTransaction(session)
@@ -538,12 +538,12 @@ func ProccedRAB(requestID string, status string, owner domain.ActorAble, pin str
 	return request, nil
 }
 
-func createVABalance(balance *domain.Balance, ownerName string) {
+func createVABalance(paramLog basic.ParamLog, balance *domain.Balance, ownerName string) {
 
 	balanceName := ownerName + " " + balance.Name
 	gatewayXendit := gateway.XenditGateway{}
 
-	mandiriAccountNumber, err := gatewayXendit.CreateVA(balance.ID.Hex(), balanceName, "MANDIRI")
+	mandiriAccountNumber, err := gatewayXendit.CreateVA(paramLog, balance.ID.Hex(), balanceName, "MANDIRI")
 	if err != nil {
 		balance.VA = append(balance.VA, domain.VirtualAccount{
 			BankCode:      "MANDIRI",
@@ -556,7 +556,7 @@ func createVABalance(balance *domain.Balance, ownerName string) {
 		})
 	}
 
-	bniAccountNumber, err := gatewayXendit.CreateVA(balance.ID.Hex(), balanceName, "BNI")
+	bniAccountNumber, err := gatewayXendit.CreateVA(paramLog, balance.ID.Hex(), balanceName, "BNI")
 	if err != nil {
 		balance.VA = append(balance.VA, domain.VirtualAccount{
 			BankCode:      "BNI",
@@ -569,7 +569,7 @@ func createVABalance(balance *domain.Balance, ownerName string) {
 		})
 	}
 
-	briAccountNumber, err := gatewayXendit.CreateVA(balance.ID.Hex(), balanceName, "BRI")
+	briAccountNumber, err := gatewayXendit.CreateVA(paramLog, balance.ID.Hex(), balanceName, "BRI")
 	if err != nil {
 		balance.VA = append(balance.VA, domain.VirtualAccount{
 			BankCode:      "BRI",
@@ -582,7 +582,7 @@ func createVABalance(balance *domain.Balance, ownerName string) {
 		})
 	}
 
-	permataAccountNumber, err := gatewayXendit.CreateVA(balance.ID.Hex(), balanceName, "PERMATA")
+	permataAccountNumber, err := gatewayXendit.CreateVA(paramLog, balance.ID.Hex(), balanceName, "PERMATA")
 	if err != nil {
 		balance.VA = append(balance.VA, domain.VirtualAccount{
 			BankCode:      "PERMATA",

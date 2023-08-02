@@ -14,6 +14,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -24,7 +25,7 @@ func (gateway XenditGateway) Name() string {
 	return Xendit
 }
 
-func (gateway XenditGateway) CreateVA(balanceID string, nameVA string, bankCode string) (string, error) {
+func (gateway XenditGateway) CreateVA(paramLog basic.ParamLog, balanceID string, nameVA string, bankCode string) (string, error) {
 	client := resty.New().SetTimeout(60 * time.Second)
 	url := os.Getenv("XENDIT_VA_API_URL")
 
@@ -45,7 +46,7 @@ func (gateway XenditGateway) CreateVA(balanceID string, nameVA string, bankCode 
 	var result XenditCreateVAResponse
 	resp, err := client.R().SetResult(&result).Post(url)
 
-	utils.LoggingAPICall(resp.StatusCode(), map[string]string{
+	utils.LoggingAPICall(paramLog, resp.StatusCode(), map[string]string{
 		"external_id": balanceID,
 		"bank_code":   bankCode,
 		"name":        nameVA,

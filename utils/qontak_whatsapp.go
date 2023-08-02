@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	log "github.com/sirupsen/logrus"
 )
 
-func SendWA(to string, message string) error {
+func SendWA(paramLog basic.ParamLog, to string, message string) error {
 	client := resty.New().SetTimeout(20 * time.Second)
 	url := os.Getenv("QONTAK_URL")
 	var result QontakResponse
@@ -42,7 +43,7 @@ func SendWA(to string, message string) error {
 		}).SetBody(payload).
 		SetResult(&result).Post(url)
 
-	LoggingAPICall(resp.StatusCode(), payload, result, "Qontak WA API ")
+	LoggingAPICall(paramLog, resp.StatusCode(), payload, result, "Qontak WA API ")
 
 	if err != nil {
 		log.Info(fmt.Sprintf("Qontak API Call failed"))

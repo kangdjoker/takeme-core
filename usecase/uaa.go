@@ -71,9 +71,9 @@ func UserSignup(paramLog basic.ParamLog, fullName string, email string, phoneNum
 		)
 
 		if OTPChannel == SMS_CHANNEL {
-			go utils.SendSMS(phoneNumber, message)
+			go utils.SendSMS(paramLog, phoneNumber, message)
 		} else {
-			go utils.SendWAHubungi(phoneNumber, user.ActivationCode)
+			go utils.SendWAHubungi(paramLog, phoneNumber, user.ActivationCode)
 		}
 
 		go deleteInactiveUser(paramLog, user.ID.Hex())
@@ -95,7 +95,7 @@ func UserSignup(paramLog basic.ParamLog, fullName string, email string, phoneNum
 	return nil
 }
 
-func UserActivation(phoneNumber string, corporate domain.Corporate, code string) (string, error) {
+func UserActivation(paramLog basic.ParamLog, phoneNumber string, corporate domain.Corporate, code string) (string, error) {
 	token := ""
 
 	userActivation := func(session mongo.SessionContext) error {
@@ -141,7 +141,7 @@ func UserActivation(phoneNumber string, corporate domain.Corporate, code string)
 			return err
 		}
 
-		go InitializeBalanceUser(user, corporate, "Main")
+		go InitializeBalanceUser(paramLog, user, corporate, "Main")
 
 		token = tokenString
 
@@ -212,9 +212,9 @@ func UserPrelogin(paramLog basic.ParamLog, phoneNumber string, corporate domain.
 		)
 
 		if OTPChannel == SMS_CHANNEL {
-			go utils.SendSMS(phoneNumber, message)
+			go utils.SendSMS(paramLog, phoneNumber, message)
 		} else {
-			go utils.SendWAHubungi(phoneNumber, user.LoginCode)
+			go utils.SendWAHubungi(paramLog, phoneNumber, user.LoginCode)
 		}
 
 		go userRemoveLoginCode(paramLog, user.ID.Hex(), user.LoginCode)

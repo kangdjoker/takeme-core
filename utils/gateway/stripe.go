@@ -9,6 +9,7 @@ import (
 
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	log "github.com/sirupsen/logrus"
 	"github.com/stripe/stripe-go/v73"
 	"github.com/stripe/stripe-go/v73/customer"
@@ -33,7 +34,7 @@ func (gateway StripeGateway) Name() string {
 	return Stripe
 }
 
-func (gateway StripeGateway) CreateVA(balanceID string, nameVA string, bankCode string) (string, error) {
+func (gateway StripeGateway) CreateVA(paramLog basic.ParamLog, balanceID string, nameVA string, bankCode string) (string, error) {
 	return "", nil
 }
 

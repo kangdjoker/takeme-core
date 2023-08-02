@@ -10,6 +10,10 @@ import (
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
+	"github.com/uber/jaeger-client-go"
+	jaegercfg "github.com/uber/jaeger-client-go/config"
+	jaegerlog "github.com/uber/jaeger-client-go/log"
+	"github.com/uber/jaeger-lib/metrics"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -298,4 +302,20 @@ type ParamLog struct {
 	TrCloser *io.Closer
 	Span     *opentracing.Span
 	Tag      string
+}
+
+func SetupTracer(serviceName string, spanName string) (*io.Closer, *opentracing.Span) {
+	cfg := jaegercfg.Configuration{
+		ServiceName: serviceName,
+		Sampler: &jaegercfg.SamplerConfig{
+			Type:  jaeger.SamplerTypeRateLimiting,
+			Param: 1000,
+		},
+	}
+	jLogger := jaegerlog.StdLogger
+	jMetricsFactory := metrics.NullFactory
+	tracer, trCloser, _ := cfg.NewTracer(jaegercfg.Logger(jLogger), jaegercfg.Metrics(jMetricsFactory))
+	opentracing.SetGlobalTracer(tracer)
+	span, _ := opentracing.StartSpanFromContext(context.Background(), spanName)
+	return &trCloser, &span
 }

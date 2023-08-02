@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	log "github.com/sirupsen/logrus"
 )
 
-func SendSMS(to string, message string) error {
+func SendSMS(paramLog basic.ParamLog, to string, message string) error {
 	client := resty.New().SetTimeout(20 * time.Second)
 	url := os.Getenv("TWILIO_SMS_URL_API")
 
@@ -27,7 +28,7 @@ func SendSMS(to string, message string) error {
 	var result TwilioResponse
 	resp, err := client.R().SetResult(&result).Post(url)
 
-	LoggingAPICall(resp.StatusCode(), map[string]string{
+	LoggingAPICall(paramLog, resp.StatusCode(), map[string]string{
 		"to":   to,
 		"From": os.Getenv("TWILIO_PHONE_NUMBER"),
 		"Body": message,

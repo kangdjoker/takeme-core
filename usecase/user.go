@@ -10,6 +10,7 @@ import (
 	"github.com/kangdjoker/takeme-core/domain/dto"
 	"github.com/kangdjoker/takeme-core/service"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	"github.com/kangdjoker/takeme-core/utils/database"
 	"github.com/kangdjoker/takeme-core/utils/storage"
 	log "github.com/sirupsen/logrus"
@@ -253,7 +254,7 @@ func UserSavePIN(user domain.User, encryptedPIN string) error {
 	return nil
 }
 
-func UserPreForgotPIN(user domain.User, encryptedPIN string, OTPChannel string) error {
+func UserPreForgotPIN(paramLog basic.ParamLog, user domain.User, encryptedPIN string, OTPChannel string) error {
 
 	preForgotPIN := func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().
@@ -289,9 +290,9 @@ func UserPreForgotPIN(user domain.User, encryptedPIN string, OTPChannel string) 
 			changePINCode)
 
 		if OTPChannel == SMS_CHANNEL {
-			go utils.SendSMS(phoneNumber, message)
+			go utils.SendSMS(paramLog, phoneNumber, message)
 		} else {
-			go utils.SendWAHubungi(phoneNumber, changePINCode)
+			go utils.SendWAHubungi(paramLog, phoneNumber, changePINCode)
 		}
 
 		go removeForgotPINCode(userID, changePINCode)

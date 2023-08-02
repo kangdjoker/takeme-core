@@ -65,7 +65,7 @@ func (self TopupBank) Execute(paramLog basic.ParamLog, from domain.Bank, balance
 		return domain.Transaction{}, domain.Balance{}, err
 	}
 
-	go usecase.PublishTopupCallback(corporate, balance, transaction)
+	go usecase.PublishTopupCallback(paramLog, corporate, balance, transaction)
 
 	return transaction, balance, nil
 }

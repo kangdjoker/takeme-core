@@ -102,7 +102,7 @@ func (self ActorTransferBalance) Execute(paramLog basic.ParamLog, corporate doma
 		return domain.Transaction{}, err
 	}
 
-	go usecase.PublishTopupCallback(corporate, toBalance, transaction)
+	go usecase.PublishTopupCallback(paramLog, corporate, toBalance, transaction)
 
 	return transaction, nil
 }
