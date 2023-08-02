@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -53,13 +54,13 @@ func SendWAHubungi(to string, message string) error {
 		return ErrorInternalServer(QontakAPICallFailed, err.Error())
 	}
 
-	log.Info(fmt.Sprintf("Hubungi API call "+result.Status+" : Sending message for %v to %v", to, message))
+	log.Info(fmt.Sprintf("Hubungi API call "+strconv.Itoa(result.Status)+" : Sending message for %v to %v", to, message))
 
 	return nil
 }
 
 type HubungiResponse struct {
-	Status  string `json:"status"`
+	Status  int    `json:"status"`
 	Message string `json:"message"`
 }
 
