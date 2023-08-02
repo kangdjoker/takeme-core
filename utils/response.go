@@ -27,6 +27,7 @@ type CustomSuccess struct {
 func ResponseError(errr error, w http.ResponseWriter, r *http.Request) {
 	trCloser, span, tag := basic.RequestToTracing(r)
 	if span != nil {
+		logrus.Info("JAEGER.ResponseError")
 		(*span).SetTag("error", true)
 		(*span).LogFields(opentracingLog.Object("ResponseError", errr.Error()))
 	}
@@ -55,18 +56,14 @@ func ResponseError(errr error, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(err.HttpStatus)
 	w.Write(body)
 
-	_, e := basic.LogInformation(basic.ParamLog{Tag: tag, TrCloser: trCloser, Span: span}, "----------------------------- REQUEST END -----------------------------")
-	if e != nil {
-		logrus.Info("ERROR LOGGING", e.Error())
-	} else {
-		logrus.Info("LOGGING:OK")
-	}
+	basic.LogInformation(basic.ParamLog{Tag: tag, TrCloser: trCloser, Span: span}, "----------------------------- REQUEST END -----------------------------")
 }
 
 func ResponseSuccessCustom(data interface{}, w http.ResponseWriter, r *http.Request) {
 	trCloser, span, tag := basic.RequestToTracing(r)
 	if span != nil {
 		b, _ := json.Marshal(data)
+		logrus.Info("JAEGER.ResponseSuccessCustom")
 		(*span).LogFields(opentracingLog.Object("ResponseSuccessCustom", string(b)))
 	}
 
@@ -82,6 +79,7 @@ func ResponseSuccess(data interface{}, w http.ResponseWriter, r *http.Request) {
 	trCloser, span, tag := basic.RequestToTracing(r)
 	if span != nil {
 		b, _ := json.Marshal(data)
+		logrus.Info("JAEGER.ResponseSuccess")
 		(*span).LogFields(opentracingLog.Object("ResponseSuccessCustom", string(b)))
 	}
 	// TODO CHANGE CODE AS PARAM FOR MORE DYNAMICALLY SUCCESS RESPONSE
@@ -105,12 +103,7 @@ func ResponseSuccess(data interface{}, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 
-	_, e := basic.LogInformation(basic.ParamLog{Tag: tag, TrCloser: trCloser, Span: span}, "----------------------------- REQUEST END -----------------------------")
-	if e != nil {
-		logrus.Info("ERROR LOGGING", e.Error())
-	} else {
-		logrus.Info("LOGGING:OK")
-	}
+	basic.LogInformation(basic.ParamLog{Tag: tag, TrCloser: trCloser, Span: span}, "----------------------------- REQUEST END -----------------------------")
 }
 
 type ErrorDescription map[string]string

@@ -10,6 +10,7 @@ import (
 
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/opentracing/opentracing-go"
+	opentracingLog "github.com/opentracing/opentracing-go/log"
 	"github.com/sirupsen/logrus"
 	"github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
@@ -125,6 +126,10 @@ func LogUpdate(model Log, session mongo.SessionContext) error {
 }
 
 func logInformation(isError bool, paramLog ParamLog, data interface{}) (Log, error) {
+	if paramLog.Span != nil {
+		logrus.Info("JAEGER.logInformation")
+		(*paramLog.Span).LogFields(opentracingLog.Object("logInformation", data))
+	}
 	var log Log
 
 	createLog := func(session mongo.SessionContext) error {
@@ -171,7 +176,6 @@ func LogInformation(paramLog ParamLog, data interface{}) (Log, error) {
 		logrus.Info("NODBCLIENT")
 		return Log{}, errors.New("No DB Client")
 	}
-	logrus.Info("LOGGING Start")
 	return logInformation(false, paramLog, data)
 }
 func SessionSaveOne(domain domain.BaseModel, session mongo.SessionContext) error {
@@ -282,7 +286,6 @@ func SetupDB() error {
 
 	// Set client options
 	clusterUrl := os.Getenv("MONGO_CLUSTER_URL")
-	logrus.Info("clusterUrl", clusterUrl)
 	clientOptions := options.Client().ApplyURI(clusterUrl)
 
 	// Connect to MongoDB
@@ -290,7 +293,7 @@ func SetupDB() error {
 
 	// Return error if there problem
 	if err != nil {
-		logrus.Info("Unable to connect MONGO ", err.Error(), clusterUrl)
+		logrus.Info("Unable to connect MONGO ", err.Error())
 		return err
 	}
 
