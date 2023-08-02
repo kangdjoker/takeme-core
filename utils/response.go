@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/kangdjoker/takeme-core/utils/basic"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -49,7 +50,12 @@ func ResponseError(error error, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(err.HttpStatus)
 	w.Write(body)
 
-	basic.LogInformation(basic.ParamLog{Tag: r.Header.Get("requestID")}, "----------------------------- REQUEST END -----------------------------")
+	_, e := basic.LogInformation(basic.ParamLog{Tag: r.Header.Get("requestID")}, "----------------------------- REQUEST END -----------------------------")
+	if e != nil {
+		logrus.Info("ERROR LOGGING", e.Error())
+	} else {
+		logrus.Info("LOGGING:OK")
+	}
 }
 
 func ResponseSuccessCustom(data interface{}, w http.ResponseWriter, r *http.Request) {
@@ -58,7 +64,12 @@ func ResponseSuccessCustom(data interface{}, w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 
-	basic.LogInformation(basic.ParamLog{Tag: r.Header.Get("requestID")}, "----------------------------- REQUEST END -----------------------------")
+	_, e := basic.LogInformation(basic.ParamLog{Tag: r.Header.Get("requestID")}, "----------------------------- REQUEST END -----------------------------")
+	if e != nil {
+		logrus.Info("ERROR LOGGING", e.Error())
+	} else {
+		logrus.Info("LOGGING:OK")
+	}
 }
 
 func ResponseSuccess(data interface{}, w http.ResponseWriter, r *http.Request) {
@@ -84,7 +95,12 @@ func ResponseSuccess(data interface{}, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 
-	log.Info("----------------------------- REQUEST END -----------------------------")
+	_, e := basic.LogInformation(basic.ParamLog{Tag: r.Header.Get("requestID")}, "----------------------------- REQUEST END -----------------------------")
+	if e != nil {
+		logrus.Info("ERROR LOGGING", e.Error())
+	} else {
+		logrus.Info("LOGGING:OK")
+	}
 }
 
 type ErrorDescription map[string]string

@@ -132,6 +132,7 @@ func logInformation(isError bool, paramLog ParamLog, data interface{}) (Log, err
 		if err != nil {
 			return errors.New("log db error")
 		}
+		logrus.Info("LOGCreate")
 		log, err = LogCreate(isError, paramLog, data, session)
 
 		if err != nil {
@@ -162,8 +163,10 @@ func LogError(paramLog ParamLog, data interface{}) (Log, error) {
 }
 func LogInformation(paramLog ParamLog, data interface{}) (Log, error) {
 	if DBClient == nil {
+		logrus.Info("NODBCLIENT")
 		return Log{}, errors.New("No DB Client")
 	}
+	logrus.Info("LOGGING Start")
 	return logInformation(false, paramLog, data)
 }
 func SessionSaveOne(domain domain.BaseModel, session mongo.SessionContext) error {
