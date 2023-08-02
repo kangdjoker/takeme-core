@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log"
 	"os"
 	"time"
 
@@ -266,13 +267,15 @@ func RunTransactionWithRetry(sessionCtx mongo.SessionContext, function func(mong
 func SetupDB() error {
 
 	// Set client options
-	clientOptions := options.Client().ApplyURI(os.Getenv("MONGO_CLUSTER_URL"))
+	clusterUrl := os.Getenv("MONGO_CLUSTER_URL")
+	clientOptions := options.Client().ApplyURI(clusterUrl)
 
 	// Connect to MongoDB
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 
 	// Return error if there problem
 	if err != nil {
+		log.Fatal("Unable to connect MONGO ", clusterUrl)
 		return err
 	}
 
