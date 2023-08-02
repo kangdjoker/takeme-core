@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/kangdjoker/takeme-core/utils/basic"
+	opentracingLog "github.com/opentracing/opentracing-go/log"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
@@ -23,9 +24,13 @@ type CustomSuccess struct {
 	Time        string      `json:"time"`
 }
 
-func ResponseError(error error, w http.ResponseWriter, r *http.Request) {
-
-	err, ok := error.(CustomError)
+func ResponseError(errr error, w http.ResponseWriter, r *http.Request) {
+	trCloser, span, tag := basic.RequestToTracing(r)
+	if span != nil {
+		(*span).SetTag("error", true)
+		(*span).LogFields(opentracingLog.Object("ResponseError", errr.Error()))
+	}
+	err, ok := errr.(CustomError)
 	if !ok {
 		err = CustomError{
 			HttpStatus:  http.StatusInternalServerError,
@@ -50,7 +55,7 @@ func ResponseError(error error, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(err.HttpStatus)
 	w.Write(body)
 
-	_, e := basic.LogInformation(basic.ParamLog{Tag: r.Header.Get("requestID")}, "----------------------------- REQUEST END -----------------------------")
+	_, e := basic.LogInformation(basic.ParamLog{Tag: tag, TrCloser: trCloser, Span: span}, "----------------------------- REQUEST END -----------------------------")
 	if e != nil {
 		logrus.Info("ERROR LOGGING", e.Error())
 	} else {
@@ -59,21 +64,26 @@ func ResponseError(error error, w http.ResponseWriter, r *http.Request) {
 }
 
 func ResponseSuccessCustom(data interface{}, w http.ResponseWriter, r *http.Request) {
+	trCloser, span, tag := basic.RequestToTracing(r)
+	if span != nil {
+		b, _ := json.Marshal(data)
+		(*span).LogFields(opentracingLog.Object("ResponseSuccessCustom", string(b)))
+	}
+
 	body, _ := json.Marshal(data)
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 
-	_, e := basic.LogInformation(basic.ParamLog{Tag: r.Header.Get("requestID")}, "----------------------------- REQUEST END -----------------------------")
-	if e != nil {
-		logrus.Info("ERROR LOGGING", e.Error())
-	} else {
-		logrus.Info("LOGGING:OK")
-	}
+	basic.LogInformation(basic.ParamLog{Tag: tag, TrCloser: trCloser, Span: span}, "----------------------------- REQUEST END -----------------------------")
 }
 
 func ResponseSuccess(data interface{}, w http.ResponseWriter, r *http.Request) {
-
+	trCloser, span, tag := basic.RequestToTracing(r)
+	if span != nil {
+		b, _ := json.Marshal(data)
+		(*span).LogFields(opentracingLog.Object("ResponseSuccessCustom", string(b)))
+	}
 	// TODO CHANGE CODE AS PARAM FOR MORE DYNAMICALLY SUCCESS RESPONSE
 	successCode := 100
 	language := r.Context().Value("language")
@@ -95,7 +105,7 @@ func ResponseSuccess(data interface{}, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 
-	_, e := basic.LogInformation(basic.ParamLog{Tag: r.Header.Get("requestID")}, "----------------------------- REQUEST END -----------------------------")
+	_, e := basic.LogInformation(basic.ParamLog{Tag: tag, TrCloser: trCloser, Span: span}, "----------------------------- REQUEST END -----------------------------")
 	if e != nil {
 		logrus.Info("ERROR LOGGING", e.Error())
 	} else {

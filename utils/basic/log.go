@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"net/http"
 	"os"
 	"time"
 
@@ -318,4 +319,24 @@ func SetupTracer(serviceName string, spanName string) (*io.Closer, *opentracing.
 	opentracing.SetGlobalTracer(tracer)
 	span, _ := opentracing.StartSpanFromContext(context.Background(), spanName)
 	return &trCloser, &span
+}
+
+func RequestToTracing(r *http.Request) (*io.Closer, *opentracing.Span, string) {
+	c := r.Context()
+	tag := ""
+	tagC := c.Value("TAG")
+	if tagC != nil {
+		tag = tagC.(string)
+	}
+	var trCloser *io.Closer
+	var span *opentracing.Span
+	trCloserC := c.Value("TRACECLOSER")
+	spC := c.Value("TRACESPAN")
+	if trCloserC != nil {
+		trCloser = trCloserC.(*io.Closer)
+	}
+	if spC != nil {
+		span = spC.(*opentracing.Span)
+	}
+	return trCloser, span, tag
 }
