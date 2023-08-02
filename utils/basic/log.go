@@ -155,9 +155,15 @@ func logInformation(isError bool, paramLog ParamLog, data interface{}) (Log, err
 	return log, nil
 }
 func LogError(paramLog ParamLog, data interface{}) (Log, error) {
+	if DBClient == nil {
+		return Log{}, errors.New("No DB Client")
+	}
 	return logInformation(true, paramLog, data)
 }
 func LogInformation(paramLog ParamLog, data interface{}) (Log, error) {
+	if DBClient == nil {
+		return Log{}, errors.New("No DB Client")
+	}
 	return logInformation(false, paramLog, data)
 }
 func SessionSaveOne(domain domain.BaseModel, session mongo.SessionContext) error {
