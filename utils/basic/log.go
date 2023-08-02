@@ -281,7 +281,7 @@ func SetupDB() error {
 
 	// Return error if there problem
 	if err != nil {
-		log.Fatal("Unable to connect MONGO ", clusterUrl)
+		log.Fatal("Unable to connect MONGO ", err.Error(), clusterUrl)
 		return err
 	}
 
