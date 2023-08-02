@@ -9,6 +9,7 @@ import (
 	"github.com/kangdjoker/takeme-core/usecase"
 	"github.com/kangdjoker/takeme-core/usecase/transaction"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	"github.com/kangdjoker/takeme-core/utils/gateway"
 )
 
@@ -23,7 +24,7 @@ type TopupBank struct {
 	transactionUsecase transaction.Base
 }
 
-func (self TopupBank) Execute(tag string, from domain.Bank, balanceID string, amount int,
+func (self TopupBank) Execute(paramLog basic.ParamLog, from domain.Bank, balanceID string, amount int,
 	reference string, currency string, requestId string) (domain.Transaction, domain.Balance, error) {
 
 	balance, owner, corporate, err := identifyBalance(balanceID)
@@ -59,7 +60,7 @@ func (self TopupBank) Execute(tag string, from domain.Bank, balanceID string, am
 		return domain.Transaction{}, domain.Balance{}, err
 	}
 
-	err = self.transactionUsecase.Commit(tag, statements, &transaction)
+	err = self.transactionUsecase.Commit(paramLog, statements, &transaction)
 	if err != nil {
 		return domain.Transaction{}, domain.Balance{}, err
 	}

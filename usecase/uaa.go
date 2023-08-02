@@ -23,7 +23,7 @@ const (
 	WA_CHANNEL  = "wa"
 )
 
-func UserSignup(tag string, fullName string, email string, phoneNumber string, corporate domain.Corporate, OTPChannel string) error {
+func UserSignup(paramLog basic.ParamLog, fullName string, email string, phoneNumber string, corporate domain.Corporate, OTPChannel string) error {
 
 	userSignup := func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().
@@ -76,7 +76,7 @@ func UserSignup(tag string, fullName string, email string, phoneNumber string, c
 			go utils.SendWAHubungi(phoneNumber, user.ActivationCode)
 		}
 
-		go deleteInactiveUser(tag, user.ID.Hex())
+		go deleteInactiveUser(paramLog, user.ID.Hex())
 
 		return nil
 	}
@@ -162,7 +162,7 @@ func UserActivation(phoneNumber string, corporate domain.Corporate, code string)
 	return token, nil
 }
 
-func UserPrelogin(tag string, phoneNumber string, corporate domain.Corporate, OTPChannel string) error {
+func UserPrelogin(paramLog basic.ParamLog, phoneNumber string, corporate domain.Corporate, OTPChannel string) error {
 
 	userPrelogin := func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().
@@ -217,7 +217,7 @@ func UserPrelogin(tag string, phoneNumber string, corporate domain.Corporate, OT
 			go utils.SendWAHubungi(phoneNumber, user.LoginCode)
 		}
 
-		go userRemoveLoginCode(tag, user.ID.Hex(), user.LoginCode)
+		go userRemoveLoginCode(paramLog, user.ID.Hex(), user.LoginCode)
 
 		return nil
 	}
@@ -373,7 +373,7 @@ func UserFaceLogin(phoneNumber string, corporate domain.Corporate, faceImage str
 	return token, nil
 }
 
-func userRemoveLoginCode(tag string, userID string, loginCode string) {
+func userRemoveLoginCode(paramLog basic.ParamLog, userID string, loginCode string) {
 	time.Sleep(120 * time.Second)
 	userRemoveLogin := func(session mongo.SessionContext) error {
 
@@ -393,7 +393,7 @@ func userRemoveLoginCode(tag string, userID string, loginCode string) {
 		}
 
 		if user.LoginCode == loginCode {
-			basic.LogInformation(tag, fmt.Sprintf("Remove login code for user (%v)", user.PhoneNumber))
+			basic.LogInformation(paramLog, fmt.Sprintf("Remove login code for user (%v)", user.PhoneNumber))
 			user.LoginCode = "-"
 			err := service.UserUpdateOne(&user, session)
 			if err != nil {
@@ -413,11 +413,11 @@ func userRemoveLoginCode(tag string, userID string, loginCode string) {
 	)
 
 	if err != nil {
-		basic.LogError(tag, fmt.Sprintf("Failed remove login code for userID (%v)", userID))
+		basic.LogError(paramLog, fmt.Sprintf("Failed remove login code for userID (%v)", userID))
 	}
 }
 
-func deleteInactiveUser(tag string, userID string) {
+func deleteInactiveUser(paramLog basic.ParamLog, userID string) {
 	time.Sleep(120 * time.Second)
 	userRemoveLogin := func(session mongo.SessionContext) error {
 
@@ -443,9 +443,9 @@ func deleteInactiveUser(tag string, userID string) {
 		}
 
 		if err != nil {
-			basic.LogInformation(tag, "Delete unactive user failed because user already active")
+			basic.LogInformation(paramLog, "Delete unactive user failed because user already active")
 		} else {
-			basic.LogInformation(tag, "Delete unactive user success")
+			basic.LogInformation(paramLog, "Delete unactive user success")
 		}
 
 		return database.CommitWithRetry(session)
@@ -459,6 +459,6 @@ func deleteInactiveUser(tag string, userID string) {
 	)
 
 	if err != nil {
-		basic.LogError(tag, fmt.Sprintf("Failed remove login code for userID (%v)", userID))
+		basic.LogError(paramLog, fmt.Sprintf("Failed remove login code for userID (%v)", userID))
 	}
 }

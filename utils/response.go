@@ -49,7 +49,7 @@ func ResponseError(error error, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(err.HttpStatus)
 	w.Write(body)
 
-	basic.LogInformation(r.Header.Get("requestID"), "----------------------------- REQUEST END -----------------------------")
+	basic.LogInformation(basic.ParamLog{Tag: r.Header.Get("requestID")}, "----------------------------- REQUEST END -----------------------------")
 }
 
 func ResponseSuccessCustom(data interface{}, w http.ResponseWriter, r *http.Request) {
@@ -58,7 +58,7 @@ func ResponseSuccessCustom(data interface{}, w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 
-	basic.LogInformation(r.Header.Get("requestID"), "----------------------------- REQUEST END -----------------------------")
+	basic.LogInformation(basic.ParamLog{Tag: r.Header.Get("requestID")}, "----------------------------- REQUEST END -----------------------------")
 }
 
 func ResponseSuccess(data interface{}, w http.ResponseWriter, r *http.Request) {

@@ -20,7 +20,7 @@ func Middleware(h http.HandlerFunc, secure bool) http.HandlerFunc {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		basic.LogInformation(r.Header.Get("requestID"), "----------------------------- REQUEST START -----------------------------")
+		basic.LogInformation(basic.ParamLog{Tag: r.Header.Get("requestID")}, "----------------------------- REQUEST START -----------------------------")
 
 		var ctx context.Context
 		var corporate domain.Corporate

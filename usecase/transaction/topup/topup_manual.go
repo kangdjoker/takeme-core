@@ -9,6 +9,7 @@ import (
 	"github.com/kangdjoker/takeme-core/service"
 	"github.com/kangdjoker/takeme-core/usecase/transaction"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
 type TopupManual struct {
@@ -21,7 +22,7 @@ type TopupManual struct {
 	transactionUsecase transaction.Base
 }
 
-func (tm TopupManual) Execute(tag, balanceID string, amount int,
+func (tm TopupManual) Execute(paramLog basic.ParamLog, balanceID string, amount int,
 	remark string, currency string) (domain.Transaction, domain.Balance, error) {
 
 	balance, owner, corporate, err := identifyBalance(balanceID)
@@ -49,7 +50,7 @@ func (tm TopupManual) Execute(tag, balanceID string, amount int,
 		return domain.Transaction{}, domain.Balance{}, err
 	}
 
-	err = tm.transactionUsecase.Commit(tag, statements, &transaction)
+	err = tm.transactionUsecase.Commit(paramLog, statements, &transaction)
 	if err != nil {
 		return domain.Transaction{}, domain.Balance{}, err
 	}

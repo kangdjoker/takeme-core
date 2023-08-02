@@ -301,7 +301,7 @@ func InitializeBalanceCorporate(corp domain.ActorAble, corporate domain.Corporat
 	return balance, nil
 }
 
-func WithdrawBalance(tag string, statement domain.Statement, session mongo.SessionContext) error {
+func WithdrawBalance(paramLog basic.ParamLog, statement domain.Statement, session mongo.SessionContext) error {
 	balanceID := statement.BalanceID.Hex()
 	amount := statement.Withdraw
 
@@ -309,7 +309,7 @@ func WithdrawBalance(tag string, statement domain.Statement, session mongo.Sessi
 	if err != nil {
 		return err
 	}
-	basic.LogInformation(tag, "balance.Amount: "+strconv.Itoa(balance.Amount)+", "+strconv.Itoa(amount))
+	basic.LogInformation(paramLog, "balance.Amount: "+strconv.Itoa(balance.Amount)+", "+strconv.Itoa(amount))
 	if balance.Amount < amount {
 		return utils.ErrorBadRequest(utils.InsufficientBalance, "Insufficient balance")
 	}

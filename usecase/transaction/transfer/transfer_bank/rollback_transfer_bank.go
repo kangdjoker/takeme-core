@@ -7,6 +7,7 @@ import (
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/service"
 	"github.com/kangdjoker/takeme-core/usecase/transaction"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
 type RollbackTransferBank struct {
@@ -37,7 +38,7 @@ func (self *RollbackTransferBank) Initialize(rollbackTransaction domain.Transact
 	return nil
 }
 
-func (self *RollbackTransferBank) ExecuteRollback(tag string) error {
+func (self *RollbackTransferBank) ExecuteRollback(paramLog basic.ParamLog) error {
 	transactionStatement := service.DepositTransactionStatement(
 		self.balance.ID, time.Now().Format(os.Getenv("TIME_FORMAT")),
 		self.transaction.TransactionCode,
@@ -52,7 +53,7 @@ func (self *RollbackTransferBank) ExecuteRollback(tag string) error {
 	statements = append(statements, transactionStatement)
 	statements = append(statements, feeStatements...)
 
-	err = self.transactionUsecase.CommitRollback(tag, statements)
+	err = self.transactionUsecase.CommitRollback(paramLog, statements)
 	if err != nil {
 		return err
 	}

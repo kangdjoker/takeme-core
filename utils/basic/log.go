@@ -3,10 +3,12 @@ package basic
 import (
 	"context"
 	"errors"
+	"io"
 	"os"
 	"time"
 
 	"github.com/kangdjoker/takeme-core/domain"
+	"github.com/opentracing/opentracing-go"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -50,7 +52,7 @@ func (domain *Log) CollectionName() string {
 	return LOG_COLLECTION
 }
 
-func LogCreate(isError bool, tag string, data interface{}, session mongo.SessionContext) (Log, error) {
+func LogCreate(isError bool, paramLog ParamLog, data interface{}, session mongo.SessionContext) (Log, error) {
 	now := time.Now().Format("2006-01-02 15:04:05")
 
 	model := Log{
@@ -116,7 +118,7 @@ func LogUpdate(model Log, session mongo.SessionContext) error {
 	return nil
 }
 
-func logInformation(isError bool, tag string, data interface{}) (Log, error) {
+func logInformation(isError bool, paramLog ParamLog, data interface{}) (Log, error) {
 	var log Log
 
 	createLog := func(session mongo.SessionContext) error {
@@ -129,7 +131,7 @@ func logInformation(isError bool, tag string, data interface{}) (Log, error) {
 		if err != nil {
 			return errors.New("log db error")
 		}
-		log, err = LogCreate(isError, tag, data, session)
+		log, err = LogCreate(isError, paramLog, data, session)
 
 		if err != nil {
 			session.AbortTransaction(session)
@@ -151,11 +153,11 @@ func logInformation(isError bool, tag string, data interface{}) (Log, error) {
 
 	return log, nil
 }
-func LogError(tag string, data interface{}) (Log, error) {
-	return logInformation(true, tag, data)
+func LogError(paramLog ParamLog, data interface{}) (Log, error) {
+	return logInformation(true, paramLog, data)
 }
-func LogInformation(tag string, data interface{}) (Log, error) {
-	return logInformation(false, tag, data)
+func LogInformation(paramLog ParamLog, data interface{}) (Log, error) {
+	return logInformation(false, paramLog, data)
 }
 func SessionSaveOne(domain domain.BaseModel, session mongo.SessionContext) error {
 
@@ -277,4 +279,10 @@ func SetupDB() error {
 	DBClient = client
 
 	return nil
+}
+
+type ParamLog struct {
+	TrCloser *io.Closer
+	Span     *opentracing.Span
+	Tag      string
 }

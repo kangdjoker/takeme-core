@@ -10,6 +10,7 @@ import (
 	"github.com/kangdjoker/takeme-core/service"
 	"github.com/kangdjoker/takeme-core/usecase"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
 func CreateBulkInquiry(corporate domain.Corporate, reference string, banks []domain.Bank,
@@ -58,7 +59,7 @@ func CreateBulkTransfer(corporate domain.Corporate, reference string, transfers 
 	return bulk, nil
 }
 
-func ActorExecuteBulkTransfer(tag string, corporate domain.Corporate, user domain.ActorAble, pin string,
+func ActorExecuteBulkTransfer(paramLog basic.ParamLog, corporate domain.Corporate, user domain.ActorAble, pin string,
 	bulkID string, requestId string) (domain.BulkTransfer, error) {
 
 	bulk, err := service.BulkTransferByID(bulkID)
@@ -81,7 +82,7 @@ func ActorExecuteBulkTransfer(tag string, corporate domain.Corporate, user domai
 		return domain.BulkTransfer{}, err
 	}
 
-	go executeBulkTransfer(tag, corporate, user, pin, bulk, requestId)
+	go executeBulkTransfer(paramLog, corporate, user, pin, bulk, requestId)
 
 	bulk.Status = domain.BULK_PROGRESS_STATUS
 	return bulk, nil
@@ -146,7 +147,7 @@ func executeBulkInquiry(corporate domain.Corporate, actor domain.ActorObject, bu
 	go usecase.PublishBulkCallback(corporate, actor, bulk.ID.Hex(), bulk.Status, corporate.BulkInquiryCallbackURL)
 }
 
-func executeBulkTransfer(tag string, corporate domain.Corporate, user domain.ActorAble, pin string, bulk domain.BulkTransfer, requestId string) {
+func executeBulkTransfer(paramLog basic.ParamLog, corporate domain.Corporate, user domain.ActorAble, pin string, bulk domain.BulkTransfer, requestId string) {
 
 	bulk.Status = domain.BULK_PROGRESS_STATUS
 	service.BulkTransferUpdateOne(&bulk)
@@ -154,7 +155,7 @@ func executeBulkTransfer(tag string, corporate domain.Corporate, user domain.Act
 	transfers := bulk.List
 	for index, transfer := range transfers {
 		usecase := UserTransferBank{}
-		trx, err := usecase.Execute(tag, corporate, user, transfer.ToBankAccount.ToTransactionObject(),
+		trx, err := usecase.Execute(paramLog, corporate, user, transfer.ToBankAccount.ToTransactionObject(),
 			bulk.BalanceID.Hex(), transfer.Amount, pin, transfer.ExternalID, requestId)
 		if err != nil {
 			err, ok := err.(utils.CustomError)

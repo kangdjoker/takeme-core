@@ -9,6 +9,7 @@ import (
 	"github.com/kangdjoker/takeme-core/usecase"
 	"github.com/kangdjoker/takeme-core/usecase/transaction"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
 type DeductCorporate struct {
@@ -24,7 +25,7 @@ type DeductCorporate struct {
 	transactionUsecase transaction.Base
 }
 
-func (self DeductCorporate) Execute(tag string, corporate domain.Corporate, actor domain.ActorAble,
+func (self DeductCorporate) Execute(paramLog basic.ParamLog, corporate domain.Corporate, actor domain.ActorAble,
 	toBalanceID string, fromBalanceID string, subAmount int, encryptedPIN string, externalID string, requestId string) (domain.Transaction, error) {
 
 	fromBalance, err := identifyBalance(fromBalanceID)
@@ -87,7 +88,7 @@ func (self DeductCorporate) Execute(tag string, corporate domain.Corporate, acto
 		return domain.Transaction{}, err
 	}
 
-	err = self.transactionUsecase.Commit(tag, statements, &transaction)
+	err = self.transactionUsecase.Commit(paramLog, statements, &transaction)
 	if err != nil {
 		return domain.Transaction{}, err
 	}

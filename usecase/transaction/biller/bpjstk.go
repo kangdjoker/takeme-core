@@ -14,6 +14,7 @@ import (
 	"github.com/kangdjoker/takeme-core/usecase"
 	"github.com/kangdjoker/takeme-core/usecase/transaction"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	"github.com/sirupsen/logrus"
 )
 
@@ -34,7 +35,7 @@ type BPJSTKBiller struct {
 func (biller BPJSTKBiller) Inquiry(paymentCode string, currency string, requestId string) (FusBPJSInqResponse, error) {
 	return biller.billerBase.BillerInquiryBPJSTKPMI(paymentCode, currency, requestId)
 }
-func (self BPJSTKBiller) Execute(tag string, corporate domain.Corporate, actor domain.ActorAble,
+func (self BPJSTKBiller) Execute(paramLog basic.ParamLog, corporate domain.Corporate, actor domain.ActorAble,
 	to domain.TransactionObject, balanceID string, encryptedPIN string, externalID string,
 	paymentCode string, currency string, requestId string) (domain.Transaction, interface{}, error) {
 
@@ -89,7 +90,7 @@ func (self BPJSTKBiller) Execute(tag string, corporate domain.Corporate, actor d
 		return domain.Transaction{}, nil, err
 	}
 
-	err = self.transactionUsecase.Commit(tag, statements, &transaction)
+	err = self.transactionUsecase.Commit(paramLog, statements, &transaction)
 	if err != nil {
 		logrus.Info("Error: " + err.Error())
 		return domain.Transaction{}, nil, err

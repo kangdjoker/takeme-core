@@ -10,6 +10,7 @@ import (
 	"github.com/kangdjoker/takeme-core/service"
 	"github.com/kangdjoker/takeme-core/usecase"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	"github.com/kangdjoker/takeme-core/utils/database"
 	"github.com/kangdjoker/takeme-core/utils/gateway"
 	log "github.com/sirupsen/logrus"
@@ -89,7 +90,7 @@ func (self TransferBank) SetupGateway(transaction *domain.Transaction) {
 	}
 }
 
-func (self TransferBank) CreateTransferGateway(tag string, transaction domain.Transaction, requestID string) {
+func (self TransferBank) CreateTransferGateway(paramLog basic.ParamLog, transaction domain.Transaction, requestID string) {
 	oy := gateway.OYGateway{}
 	mmbc := gateway.MMBCGateway{}
 	xendit := gateway.XenditGateway{}
@@ -115,20 +116,20 @@ func (self TransferBank) CreateTransferGateway(tag string, transaction domain.Tr
 
 		rollbackUsecase := RollbackTransferBank{}
 		rollbackUsecase.Initialize(transaction)
-		rollbackUsecase.ExecuteRollback(tag)
+		rollbackUsecase.ExecuteRollback(paramLog)
 	}
 
 	commitTransactionGateway(transaction.ID.Hex(), transaction.Status, gatewayCode, reference, transaction.GatewayStrategies)
 
 	if err != nil {
-		self.CreateTransferGateway(tag, transaction, requestID)
+		self.CreateTransferGateway(paramLog, transaction, requestID)
 		return
 	}
 
 	return
 }
 
-func (self TransferBank) ProcessCallbackGatewayTransfer(tag string, gatewayCode string, transactionCode string, reference string,
+func (self TransferBank) ProcessCallbackGatewayTransfer(paramLog basic.ParamLog, gatewayCode string, transactionCode string, reference string,
 	status string, requestId string) (domain.Transaction, error) {
 
 	var corporate domain.Corporate
@@ -155,7 +156,7 @@ func (self TransferBank) ProcessCallbackGatewayTransfer(tag string, gatewayCode 
 	}
 
 	if nextGateway != "" && (status == domain.FAILED_STATUS || status == domain.REFUND_STATUS) {
-		go self.CreateTransferGateway(tag, transaction, requestId)
+		go self.CreateTransferGateway(paramLog, transaction, requestId)
 		return domain.Transaction{}, nil
 	}
 
@@ -165,7 +166,7 @@ func (self TransferBank) ProcessCallbackGatewayTransfer(tag string, gatewayCode 
 
 		rollbackUsecase := RollbackTransferBank{}
 		rollbackUsecase.Initialize(transaction)
-		rollbackUsecase.ExecuteRollback(tag)
+		rollbackUsecase.ExecuteRollback(paramLog)
 
 		go usecase.PublishTransferCallback(corporate, transaction)
 

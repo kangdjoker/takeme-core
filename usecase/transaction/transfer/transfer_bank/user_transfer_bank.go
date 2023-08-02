@@ -9,6 +9,7 @@ import (
 	"github.com/kangdjoker/takeme-core/usecase"
 	"github.com/kangdjoker/takeme-core/usecase/transaction"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
 type UserTransferBank struct {
@@ -25,7 +26,7 @@ type UserTransferBank struct {
 	transferBankBase   TransferBank
 }
 
-func (self UserTransferBank) Execute(tag string, corporate domain.Corporate, actor domain.ActorAble,
+func (self UserTransferBank) Execute(paramLog basic.ParamLog, corporate domain.Corporate, actor domain.ActorAble,
 	to domain.TransactionObject, balanceID string, subAmount int, encryptedPIN string, externalID string, requestId string) (domain.Transaction, error) {
 
 	balance, err := identifyBalance(balanceID)
@@ -78,12 +79,12 @@ func (self UserTransferBank) Execute(tag string, corporate domain.Corporate, act
 
 	self.transferBankBase.SetupGateway(&transaction)
 
-	err = self.transactionUsecase.Commit(tag, statements, &transaction)
+	err = self.transactionUsecase.Commit(paramLog, statements, &transaction)
 	if err != nil {
 		return domain.Transaction{}, err
 	}
 
-	go self.transferBankBase.CreateTransferGateway(tag, transaction, requestId)
+	go self.transferBankBase.CreateTransferGateway(paramLog, transaction, requestId)
 
 	return transaction, nil
 }
