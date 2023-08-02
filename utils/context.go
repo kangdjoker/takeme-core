@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/kangdjoker/takeme-core/domain"
-	log "github.com/sirupsen/logrus"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
 // ContextValue is a context key
@@ -28,15 +28,17 @@ func UserContext(request *http.Request) domain.User {
 }
 
 func LoadPayload(r *http.Request, payload interface{}) error {
-	log.Info("------------------------ Client payload ------------------------")
-	log.Info(
+	trClose, span, tag := basic.RequestToTracing(r)
+	paramLog := basic.ParamLog{TrCloser: trClose, Span: span, Tag: tag}
+	basic.LogInformation(&paramLog, "------------------------ Client payload ------------------------")
+	basic.LogInformation(&paramLog,
 		string(r.Context().Value("payload").([]byte)[:]),
 	)
 	err := json.Unmarshal(r.Context().Value("payload").([]byte), &payload)
 	if err != nil {
 		return ErrorBadRequest(InvalidRequestPayload, "Invalid request payload")
 	}
-	log.Info("------------------------ Client payload ------------------------")
+	basic.LogInformation(&paramLog, "------------------------ Client payload ------------------------")
 
 	return nil
 }

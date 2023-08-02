@@ -329,17 +329,26 @@ func RequestToTracing(r *http.Request) (*io.Closer, *opentracing.Span, string) {
 	tag := ""
 	tagC := c.Value("TAG")
 	if tagC != nil {
+		logrus.Println("JAEGER.TAG.Available")
 		tag = tagC.(string)
+	} else {
+		logrus.Println("JAEGER.TAG.NA")
 	}
 	var trCloser *io.Closer
 	var span *opentracing.Span
 	trCloserC := c.Value("TRACECLOSER")
 	spC := c.Value("TRACESPAN")
 	if trCloserC != nil {
+		logrus.Println("JAEGER.TR.Available")
 		trCloser = trCloserC.(*io.Closer)
+	} else {
+		logrus.Println("JAEGER.TR.NA")
 	}
 	if spC != nil {
+		logrus.Println("JAEGER.SP.Available")
 		span = spC.(*opentracing.Span)
+	} else {
+		logrus.Println("JAEGER.SP.NA")
 	}
 	return trCloser, span, tag
 }
