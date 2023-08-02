@@ -274,6 +274,7 @@ func SetupDB() error {
 
 	// Set client options
 	clusterUrl := os.Getenv("MONGO_CLUSTER_URL")
+	logrus.Info("clusterUrl", clusterUrl)
 	clientOptions := options.Client().ApplyURI(clusterUrl)
 
 	// Connect to MongoDB
