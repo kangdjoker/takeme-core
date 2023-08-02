@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"io"
-	"log"
 	"os"
 	"time"
 
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/opentracing/opentracing-go"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -281,7 +281,7 @@ func SetupDB() error {
 
 	// Return error if there problem
 	if err != nil {
-		log.Fatal("Unable to connect MONGO ", err.Error(), clusterUrl)
+		logrus.Info("Unable to connect MONGO ", err.Error(), clusterUrl)
 		return err
 	}
 
