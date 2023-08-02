@@ -9,6 +9,7 @@ import (
 	"github.com/kangdjoker/takeme-core/service"
 	"github.com/kangdjoker/takeme-core/usecase/security"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	"github.com/kangdjoker/takeme-core/utils/database"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -392,7 +393,7 @@ func userRemoveLoginCode(tag string, userID string, loginCode string) {
 		}
 
 		if user.LoginCode == loginCode {
-			LogInformation(tag, fmt.Sprintf("Remove login code for user (%v)", user.PhoneNumber))
+			basic.LogInformation(tag, fmt.Sprintf("Remove login code for user (%v)", user.PhoneNumber))
 			user.LoginCode = "-"
 			err := service.UserUpdateOne(&user, session)
 			if err != nil {
@@ -412,7 +413,7 @@ func userRemoveLoginCode(tag string, userID string, loginCode string) {
 	)
 
 	if err != nil {
-		LogError(tag, fmt.Sprintf("Failed remove login code for userID (%v)", userID))
+		basic.LogError(tag, fmt.Sprintf("Failed remove login code for userID (%v)", userID))
 	}
 }
 
@@ -442,9 +443,9 @@ func deleteInactiveUser(tag string, userID string) {
 		}
 
 		if err != nil {
-			LogInformation(tag, "Delete unactive user failed because user already active")
+			basic.LogInformation(tag, "Delete unactive user failed because user already active")
 		} else {
-			LogInformation(tag, "Delete unactive user success")
+			basic.LogInformation(tag, "Delete unactive user success")
 		}
 
 		return database.CommitWithRetry(session)
@@ -458,6 +459,6 @@ func deleteInactiveUser(tag string, userID string) {
 	)
 
 	if err != nil {
-		LogError(tag, fmt.Sprintf("Failed remove login code for userID (%v)", userID))
+		basic.LogError(tag, fmt.Sprintf("Failed remove login code for userID (%v)", userID))
 	}
 }

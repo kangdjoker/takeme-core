@@ -12,6 +12,7 @@ import (
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/service"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -19,7 +20,7 @@ func Middleware(h http.HandlerFunc, secure bool) http.HandlerFunc {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		log.Info("----------------------------- REQUEST START -----------------------------")
+		basic.LogInformation(r.Header.Get("requestID"), "----------------------------- REQUEST START -----------------------------")
 
 		var ctx context.Context
 		var corporate domain.Corporate

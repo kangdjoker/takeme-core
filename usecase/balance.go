@@ -8,6 +8,7 @@ import (
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/service"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	"github.com/kangdjoker/takeme-core/utils/database"
 	"github.com/kangdjoker/takeme-core/utils/gateway"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -308,7 +309,7 @@ func WithdrawBalance(tag string, statement domain.Statement, session mongo.Sessi
 	if err != nil {
 		return err
 	}
-	LogInformation(tag, "balance.Amount: "+strconv.Itoa(balance.Amount)+", "+strconv.Itoa(amount))
+	basic.LogInformation(tag, "balance.Amount: "+strconv.Itoa(balance.Amount)+", "+strconv.Itoa(amount))
 	if balance.Amount < amount {
 		return utils.ErrorBadRequest(utils.InsufficientBalance, "Insufficient balance")
 	}
