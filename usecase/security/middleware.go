@@ -26,6 +26,9 @@ func Middleware(h http.HandlerFunc, secure bool) http.HandlerFunc {
 		defer (*trCloser).Close()
 		defer (*span).Finish()
 		requestID := r.Header.Get("requestID")
+		if requestID != "" {
+			(*span).SetTag("requestID", requestID)
+		}
 		ctx := context.WithValue(r.Context(), "TRACESPAN", span)
 		ctx = context.WithValue(ctx, "TRACECLOSER", trCloser)
 		ctx = context.WithValue(ctx, "TAG", requestID)
@@ -179,6 +182,9 @@ func MiddlewareWithoutSignature(h http.HandlerFunc, secure bool) http.HandlerFun
 		defer (*span).Finish()
 		(*span).LogFields(opentracingLog.Object("MiddlewareWithoutSignature", r.URL.Path))
 		requestID := r.Header.Get("requestID")
+		if requestID != "" {
+			(*span).SetTag("requestID", requestID)
+		}
 		ctx := context.WithValue(r.Context(), "TRACESPAN", span)
 		ctx = context.WithValue(ctx, "TRACECLOSER", trCloser)
 		ctx = context.WithValue(ctx, "TAG", requestID)
