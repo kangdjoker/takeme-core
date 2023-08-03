@@ -67,7 +67,7 @@ func createTransactionTopupManual(corporate domain.Corporate, balance domain.Bal
 		TransactionCode:  utils.GenerateTransactionCode("2"),
 		CorporateID:      corporate.ID,
 		Type:             domain.TOPUP,
-		Method:           domain.METHOD_VA,
+		Method:           domain.METHOD_DASHBOARD,
 		ToBalanceID:      balance.ID,
 		FromBalanceID:    balance.ID,
 		From:             domain.TransactionObject{},

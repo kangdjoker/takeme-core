@@ -25,9 +25,10 @@ const (
 )
 
 const (
-	METHOD_VA      = "Virtual Account"
-	METHOD_CARD    = "Credit Card"
-	METHOD_BALANCE = "Wallet Balance"
+	METHOD_VA        = "Virtual Account"
+	METHOD_CARD      = "Credit Card"
+	METHOD_BALANCE   = "Wallet Balance"
+	METHOD_DASHBOARD = "DASHBOARD"
 )
 
 const (
