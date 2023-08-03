@@ -308,12 +308,16 @@ type ParamLog struct {
 	Tag      string
 }
 
-func SetupTracer(serviceName string, spanName string) (*io.Closer, *opentracing.Span) {
+func SetupTracer(spanName string) (*io.Closer, *opentracing.Span) {
 	cfg := jaegercfg.Configuration{
-		ServiceName: serviceName,
+		ServiceName: os.Getenv("JAEGER_SERVICE_NAME"),
 		Sampler: &jaegercfg.SamplerConfig{
-			Type:  jaeger.SamplerTypeRateLimiting,
-			Param: 1000,
+			Type:              jaeger.SamplerTypeRateLimiting,
+			Param:             1000,
+			SamplingServerURL: "http://" + os.Getenv("JAEGER_SAMPLER_MANAGER_HOST_PORT") + "/sampling",
+		},
+		Reporter: &jaegercfg.ReporterConfig{
+			LocalAgentHostPort: os.Getenv("JAEGER_AGENT_HOST") + ":" + os.Getenv("JAEGER_AGENT_PORT"),
 		},
 	}
 	jLogger := jaegerlog.StdLogger
