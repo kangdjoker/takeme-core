@@ -1,13 +1,14 @@
 package acceptpayment
 
 import (
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	"github.com/kangdjoker/takeme-core/utils/gateway"
 )
 
-func CancelSubscribe(subscribeCode string) error {
+func CancelSubscribe(paramLog *basic.ParamLog, subscribeCode string) error {
 	gateway := gateway.StripeGateway{}
 
-	err := gateway.CancelSubscribe(subscribeCode)
+	err := gateway.CancelSubscribe(paramLog, subscribeCode)
 	if err != nil {
 		return err
 	}

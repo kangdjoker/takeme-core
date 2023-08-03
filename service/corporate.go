@@ -7,6 +7,7 @@ import (
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/domain/dto"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	"github.com/kangdjoker/takeme-core/utils/database"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -45,21 +46,23 @@ func CorporateByID(ID string, session mongo.SessionContext) (domain.Corporate, e
 }
 
 func CorporateByRequest(r *http.Request) (domain.Corporate, error) {
+	ioCloser, span, tag := basic.RequestToTracing(r)
+	paramLog := &basic.ParamLog{Span: span, TrCloser: ioCloser, Tag: tag}
 	corporateID := r.Header.Get("corporate")
 
 	model := domain.Corporate{}
 	cursor := database.FindOneByID(domain.CORPORATE_COLLECTION, corporateID)
 	err := cursor.Decode(&model)
 	if err != nil {
-		return domain.Corporate{}, utils.ErrorBadRequest(utils.InvalidCorporateKey, "Corporate not found")
+		return domain.Corporate{}, utils.ErrorBadRequest(paramLog, utils.InvalidCorporateKey, "Corporate not found")
 	}
 
-	err = ValidateCorporateExist(model)
+	err = ValidateCorporateExist(paramLog, model)
 	if err != nil {
 		return domain.Corporate{}, err
 	}
 
-	err = ValidateCorporateLocked(model)
+	err = ValidateCorporateLocked(paramLog, model)
 	if err != nil {
 		return domain.Corporate{}, err
 	}
@@ -67,8 +70,8 @@ func CorporateByRequest(r *http.Request) (domain.Corporate, error) {
 	return model, nil
 }
 
-func CorporateUpdateOne(model *domain.Corporate, session mongo.SessionContext) error {
-	err := database.SessionUpdateOne(model, session)
+func CorporateUpdateOne(paramLog *basic.ParamLog, model *domain.Corporate, session mongo.SessionContext) error {
+	err := database.SessionUpdateOne(paramLog, model, session)
 	if err != nil {
 		return err
 	}
@@ -76,14 +79,14 @@ func CorporateUpdateOne(model *domain.Corporate, session mongo.SessionContext) e
 	return nil
 }
 
-func CorporateReduceAccessAttempt(corporateID string, session mongo.SessionContext) error {
+func CorporateReduceAccessAttempt(paramLog *basic.ParamLog, corporateID string, session mongo.SessionContext) error {
 
 	corporate, err := CorporateByID(corporateID, session)
 	if err != nil {
 		return err
 	}
 
-	err = ValidateCorporateLocked(corporate)
+	err = ValidateCorporateLocked(paramLog, corporate)
 	if err != nil {
 		return err
 	}
@@ -96,7 +99,7 @@ func CorporateReduceAccessAttempt(corporateID string, session mongo.SessionConte
 		corporate.AccessAttempt -= 1
 	}
 
-	err = CorporateUpdateOne(&corporate, session)
+	err = CorporateUpdateOne(paramLog, &corporate, session)
 	if err != nil {
 		return err
 	}
@@ -104,16 +107,16 @@ func CorporateReduceAccessAttempt(corporateID string, session mongo.SessionConte
 	return nil
 }
 
-func CorporateSavePIN(corporate *domain.Corporate, pin string, session mongo.SessionContext) error {
+func CorporateSavePIN(paramLog *basic.ParamLog, corporate *domain.Corporate, pin string, session mongo.SessionContext) error {
 
 	pin, err := utils.RSADecrypt(pin)
 	if err != nil {
-		return utils.ErrorInternalServer(utils.DecryptError, err.Error())
+		return utils.ErrorInternalServer(paramLog, utils.DecryptError, err.Error())
 	}
 
 	corporate.PIN = pin
 
-	err = CorporateUpdateOne(corporate, session)
+	err = CorporateUpdateOne(paramLog, corporate, session)
 	if err != nil {
 		return err
 	}
@@ -121,10 +124,10 @@ func CorporateSavePIN(corporate *domain.Corporate, pin string, session mongo.Ses
 	return nil
 }
 
-func CorporateChangeNewPIN(corporate *domain.Corporate, newPIN string, session mongo.SessionContext) error {
+func CorporateChangeNewPIN(paramLog *basic.ParamLog, corporate *domain.Corporate, newPIN string, session mongo.SessionContext) error {
 	corporate.PIN = newPIN
 
-	err := CorporateUpdateOne(corporate, session)
+	err := CorporateUpdateOne(paramLog, corporate, session)
 	if err != nil {
 		return err
 	}
@@ -132,23 +135,23 @@ func CorporateChangeNewPIN(corporate *domain.Corporate, newPIN string, session m
 	return nil
 }
 
-func ValidateCorporateLocked(corporate domain.Corporate) error {
+func ValidateCorporateLocked(paramLog *basic.ParamLog, corporate domain.Corporate) error {
 	if corporate.Active == false {
-		return utils.ErrorBadRequest(utils.CorporateLocked, "Corporate Locked")
+		return utils.ErrorBadRequest(paramLog, utils.CorporateLocked, "Corporate Locked")
 	}
 
 	return nil
 }
 
-func ValidateCorporateExist(corporate domain.Corporate) error {
+func ValidateCorporateExist(paramLog *basic.ParamLog, corporate domain.Corporate) error {
 	if corporate.Name == "" {
-		return utils.ErrorBadRequest(utils.InvalidCorporateKey, "Corporate not found")
+		return utils.ErrorBadRequest(paramLog, utils.InvalidCorporateKey, "Corporate not found")
 	}
 
 	return nil
 }
 
-func CorporateDTOByID(corporateID string) (dto.Corporate, error) {
+func CorporateDTOByID(paramLog *basic.ParamLog, corporateID string) (dto.Corporate, error) {
 
 	objectID, err := primitive.ObjectIDFromHex(corporateID)
 
@@ -203,10 +206,10 @@ func CorporateDTOByID(corporateID string) (dto.Corporate, error) {
 	}
 
 	var result []dto.Corporate
-	cursor, err := database.Aggregate(domain.CORPORATE_COLLECTION, query)
+	cursor, err := database.Aggregate(paramLog, domain.CORPORATE_COLLECTION, query)
 	cursor.All(context.TODO(), &result)
 	if err != nil {
-		return dto.Corporate{}, utils.ErrorInternalServer(utils.QueryFailed, "Query failed or cannot decode")
+		return dto.Corporate{}, utils.ErrorInternalServer(paramLog, utils.QueryFailed, "Query failed or cannot decode")
 	}
 
 	return result[0], nil

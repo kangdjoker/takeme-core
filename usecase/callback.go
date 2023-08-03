@@ -115,11 +115,11 @@ func callbackTopupHTTP(paramLog *basic.ParamLog, corporate domain.Corporate, tra
 	reqBody, _ := json.Marshal(payload)
 
 	if resp.StatusCode() != 200 || err != nil {
-		go service.CreateCallbackHistoryRefused(transaction.TransactionCode, url, string(reqBody))
-		return utils.ErrorInternalServer(utils.CallbackError, "Callback topup corporate connection refused or Timeout")
+		go service.CreateCallbackHistoryRefused(paramLog, transaction.TransactionCode, url, string(reqBody))
+		return utils.ErrorInternalServer(paramLog, utils.CallbackError, "Callback topup corporate connection refused or Timeout")
 	}
 
-	go service.CreateCallbackHistory(transaction.TransactionCode, url,
+	go service.CreateCallbackHistory(paramLog, transaction.TransactionCode, url,
 		string(reqBody), string(resp.Body()), strconv.Itoa(resp.StatusCode()))
 
 	return nil
@@ -146,11 +146,11 @@ func callbackDeductHTTP(paramLog *basic.ParamLog, corporate domain.Corporate, tr
 	reqBody, _ := json.Marshal(payload)
 
 	if resp.StatusCode() != 200 || err != nil {
-		go service.CreateCallbackHistoryRefused(transaction.TransactionCode, url, string(reqBody))
-		return utils.ErrorInternalServer(utils.CallbackError, "Callback deduct corporate connection refused or Timeout")
+		go service.CreateCallbackHistoryRefused(paramLog, transaction.TransactionCode, url, string(reqBody))
+		return utils.ErrorInternalServer(paramLog, utils.CallbackError, "Callback deduct corporate connection refused or Timeout")
 	}
 
-	go service.CreateCallbackHistory(transaction.TransactionCode, url,
+	go service.CreateCallbackHistory(paramLog, transaction.TransactionCode, url,
 		string(reqBody), string(resp.Body()), strconv.Itoa(resp.StatusCode()))
 
 	return nil
@@ -177,11 +177,11 @@ func callbackTransferHTTP(paramLog *basic.ParamLog, corporate domain.Corporate, 
 	reqBody, _ := json.Marshal(payload)
 
 	if resp.StatusCode() != 200 || err != nil {
-		go service.CreateCallbackHistoryRefused(transaction.TransactionCode, url, string(reqBody))
-		return utils.ErrorInternalServer(utils.CallbackError, "Callback transfer corporate connection refused or Timeout")
+		go service.CreateCallbackHistoryRefused(paramLog, transaction.TransactionCode, url, string(reqBody))
+		return utils.ErrorInternalServer(paramLog, utils.CallbackError, "Callback transfer corporate connection refused or Timeout")
 	}
 
-	go service.CreateCallbackHistory(transaction.TransactionCode, url,
+	go service.CreateCallbackHistory(paramLog, transaction.TransactionCode, url,
 		string(reqBody), string(resp.Body()), strconv.Itoa(resp.StatusCode()))
 
 	return nil
@@ -204,7 +204,7 @@ func callbackBulkHTTP(paramLog *basic.ParamLog, corporate domain.Corporate, payl
 	utils.LoggingAPICall(paramLog, resp.StatusCode(), payload, resp.Body, "Callback bulk corporate")
 
 	if resp.StatusCode() != 200 || err != nil {
-		return utils.ErrorInternalServer(utils.CallbackError, "Callback bulk corporate connection refused or Timeout")
+		return utils.ErrorInternalServer(paramLog, utils.CallbackError, "Callback bulk corporate connection refused or Timeout")
 	}
 
 	return nil
@@ -231,11 +231,11 @@ func callbackAcceptPaymentHTTP(paramLog *basic.ParamLog, corporate domain.Corpor
 	reqBody, _ := json.Marshal(payload)
 
 	if resp.StatusCode() != 200 || err != nil {
-		go service.CreateCallbackHistoryRefused(transaction.TransactionCode, url, string(reqBody))
-		return utils.ErrorInternalServer(utils.CallbackError, "Callback topup corporate connection refused or Timeout")
+		go service.CreateCallbackHistoryRefused(paramLog, transaction.TransactionCode, url, string(reqBody))
+		return utils.ErrorInternalServer(paramLog, utils.CallbackError, "Callback topup corporate connection refused or Timeout")
 	}
 
-	go service.CreateCallbackHistory(transaction.TransactionCode, url,
+	go service.CreateCallbackHistory(paramLog, transaction.TransactionCode, url,
 		string(reqBody), string(resp.Body()), strconv.Itoa(resp.StatusCode()))
 
 	return nil

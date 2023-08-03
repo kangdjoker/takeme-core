@@ -21,7 +21,7 @@ type Gateway interface {
 	Name() string
 	CreateVA(paramLog *basic.ParamLog, balanceID string, nameVA string, bankCode string) (string, error)
 	CallbackVA(w http.ResponseWriter, r *http.Request) (string, int, domain.Bank, string, error)
-	CreateTransfer(transaction domain.Transaction) (string, error)
+	CreateTransfer(paramLog *basic.ParamLog, transaction domain.Transaction) (string, error)
 	CallbackTransfer(w http.ResponseWriter, r *http.Request) (string, string, string, error)
-	Inquiry(bankCode string, accountNumber string) (string, error)
+	Inquiry(paramLog *basic.ParamLog, bankCode string, accountNumber string) (string, error)
 }

@@ -36,7 +36,7 @@ func LoadPayload(r *http.Request, payload interface{}) error {
 	)
 	err := json.Unmarshal(r.Context().Value("payload").([]byte), &payload)
 	if err != nil {
-		return ErrorBadRequest(InvalidRequestPayload, "Invalid request payload")
+		return ErrorBadRequest(&paramLog, InvalidRequestPayload, "Invalid request payload")
 	}
 	basic.LogInformation(&paramLog, "------------------------ Client payload ------------------------")
 

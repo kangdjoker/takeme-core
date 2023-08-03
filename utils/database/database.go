@@ -7,6 +7,7 @@ import (
 
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -15,7 +16,7 @@ import (
 
 var DBClient *mongo.Client
 
-func FindCount(colName string, query bson.M) (int64, error) {
+func FindCount(paramLog *basic.ParamLog, colName string, query bson.M) (int64, error) {
 
 	opts := options.CountOptions{}
 
@@ -27,13 +28,13 @@ func FindCount(colName string, query bson.M) (int64, error) {
 	)
 
 	if err != nil {
-		return 0, utils.ErrorInternalServer(utils.QueryFailed, err.Error())
+		return 0, utils.ErrorInternalServer(paramLog, utils.QueryFailed, err.Error())
 	}
 
 	return total, nil
 }
 
-func FindWithJoin(colName string, query []bson.M) (*mongo.Cursor, error) {
+func FindWithJoin(paramLog *basic.ParamLog, colName string, query []bson.M) (*mongo.Cursor, error) {
 	a := true
 	collection := DBClient.Database(os.Getenv("MONGO_DB_NAME")).Collection(colName)
 	cursor, err := collection.Aggregate(
@@ -46,7 +47,7 @@ func FindWithJoin(colName string, query []bson.M) (*mongo.Cursor, error) {
 
 	if err != nil {
 		errorMessage := err.Error()
-		return nil, utils.ErrorInternalServer(utils.QueryFailed, errorMessage)
+		return nil, utils.ErrorInternalServer(paramLog, utils.QueryFailed, errorMessage)
 	}
 
 	return cursor, nil
@@ -69,7 +70,7 @@ func FindOne(colName string, query bson.M) *mongo.SingleResult {
 	return result
 }
 
-func Find(colName string, query bson.M, page string, limit string) (*mongo.Cursor, error) {
+func Find(paramLog *basic.ParamLog, colName string, query bson.M, page string, limit string) (*mongo.Cursor, error) {
 
 	opts := options.Find()
 	opts.SetSort(bson.D{{"time", -1}})
@@ -88,13 +89,13 @@ func Find(colName string, query bson.M, page string, limit string) (*mongo.Curso
 		opts,
 	)
 	if err != nil {
-		return nil, utils.ErrorInternalServer(utils.QueryFailed, err.Error())
+		return nil, utils.ErrorInternalServer(paramLog, utils.QueryFailed, err.Error())
 	}
 
 	return cursor, nil
 }
 
-func FindOrderByID(colName string, query bson.M, page string, limit string) (*mongo.Cursor, error) {
+func FindOrderByID(paramLog *basic.ParamLog, colName string, query bson.M, page string, limit string) (*mongo.Cursor, error) {
 
 	opts := options.Find()
 	opts.SetSort(bson.D{{"_id", -1}})
@@ -113,13 +114,13 @@ func FindOrderByID(colName string, query bson.M, page string, limit string) (*mo
 		opts,
 	)
 	if err != nil {
-		return nil, utils.ErrorInternalServer(utils.QueryFailed, err.Error())
+		return nil, utils.ErrorInternalServer(paramLog, utils.QueryFailed, err.Error())
 	}
 
 	return cursor, nil
 }
 
-func FindAllOrderByID(colName string, query bson.M, page string, limit string) (*mongo.Cursor, error) {
+func FindAllOrderByID(paramLog *basic.ParamLog, colName string, query bson.M, page string, limit string) (*mongo.Cursor, error) {
 
 	opts := options.Find()
 	opts.SetSort(bson.D{{"_id", -1}})
@@ -138,13 +139,13 @@ func FindAllOrderByID(colName string, query bson.M, page string, limit string) (
 		opts,
 	)
 	if err != nil {
-		return nil, utils.ErrorInternalServer(utils.QueryFailed, err.Error())
+		return nil, utils.ErrorInternalServer(paramLog, utils.QueryFailed, err.Error())
 	}
 
 	return cursor, nil
 }
 
-func Aggregate(colName string, query []bson.M) (*mongo.Cursor, error) {
+func Aggregate(paramLog *basic.ParamLog, colName string, query []bson.M) (*mongo.Cursor, error) {
 	collection := DBClient.Database(os.Getenv("MONGO_DB_NAME")).Collection(colName)
 	cursor, err := collection.Aggregate(
 		context.TODO(),
@@ -152,13 +153,13 @@ func Aggregate(colName string, query []bson.M) (*mongo.Cursor, error) {
 	)
 
 	if err != nil {
-		return nil, utils.ErrorInternalServer(utils.QueryFailed, err.Error())
+		return nil, utils.ErrorInternalServer(paramLog, utils.QueryFailed, err.Error())
 	}
 
 	return cursor, nil
 }
 
-func IsExist(colName string, query bson.M) (*mongo.Cursor, error) {
+func IsExist(paramLog *basic.ParamLog, colName string, query bson.M) (*mongo.Cursor, error) {
 	opts := options.Find()
 	opts.SetLimit(1)
 
@@ -169,18 +170,18 @@ func IsExist(colName string, query bson.M) (*mongo.Cursor, error) {
 		opts,
 	)
 	if err != nil {
-		return nil, utils.ErrorInternalServer(utils.QueryFailed, err.Error())
+		return nil, utils.ErrorInternalServer(paramLog, utils.QueryFailed, err.Error())
 	}
 
 	return cursor, nil
 }
 
-func SaveOne(colName string, domain domain.BaseModel) error {
+func SaveOne(paramLog *basic.ParamLog, colName string, domain domain.BaseModel) error {
 
 	collection := DBClient.Database(os.Getenv("MONGO_DB_NAME")).Collection(colName)
 	result, err := collection.InsertOne(context.TODO(), domain)
 	if err != nil {
-		return utils.ErrorInternalServer(utils.InsertFailed, err.Error())
+		return utils.ErrorInternalServer(paramLog, utils.InsertFailed, err.Error())
 	}
 
 	ID := result.InsertedID.(primitive.ObjectID)
@@ -189,12 +190,12 @@ func SaveOne(colName string, domain domain.BaseModel) error {
 	return nil
 }
 
-func UpdateOne(colName string, domain domain.BaseModel) error {
+func UpdateOne(paramLog *basic.ParamLog, colName string, domain domain.BaseModel) error {
 
 	collection := DBClient.Database(os.Getenv("MONGO_DB_NAME")).Collection(colName)
 	document, err := toDoc(domain)
 	if err != nil {
-		return utils.ErrorInternalServer(utils.UpdateFailed, err.Error())
+		return utils.ErrorInternalServer(paramLog, utils.UpdateFailed, err.Error())
 	}
 
 	filter := bson.M{"_id": bson.M{"$eq": domain.GetDocumentID()}}
@@ -206,13 +207,13 @@ func UpdateOne(colName string, domain domain.BaseModel) error {
 		update,
 	)
 	if err != nil {
-		return utils.ErrorInternalServer(utils.UpdateFailed, err.Error())
+		return utils.ErrorInternalServer(paramLog, utils.UpdateFailed, err.Error())
 	}
 
 	return nil
 }
 
-func UpdateQuery(colName string, id primitive.ObjectID, update bson.M) error {
+func UpdateQuery(paramLog *basic.ParamLog, colName string, id primitive.ObjectID, update bson.M) error {
 
 	collection := DBClient.Database(os.Getenv("MONGO_DB_NAME")).Collection(colName)
 
@@ -224,23 +225,23 @@ func UpdateQuery(colName string, id primitive.ObjectID, update bson.M) error {
 		update,
 	)
 	if err != nil {
-		return utils.ErrorInternalServer(utils.UpdateFailed, err.Error())
+		return utils.ErrorInternalServer(paramLog, utils.UpdateFailed, err.Error())
 	}
 
 	return nil
 }
 
-func UpdateMany(domains []domain.BaseModel) error {
+func UpdateMany(paramLog *basic.ParamLog, domains []domain.BaseModel) error {
 
 	ctx := context.TODO()
 	session, err := DBClient.StartSession()
 	if err != nil {
-		return utils.ErrorInternalServer(utils.UpdateFailed, err.Error())
+		return utils.ErrorInternalServer(paramLog, utils.UpdateFailed, err.Error())
 	}
 
 	err = session.StartTransaction()
 	if err != nil {
-		return utils.ErrorInternalServer(utils.UpdateFailed, err.Error())
+		return utils.ErrorInternalServer(paramLog, utils.UpdateFailed, err.Error())
 	}
 
 	var docol []DocAndCollection
@@ -265,7 +266,7 @@ func UpdateMany(domains []domain.BaseModel) error {
 			)
 
 			if err != nil {
-				return utils.ErrorInternalServer(utils.UpdateFailed, err.Error())
+				return utils.ErrorInternalServer(paramLog, utils.UpdateFailed, err.Error())
 			}
 		}
 
@@ -273,13 +274,13 @@ func UpdateMany(domains []domain.BaseModel) error {
 		return nil
 	}); err != nil {
 		session.EndSession(ctx)
-		return utils.ErrorInternalServer(utils.UpdateFailed, err.Error())
+		return utils.ErrorInternalServer(paramLog, utils.UpdateFailed, err.Error())
 	}
 	session.EndSession(ctx)
 	return nil
 }
 
-func Update(colName string, filter bson.M, changes bson.D) (*mongo.UpdateResult, error) {
+func Update(paramLog *basic.ParamLog, colName string, filter bson.M, changes bson.D) (*mongo.UpdateResult, error) {
 	collection := DBClient.Database(os.Getenv("MONGO_DB_NAME")).Collection(colName)
 	result, err := collection.UpdateMany(
 		context.TODO(),
@@ -287,28 +288,28 @@ func Update(colName string, filter bson.M, changes bson.D) (*mongo.UpdateResult,
 		changes,
 	)
 	if err != nil {
-		return nil, utils.ErrorInternalServer(utils.UpdateFailed, err.Error())
+		return nil, utils.ErrorInternalServer(paramLog, utils.UpdateFailed, err.Error())
 	}
 
 	return result, nil
 }
 
-func DeleteOne(colName string, domain domain.BaseModel) error {
+func DeleteOne(paramLog *basic.ParamLog, colName string, domain domain.BaseModel) error {
 	collection := DBClient.Database(os.Getenv("MONGO_DB_NAME")).Collection(colName)
 	_, err := collection.DeleteOne(context.TODO(), bson.M{"ID": domain.GetDocumentID()})
 	if err != nil {
-		return utils.ErrorInternalServer(utils.DeleteFailed, err.Error())
+		return utils.ErrorInternalServer(paramLog, utils.DeleteFailed, err.Error())
 	}
 
 	return nil
 }
 
-func DeleteInActive(colName string, domain domain.BaseModel) error {
+func DeleteInActive(paramLog *basic.ParamLog, colName string, domain domain.BaseModel) error {
 	collection := DBClient.Database(os.Getenv("MONGO_DB_NAME")).Collection(colName)
 
 	_, err := collection.DeleteOne(context.TODO(), bson.M{"_id": domain.GetDocumentID(), "active": false, "pending": false})
 	if err != nil {
-		return utils.ErrorInternalServer(utils.DeleteFailed, err.Error())
+		return utils.ErrorInternalServer(paramLog, utils.DeleteFailed, err.Error())
 	}
 
 	return nil

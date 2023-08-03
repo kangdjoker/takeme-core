@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/kangdjoker/takeme-core/domain"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	"github.com/kangdjoker/takeme-core/utils/database"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -55,8 +56,8 @@ func BalanceSaveOne(model *domain.Balance, session mongo.SessionContext) error {
 	return nil
 }
 
-func BalanceSaveOneNoSession(model *domain.Balance) error {
-	err := database.SaveOne(domain.BALANCE_COLLECTION, model)
+func BalanceSaveOneNoSession(paramLog *basic.ParamLog, model *domain.Balance) error {
+	err := database.SaveOne(paramLog, domain.BALANCE_COLLECTION, model)
 	if err != nil {
 		return err
 	}
@@ -86,8 +87,8 @@ func BalanceByIDNoSession(ID string) (domain.Balance, error) {
 	return model, nil
 }
 
-func BalanceUpdate(model domain.Balance, session mongo.SessionContext) error {
-	err := database.SessionUpdateOne(&model, session)
+func BalanceUpdate(paramLog *basic.ParamLog, model domain.Balance, session mongo.SessionContext) error {
+	err := database.SessionUpdateOne(paramLog, &model, session)
 	if err != nil {
 		return err
 	}

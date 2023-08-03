@@ -11,7 +11,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/utils"
-	log "github.com/sirupsen/logrus"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
 type MMBCGateway struct {
@@ -29,23 +29,25 @@ func (gateway MMBCGateway) CallbackVA(w http.ResponseWriter, r *http.Request) (s
 	return "", 0, domain.Bank{}, "", nil
 }
 
-func (gateway MMBCGateway) CreateTransfer(transaction domain.Transaction) (string, error) {
+func (gateway MMBCGateway) CreateTransfer(paramLog *basic.ParamLog, transaction domain.Transaction) (string, error) {
 	if checkIsTransferToWallet(transaction.To.InstitutionCode) {
-		referece, err := createTransferToWallet(transaction)
+		referece, err := createTransferToWallet(paramLog, transaction)
 		return referece, err
 	} else {
-		referece, err := createTransferToBank(transaction)
+		referece, err := createTransferToBank(paramLog, transaction)
 		return referece, err
 	}
 }
 
 func (gateway MMBCGateway) CallbackTransfer(w http.ResponseWriter, r *http.Request) (string, string, string, error) {
-	log.Info("------------------------ MMBC hit callback transfer ------------------------")
+	ioCloser, span, tag := basic.RequestToTracing(r)
+	paramLog := &basic.ParamLog{Span: span, TrCloser: ioCloser, Tag: tag}
+	basic.LogInformation(paramLog, "------------------------ MMBC hit callback transfer ------------------------")
 	var payload MMBCTransferResponse
 
 	err := utils.LoadPayload(r, &payload)
 	if err != nil {
-		log.Info("Failed process mmbc callback ")
+		basic.LogInformation(paramLog, "Failed process mmbc callback ")
 		return "", "", "", err
 	}
 
@@ -60,14 +62,14 @@ func (gateway MMBCGateway) Inquiry(bankCode string, accountNumber string) (strin
 	return "", nil
 }
 
-func createTransferToBank(transaction domain.Transaction) (string, error) {
+func createTransferToBank(paramLog *basic.ParamLog, transaction domain.Transaction) (string, error) {
 	client := resty.New()
 	client.SetTimeout(10 * time.Minute)
 	url := os.Getenv("MMBC_TRANSFER_API_URL")
 
 	bankCode := utils.ConvertBankCodeMMBC(transaction.To.InstitutionCode)
 	if bankCode == "" {
-		return "", utils.ErrorInternalServer(utils.MMBCBankNoutFound, "MMBC Bank not found")
+		return "", utils.ErrorInternalServer(paramLog, utils.MMBCBankNoutFound, "MMBC Bank not found")
 	}
 
 	// need convert
@@ -89,15 +91,15 @@ func createTransferToBank(transaction domain.Transaction) (string, error) {
 		SetResult(&result).Post(url)
 
 	if err != nil {
-		return "", utils.ErrorInternalServer(utils.MMBCApiCallFailed, err.Error())
+		return "", utils.ErrorInternalServer(paramLog, utils.MMBCApiCallFailed, err.Error())
 	}
 
 	b, _ := json.Marshal(result)
-	log.Info("Response mmbc remit pay ", string(b))
+	basic.LogInformation(paramLog, "Response mmbc remit pay "+string(b))
 
 	if result.Status != "CONFIRM" && result.Result != "ok" {
-		log.Info("Failed reason mmbc remit pay ", result.Reason)
-		return "", utils.ErrorInternalServer(utils.MMBCRetryTransctionFailed, "MMBC API Call failed")
+		basic.LogInformation(paramLog, "Failed reason mmbc remit pay "+result.Reason)
+		return "", utils.ErrorInternalServer(paramLog, utils.MMBCRetryTransctionFailed, "MMBC API Call failed")
 	}
 
 	// go createFakeSuccessCallback(transaction.TransactionCode)
@@ -105,14 +107,14 @@ func createTransferToBank(transaction domain.Transaction) (string, error) {
 	return result.Invoice, nil
 }
 
-func createTransferToWallet(transaction domain.Transaction) (string, error) {
+func createTransferToWallet(paramLog *basic.ParamLog, transaction domain.Transaction) (string, error) {
 	client := resty.New()
 	client.SetTimeout(10 * time.Minute)
 	url := os.Getenv("MMBC_TRANSFER_WALLET_API_URL")
 
 	bankCode := utils.ConvertBankCodeMMBC(transaction.To.InstitutionCode)
 	if bankCode == "" {
-		return "", utils.ErrorInternalServer(utils.MMBCBankNoutFound, "MMBC Bank not found")
+		return "", utils.ErrorInternalServer(paramLog, utils.MMBCBankNoutFound, "MMBC Bank not found")
 	}
 
 	bankAccount := transaction.To.AccountNumber
@@ -132,15 +134,15 @@ func createTransferToWallet(transaction domain.Transaction) (string, error) {
 		SetResult(&result).Post(url)
 
 	if err != nil {
-		return "", utils.ErrorInternalServer(utils.MMBCApiCallFailed, err.Error())
+		return "", utils.ErrorInternalServer(paramLog, utils.MMBCApiCallFailed, err.Error())
 	}
 
 	b, _ := json.Marshal(result)
-	log.Info("Response mmbc remit pay ", string(b))
+	basic.LogInformation(paramLog, "Response mmbc remit pay "+string(b))
 
 	if result.Status != "CONFIRM" && result.Result != "ok" {
-		log.Info("Failed reason mmbc remit pay ", result.Reason)
-		return "", utils.ErrorInternalServer(utils.MMBCRetryTransctionFailed, "MMBC API Call failed")
+		basic.LogInformation(paramLog, "Failed reason mmbc remit pay "+result.Reason)
+		return "", utils.ErrorInternalServer(paramLog, utils.MMBCRetryTransctionFailed, "MMBC API Call failed")
 	}
 
 	// go createFakeSuccessCallback(transaction.TransactionCode)

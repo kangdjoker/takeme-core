@@ -6,9 +6,10 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/kangdjoker/takeme-core/domain"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
-func JWTDecode(tokenString string) (domain.Claims, error) {
+func JWTDecode(paramLog *basic.ParamLog, tokenString string) (domain.Claims, error) {
 
 	claims := domain.Claims{}
 
@@ -21,18 +22,18 @@ func JWTDecode(tokenString string) (domain.Claims, error) {
 	})
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
-			return domain.Claims{}, ErrorUnauthorized()
+			return domain.Claims{}, ErrorUnauthorized(paramLog)
 		}
-		return domain.Claims{}, ErrorUnauthorized()
+		return domain.Claims{}, ErrorUnauthorized(paramLog)
 	}
 	if !tkn.Valid {
-		return domain.Claims{}, ErrorUnauthorized()
+		return domain.Claims{}, ErrorUnauthorized(paramLog)
 	}
 
 	return claims, nil
 }
 
-func JWTEncode(claimsAble domain.ClaimsAble, corporate domain.Corporate) (string, error) {
+func JWTEncode(paramLog *basic.ParamLog, claimsAble domain.ClaimsAble, corporate domain.Corporate) (string, error) {
 	expirationTime := time.Now().Add(time.Minute * time.Duration(corporate.TokenExpired))
 
 	claims := &domain.Claims{
@@ -59,7 +60,7 @@ func JWTEncode(claimsAble domain.ClaimsAble, corporate domain.Corporate) (string
 	tokenString, err := token.SignedString(secretKey)
 	if err != nil {
 		// If there is an error in creating the JWT return an internal server error
-		return "", ErrorInternalServer(DecodeTokenFailed, err.Error())
+		return "", ErrorInternalServer(paramLog, DecodeTokenFailed, err.Error())
 	}
 
 	return tokenString, nil

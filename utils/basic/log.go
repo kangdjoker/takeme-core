@@ -11,7 +11,6 @@ import (
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/opentracing/opentracing-go"
 	opentracingLog "github.com/opentracing/opentracing-go/log"
-	"github.com/sirupsen/logrus"
 	"github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	jaegerlog "github.com/uber/jaeger-client-go/log"
@@ -127,7 +126,6 @@ func LogUpdate(model Log, session mongo.SessionContext) error {
 
 func logInformation(isError bool, paramLog *ParamLog, data interface{}) (Log, error) {
 	if paramLog.Span != nil {
-		logrus.Info("JAEGER.logInformation")
 		(*paramLog.Span).LogFields(opentracingLog.Object("logInformation", data))
 	}
 	var log Log
@@ -142,7 +140,6 @@ func logInformation(isError bool, paramLog *ParamLog, data interface{}) (Log, er
 		if err != nil {
 			return errors.New("log db error")
 		}
-		logrus.Info("LOGCreate")
 		log, err = LogCreate(isError, paramLog, data, session)
 
 		if err != nil {
@@ -173,7 +170,6 @@ func LogError(paramLog *ParamLog, data interface{}) (Log, error) {
 }
 func LogInformation(paramLog *ParamLog, data interface{}) (Log, error) {
 	if DBClient == nil {
-		logrus.Info("NODBCLIENT")
 		return Log{}, errors.New("No DB Client")
 	}
 	return logInformation(false, paramLog, data)
@@ -293,7 +289,6 @@ func SetupDB() error {
 
 	// Return error if there problem
 	if err != nil {
-		logrus.Info("Unable to connect MONGO ", err.Error())
 		return err
 	}
 
@@ -333,26 +328,17 @@ func RequestToTracing(r *http.Request) (*io.Closer, *opentracing.Span, string) {
 	tag := ""
 	tagC := c.Value("TAG")
 	if tagC != nil {
-		logrus.Println("JAEGER.TAG.Available")
 		tag = tagC.(string)
-	} else {
-		logrus.Println("JAEGER.TAG.NA")
 	}
 	var trCloser *io.Closer
 	var span *opentracing.Span
 	trCloserC := c.Value("TRACECLOSER")
 	spC := c.Value("TRACESPAN")
 	if trCloserC != nil {
-		logrus.Println("JAEGER.TR.Available")
 		trCloser = trCloserC.(*io.Closer)
-	} else {
-		logrus.Println("JAEGER.TR.NA")
 	}
 	if spC != nil {
-		logrus.Println("JAEGER.SP.Available")
 		span = spC.(*opentracing.Span)
-	} else {
-		logrus.Println("JAEGER.SP.NA")
 	}
 	return trCloser, span, tag
 }

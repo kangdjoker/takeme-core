@@ -11,7 +11,6 @@ import (
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/utils"
 	"github.com/kangdjoker/takeme-core/utils/basic"
-	log "github.com/sirupsen/logrus"
 )
 
 type PermataGateway struct {
@@ -79,23 +78,23 @@ func (gw PermataGateway) CreateTransfer(paramLog *basic.ParamLog, transaction do
 		SetBody(payload).
 		SetResult(&result).Post(url)
 
-	log.Info("url:" + url)
+	basic.LogInformation(paramLog, "url:"+url)
 	bh, _ := json.Marshal(header)
-	log.Info("header:" + string(bh))
+	basic.LogInformation(paramLog, "header:"+string(bh))
 	utils.LoggingAPICall(paramLog, resp.StatusCode(), payload, result, "Permata Payment API Call ")
 
 	if err != nil {
-		return requestId, utils.ErrorInternalServer(utils.PermataApiCallFailed, err.Error())
+		return requestId, utils.ErrorInternalServer(paramLog, utils.PermataApiCallFailed, err.Error())
 	}
 
 	if len(result.ResponseCode) >= 3 {
 		if result.ResponseCode[:3] == "200" {
 			return result.BeneficiaryAccountName, nil
 		} else {
-			return requestId, utils.ErrorBadRequest(utils.InquiryAccountHolderNameNotFound, result.ResponseMessage)
+			return requestId, utils.ErrorBadRequest(paramLog, utils.InquiryAccountHolderNameNotFound, result.ResponseMessage)
 		}
 	} else {
-		return requestId, utils.ErrorBadRequest(utils.InquiryAccountHolderNameNotFound, "Unknown response")
+		return requestId, utils.ErrorBadRequest(paramLog, utils.InquiryAccountHolderNameNotFound, "Unknown response")
 	}
 }
 func (gw PermataGateway) CallbackTransfer(w http.ResponseWriter, r *http.Request) (string, string, string, error) {
@@ -205,22 +204,22 @@ func (gw PermataGateway) Inquiry(paramLog *basic.ParamLog, bankCode string, acco
 		SetBody(payload).
 		SetResult(&result).Post(url)
 
-	log.Info("url:" + url)
+	basic.LogInformation(paramLog, "url:"+url)
 	bh, _ := json.Marshal(header)
-	log.Info("header:" + string(bh))
+	basic.LogInformation(paramLog, "header:"+string(bh))
 	utils.LoggingAPICall(paramLog, resp.StatusCode(), payload, result, "Permata Inquiry API Call ")
 
 	if err != nil {
-		return "", utils.ErrorInternalServer(utils.OYApiCallFailed, err.Error())
+		return "", utils.ErrorInternalServer(paramLog, utils.OYApiCallFailed, err.Error())
 	}
 
 	if len(result.ResponseCode) >= 3 {
 		if result.ResponseCode[:3] == "200" {
 			return result.BeneficiaryAccountName, nil
 		} else {
-			return "", utils.ErrorBadRequest(utils.InquiryAccountHolderNameNotFound, result.ResponseMessage)
+			return "", utils.ErrorBadRequest(paramLog, utils.InquiryAccountHolderNameNotFound, result.ResponseMessage)
 		}
 	} else {
-		return "", utils.ErrorBadRequest(utils.InquiryAccountHolderNameNotFound, "Unknown response")
+		return "", utils.ErrorBadRequest(paramLog, utils.InquiryAccountHolderNameNotFound, "Unknown response")
 	}
 }

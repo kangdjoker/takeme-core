@@ -15,7 +15,6 @@ import (
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/utils"
 	"github.com/kangdjoker/takeme-core/utils/basic"
-	log "github.com/sirupsen/logrus"
 )
 
 type XenditGateway struct {
@@ -53,7 +52,7 @@ func (gateway XenditGateway) CreateVA(paramLog *basic.ParamLog, balanceID string
 	}, result, "Xendit Create VA API ")
 
 	if err != nil || resp.StatusCode() != 200 {
-		return "", utils.ErrorInternalServer(utils.XenditApiCallFailed, "Failed call xendit")
+		return "", utils.ErrorInternalServer(paramLog, utils.XenditApiCallFailed, "Failed call xendit")
 	}
 
 	return result.AccountNumber, nil
@@ -61,8 +60,9 @@ func (gateway XenditGateway) CreateVA(paramLog *basic.ParamLog, balanceID string
 
 func (gateway XenditGateway) CallbackVA(w http.ResponseWriter, r *http.Request) (
 	string, int, domain.Bank, string, error) {
-
-	log.Info("------------------------ Xendit hit callback topup ------------------------")
+	ioCloser, span, tag := basic.RequestToTracing(r)
+	paramLog := &basic.ParamLog{Span: span, TrCloser: ioCloser, Tag: tag}
+	basic.LogInformation(paramLog, "------------------------ Xendit hit callback topup ------------------------")
 
 	// Convert json body to struct
 	var payload XenditVATopupPayload
@@ -71,15 +71,16 @@ func (gateway XenditGateway) CallbackVA(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		return "", 0, domain.Bank{}, "", err
 	}
+	b, _ := json.Marshal(payload)
 
-	log.Info("Xendit topup callback payload :", payload)
+	basic.LogInformation(paramLog, "Xendit topup callback payload :"+string(b))
 
-	err = validateCallbackToken(token)
+	err = validateCallbackToken(paramLog, token)
 	if err != nil {
 		return "", 0, domain.Bank{}, "", err
 	}
 
-	log.Info(fmt.Sprintf("Callback body : %v", payload))
+	basic.LogInformation(paramLog, fmt.Sprintf("Callback body : %v", payload))
 
 	balanceID := payload.BalanceID
 	amount := payload.Amount
@@ -94,7 +95,7 @@ func (gateway XenditGateway) CallbackVA(w http.ResponseWriter, r *http.Request) 
 	return balanceID, amount, bank, reference, nil
 }
 
-func (gateway XenditGateway) CreateTransfer(transaction domain.Transaction) (string, error) {
+func (gateway XenditGateway) CreateTransfer(paramLog *basic.ParamLog, transaction domain.Transaction) (string, error) {
 	apiUrl := os.Getenv("XENDIT_TRANSFER_API_URL")
 	data := url.Values{}
 	data.Set("external_id", transaction.TransactionCode)
@@ -115,20 +116,20 @@ func (gateway XenditGateway) CreateTransfer(transaction domain.Transaction) (str
 	disbursementID := ""
 	resp, error := client.Do(r)
 	if error != nil {
-		return disbursementID, utils.ErrorInternalServer(utils.XenditApiCallFailed, error.Error())
+		return disbursementID, utils.ErrorInternalServer(paramLog, utils.XenditApiCallFailed, error.Error())
 	}
 
 	var resMap map[string]interface{}
 	decoder := json.NewDecoder(resp.Body)
 	err := decoder.Decode(&resMap)
-	log.Info(fmt.Sprintf("Response from xendit disbursement API body [ %v ]", resMap))
+	basic.LogInformation(paramLog, fmt.Sprintf("Response from xendit disbursement API body [ %v ]", resMap))
 	if err != nil {
-		return disbursementID, utils.ErrorInternalServer(utils.XenditApiCallFailed, fmt.Sprintf("Xendit API failed : %v",
+		return disbursementID, utils.ErrorInternalServer(paramLog, utils.XenditApiCallFailed, fmt.Sprintf("Xendit API failed : %v",
 			resp.Body))
 	}
 
 	if resp.StatusCode != 200 {
-		return disbursementID, utils.ErrorInternalServer(utils.XenditApiCallFailed, fmt.Sprintf("Xendit API failed : %v", resp.Body))
+		return disbursementID, utils.ErrorInternalServer(paramLog, utils.XenditApiCallFailed, fmt.Sprintf("Xendit API failed : %v", resp.Body))
 	}
 
 	disbursementID = resMap["id"].(string)
@@ -137,7 +138,9 @@ func (gateway XenditGateway) CreateTransfer(transaction domain.Transaction) (str
 }
 
 func (gateway XenditGateway) CallbackTransfer(w http.ResponseWriter, r *http.Request) (string, string, string, error) {
-	log.Info("------------------------ Xendit hit callback transfer ------------------------")
+	ioCloser, span, tag := basic.RequestToTracing(r)
+	paramLog := &basic.ParamLog{Span: span, TrCloser: ioCloser, Tag: tag}
+	basic.LogInformation(paramLog, "------------------------ Xendit hit callback transfer ------------------------")
 
 	// Convert json body to struct
 	var payload XenditTransferBankCallback
@@ -145,8 +148,8 @@ func (gateway XenditGateway) CallbackTransfer(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		return "", "", "", err
 	}
-
-	log.Info("Xendit transfer callback payload :", payload)
+	b, _ := json.Marshal(payload)
+	basic.LogInformation(paramLog, "Xendit transfer callback payload :"+string(b))
 
 	transactionCode := payload.ExternalID
 	reference := payload.ID
@@ -155,13 +158,13 @@ func (gateway XenditGateway) CallbackTransfer(w http.ResponseWriter, r *http.Req
 	return transactionCode, reference, status, nil
 }
 
-func (gateway XenditGateway) Inquiry(bankCode string, accountNumber string) (string, error) {
+func (gateway XenditGateway) Inquiry(paramLog *basic.ParamLog, bankCode string, accountNumber string) (string, error) {
 	return "", nil
 }
 
-func validateCallbackToken(token string) error {
+func validateCallbackToken(paramLog *basic.ParamLog, token string) error {
 	if token != os.Getenv("XENDIT_CALLBACK_TOKEN") {
-		return utils.ErrorBadRequest(utils.InvalidRequestPayload, "Topup API callback failed")
+		return utils.ErrorBadRequest(paramLog, utils.InvalidRequestPayload, "Topup API callback failed")
 	}
 
 	return nil

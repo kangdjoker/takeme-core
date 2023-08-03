@@ -28,22 +28,22 @@ type DeductCorporate struct {
 func (self DeductCorporate) Execute(paramLog *basic.ParamLog, corporate domain.Corporate, actor domain.ActorAble,
 	toBalanceID string, fromBalanceID string, subAmount int, encryptedPIN string, externalID string, requestId string) (domain.Transaction, error) {
 
-	fromBalance, err := identifyBalance(fromBalanceID)
+	fromBalance, err := identifyBalance(paramLog, fromBalanceID)
 	if err != nil {
 		return domain.Transaction{}, err
 	}
 
-	from, err := usecase.ActorObjectToActor(fromBalance.Owner.ToActorObject())
+	from, err := usecase.ActorObjectToActor(paramLog, fromBalance.Owner.ToActorObject())
 	if err != nil {
 		return domain.Transaction{}, err
 	}
 
-	toBalance, err := identifyBalance(toBalanceID)
+	toBalance, err := identifyBalance(paramLog, toBalanceID)
 	if err != nil {
 		return domain.Transaction{}, err
 	}
 
-	to, err := usecase.ActorObjectToActor(toBalance.Owner.ToActorObject())
+	to, err := usecase.ActorObjectToActor(paramLog, toBalance.Owner.ToActorObject())
 	if err != nil {
 		return domain.Transaction{}, err
 	}
@@ -65,7 +65,7 @@ func (self DeductCorporate) Execute(paramLog *basic.ParamLog, corporate domain.C
 	transaction, transactionStatement := createTransaction(self.corporate, self.fromBalance, self.actor, self.from, self.to,
 		self.toBalance, self.subAmount, self.externalID, requestId)
 
-	feeStatement, err := self.transactionUsecase.CreateFeeStatement(corporate, self.fromBalance, transaction)
+	feeStatement, err := self.transactionUsecase.CreateFeeStatement(paramLog, corporate, self.fromBalance, transaction)
 	if err != nil {
 		return domain.Transaction{}, err
 	}
@@ -73,17 +73,17 @@ func (self DeductCorporate) Execute(paramLog *basic.ParamLog, corporate domain.C
 	statements = append(statements, transactionStatement...)
 	statements = append(statements, feeStatement...)
 
-	err = validationActor(self.actor, self.fromBalance, toBalance, self.pin)
+	err = validationActor(paramLog, self.actor, self.fromBalance, toBalance, self.pin)
 	if err != nil {
 		return domain.Transaction{}, err
 	}
 
-	err = validateCurrency(fromBalance, toBalance)
+	err = validateCurrency(paramLog, fromBalance, toBalance)
 	if err != nil {
 		return domain.Transaction{}, err
 	}
 
-	err = validationTransaction(transaction)
+	err = validationTransaction(paramLog, transaction)
 	if err != nil {
 		return domain.Transaction{}, err
 	}
@@ -145,33 +145,33 @@ func createTransaction(corporate domain.Corporate, fromBalance domain.Balance, a
 	return transaction, statements
 }
 
-func identifyBalance(balanceID string) (domain.Balance, error) {
+func identifyBalance(paramLog *basic.ParamLog, balanceID string) (domain.Balance, error) {
 	balance, err := service.BalanceByIDNoSession(balanceID)
 	if err != nil {
-		return domain.Balance{}, utils.ErrorBadRequest(utils.InvalidBalanceID, "Balance id not found")
+		return domain.Balance{}, utils.ErrorBadRequest(paramLog, utils.InvalidBalanceID, "Balance id not found")
 	}
 
 	return balance, nil
 }
 
-func validationActor(actor domain.ActorAble, sourceBalance domain.Balance, targetBalance domain.Balance, pin string) error {
+func validationActor(paramLog *basic.ParamLog, actor domain.ActorAble, sourceBalance domain.Balance, targetBalance domain.Balance, pin string) error {
 
-	err := usecase.ValidateActorPIN(actor, pin)
+	err := usecase.ValidateActorPIN(paramLog, actor, pin)
 	if err != nil {
 		return err
 	}
 
-	err = usecase.ValidateAccessBalance(actor, targetBalance.ID.Hex())
+	err = usecase.ValidateAccessBalance(paramLog, actor, targetBalance.ID.Hex())
 	if err != nil {
 		return err
 	}
 
-	err = usecase.ValidateIsVerify(actor)
+	err = usecase.ValidateIsVerify(paramLog, actor)
 	if err != nil {
 		return err
 	}
 
-	err = validateDeductScope(actor, sourceBalance)
+	err = validateDeductScope(paramLog, actor, sourceBalance)
 	if err != nil {
 		return err
 	}
@@ -179,21 +179,21 @@ func validationActor(actor domain.ActorAble, sourceBalance domain.Balance, targe
 	return nil
 }
 
-func validateDeductScope(actor domain.ActorAble, balance domain.Balance) error {
+func validateDeductScope(paramLog *basic.ParamLog, actor domain.ActorAble, balance domain.Balance) error {
 	if balance.CorporateID.Hex() != actor.GetActorID().Hex() {
-		return utils.ErrorBadRequest(utils.InvalidDeductTarget, "Invalid deduct target")
+		return utils.ErrorBadRequest(paramLog, utils.InvalidDeductTarget, "Invalid deduct target")
 	}
 
 	return nil
 }
 
-func validationTransaction(transaction domain.Transaction) error {
-	err := validateMaximum(transaction)
+func validationTransaction(paramLog *basic.ParamLog, transaction domain.Transaction) error {
+	err := validateMaximum(paramLog, transaction)
 	if err != nil {
 		return err
 	}
 
-	err = validateMinimum(transaction)
+	err = validateMinimum(paramLog, transaction)
 	if err != nil {
 		return err
 	}

@@ -4,30 +4,31 @@ import (
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/usecase/security"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
-func ValidateFormatPIN(pin string) error {
+func ValidateFormatPIN(paramLog *basic.ParamLog, pin string) error {
 	// validate character PIN
 	PINLength := len(pin)
 	if PINLength != 6 {
-		return utils.ErrorBadRequest(utils.InvalidFormatPIN, "Invalid format PIN")
+		return utils.ErrorBadRequest(&basic.ParamLog{}, utils.InvalidFormatPIN, "Invalid format PIN")
 	}
 
 	return nil
 }
 
-func ValidateActorPIN(actor domain.ActorAble, pinEncrypted string) error {
+func ValidateActorPIN(paramLog *basic.ParamLog, actor domain.ActorAble, pinEncrypted string) error {
 
 	if actor.IsFaceAsPIN() == false {
 		if pinEncrypted == "" {
-			return utils.ErrorForbidden()
+			return utils.ErrorForbidden(paramLog)
 		}
 
 		pin, err := utils.RSADecrypt(pinEncrypted)
 		if err != nil {
-			pin, err = utils.RSADecrypDashboard(pinEncrypted)
+			pin, err = utils.RSADecrypDashboard(paramLog, pinEncrypted)
 			if err != nil {
-				return utils.ErrorInternalServer(utils.DecryptError, "Decrypt error")
+				return utils.ErrorInternalServer(paramLog, utils.DecryptError, "Decrypt error")
 			}
 		}
 
@@ -35,13 +36,13 @@ func ValidateActorPIN(actor domain.ActorAble, pinEncrypted string) error {
 
 			a, ok := actor.(domain.User)
 			if ok {
-				go security.InvalidUserAuth(a)
+				go security.InvalidUserAuth(paramLog, a)
 			} else {
 				a, _ := actor.(domain.Corporate)
-				go security.InvalidCorporateAuth(a)
+				go security.InvalidCorporateAuth(paramLog, a)
 			}
 
-			return utils.ErrorForbidden()
+			return utils.ErrorForbidden(paramLog)
 		}
 
 		return nil
@@ -49,27 +50,27 @@ func ValidateActorPIN(actor domain.ActorAble, pinEncrypted string) error {
 		pin, err := utils.RSADecrypt(pinEncrypted)
 
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DecryptError, "Decrypt error")
+			return utils.ErrorInternalServer(paramLog, utils.DecryptError, "Decrypt error")
 		}
 
 		if pin != actor.GetTemporaryPIN() {
 
 			a, ok := actor.(domain.User)
 			if ok {
-				go security.InvalidUserAuth(a)
+				go security.InvalidUserAuth(paramLog, a)
 			} else {
 				a, _ := actor.(domain.Corporate)
-				go security.InvalidCorporateAuth(a)
+				go security.InvalidCorporateAuth(paramLog, a)
 			}
 
-			return utils.ErrorForbidden()
+			return utils.ErrorForbidden(paramLog)
 		}
 
 		return nil
 	}
 }
 
-func ValidateAccessBalance(actor domain.ActorAble, balanceID string) error {
+func ValidateAccessBalance(paramLog *basic.ParamLog, actor domain.ActorAble, balanceID string) error {
 
 	listBalance := actor.GetBalances()
 
@@ -87,13 +88,13 @@ func ValidateAccessBalance(actor domain.ActorAble, balanceID string) error {
 	if isFound == false {
 		a, ok := actor.(domain.User)
 		if ok {
-			go security.InvalidUserAuth(a)
+			go security.InvalidUserAuth(paramLog, a)
 		} else {
 			a, _ := actor.(domain.Corporate)
-			go security.InvalidCorporateAuth(a)
+			go security.InvalidCorporateAuth(paramLog, a)
 		}
 
-		return utils.ErrorBadRequest(utils.InvalidBalanceAccess, "Invalid balance access")
+		return utils.ErrorBadRequest(paramLog, utils.InvalidBalanceAccess, "Invalid balance access")
 	}
 
 	return nil
@@ -131,9 +132,9 @@ func IsAccessBalanceAlreadyHave(actor domain.ActorAble, balanceID string) bool {
 	return isFound
 }
 
-func ValidateIsVerify(actor domain.ActorAble) error {
+func ValidateIsVerify(paramLog *basic.ParamLog, actor domain.ActorAble) error {
 	if actor.IsVerify() == false {
-		return utils.ErrorBadRequest(utils.UpgradeAccountFirst, "Unverified user attempt to transfer")
+		return utils.ErrorBadRequest(paramLog, utils.UpgradeAccountFirst, "Unverified user attempt to transfer")
 	}
 
 	return nil

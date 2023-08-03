@@ -5,10 +5,11 @@ import (
 	"time"
 
 	"github.com/kangdjoker/takeme-core/domain"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	"github.com/kangdjoker/takeme-core/utils/database"
 )
 
-func CreateCallbackHistoryRefused(transactionCode string, url string, requestBody string) (domain.CallbackHistory, error) {
+func CreateCallbackHistoryRefused(paramLog *basic.ParamLog, transactionCode string, url string, requestBody string) (domain.CallbackHistory, error) {
 	model := domain.CallbackHistory{
 		Time:            time.Now().Format(os.Getenv("TIME_FORMAT")),
 		URL:             url,
@@ -18,7 +19,7 @@ func CreateCallbackHistoryRefused(transactionCode string, url string, requestBod
 		ResponseStatus:  "CONNECTION REFUSED",
 	}
 
-	err := CallbackHistorySaveOne(&model)
+	err := CallbackHistorySaveOne(paramLog, &model)
 	if err != nil {
 		return domain.CallbackHistory{}, err
 	}
@@ -26,7 +27,7 @@ func CreateCallbackHistoryRefused(transactionCode string, url string, requestBod
 	return domain.CallbackHistory{}, nil
 }
 
-func CreateCallbackHistory(transactionCode string, url string, requestBody string, responseBody string, responseStatus string) (domain.CallbackHistory, error) {
+func CreateCallbackHistory(paramLog *basic.ParamLog, transactionCode string, url string, requestBody string, responseBody string, responseStatus string) (domain.CallbackHistory, error) {
 	model := domain.CallbackHistory{
 		Time:            time.Now().Format(os.Getenv("TIME_FORMAT")),
 		URL:             url,
@@ -36,7 +37,7 @@ func CreateCallbackHistory(transactionCode string, url string, requestBody strin
 		ResponseStatus:  responseStatus,
 	}
 
-	err := CallbackHistorySaveOne(&model)
+	err := CallbackHistorySaveOne(paramLog, &model)
 	if err != nil {
 		return domain.CallbackHistory{}, err
 	}
@@ -44,8 +45,8 @@ func CreateCallbackHistory(transactionCode string, url string, requestBody strin
 	return domain.CallbackHistory{}, nil
 }
 
-func CallbackHistorySaveOne(model *domain.CallbackHistory) error {
-	err := database.SaveOne(domain.CALLBACK_HISTORY_COLLECTION, model)
+func CallbackHistorySaveOne(paramLog *basic.ParamLog, model *domain.CallbackHistory) error {
+	err := database.SaveOne(paramLog, domain.CALLBACK_HISTORY_COLLECTION, model)
 	if err != nil {
 		return err
 	}

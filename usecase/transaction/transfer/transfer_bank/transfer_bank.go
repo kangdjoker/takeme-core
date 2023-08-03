@@ -13,7 +13,6 @@ import (
 	"github.com/kangdjoker/takeme-core/utils/basic"
 	"github.com/kangdjoker/takeme-core/utils/database"
 	"github.com/kangdjoker/takeme-core/utils/gateway"
-	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readconcern"
@@ -107,9 +106,9 @@ func (self TransferBank) CreateTransferGateway(paramLog *basic.ParamLog, transac
 	case gateway.Permata:
 		reference, err = permata.CreateTransfer(paramLog, transaction, requestID)
 	case gateway.MMBC:
-		reference, err = mmbc.CreateTransfer(transaction)
+		reference, err = mmbc.CreateTransfer(paramLog, transaction)
 	case gateway.Xendit:
-		reference, err = xendit.CreateTransfer(transaction)
+		reference, err = xendit.CreateTransfer(paramLog, transaction)
 	}
 
 	if gatewayCode == "" {
@@ -120,7 +119,7 @@ func (self TransferBank) CreateTransferGateway(paramLog *basic.ParamLog, transac
 		rollbackUsecase.ExecuteRollback(paramLog)
 	}
 
-	commitTransactionGateway(transaction.ID.Hex(), transaction.Status, gatewayCode, reference, transaction.GatewayStrategies)
+	commitTransactionGateway(paramLog, transaction.ID.Hex(), transaction.Status, gatewayCode, reference, transaction.GatewayStrategies)
 
 	if err != nil {
 		self.CreateTransferGateway(paramLog, transaction, requestID)
@@ -139,11 +138,11 @@ func (self TransferBank) ProcessCallbackGatewayTransfer(paramLog *basic.ParamLog
 	var err error
 
 	if status == domain.REFUND_STATUS {
-		transaction, err = service.TransactionByGatewayReferenceNoSession(reference)
+		transaction, err = service.TransactionByGatewayReferenceNoSession(paramLog, reference)
 		corporate, err = service.CorporateByIDNoSession(transaction.CorporateID.Hex())
 		nextGateway = checkUnexecutedGateway(transaction)
 	} else {
-		transaction, err = service.TransactionPendingByReferenceNoSession(reference)
+		transaction, err = service.TransactionPendingByReferenceNoSession(paramLog, reference)
 		corporate, err = service.CorporateByIDNoSession(transaction.CorporateID.Hex())
 		nextGateway = checkUnexecutedGateway(transaction)
 	}
@@ -163,7 +162,7 @@ func (self TransferBank) ProcessCallbackGatewayTransfer(paramLog *basic.ParamLog
 
 	if nextGateway == "" && (status == domain.FAILED_STATUS || status == domain.REFUND_STATUS) {
 		transaction.Status = domain.FAILED_STATUS
-		commitTransactionGateway(transaction.ID.Hex(), transaction.Status, gatewayCode, reference, transaction.GatewayStrategies)
+		commitTransactionGateway(paramLog, transaction.ID.Hex(), transaction.Status, gatewayCode, reference, transaction.GatewayStrategies)
 
 		rollbackUsecase := RollbackTransferBank{}
 		rollbackUsecase.Initialize(transaction)
@@ -175,7 +174,7 @@ func (self TransferBank) ProcessCallbackGatewayTransfer(paramLog *basic.ParamLog
 	}
 
 	transaction.Status = domain.COMPLETED_STATUS
-	commitTransactionGateway(transaction.ID.Hex(), transaction.Status, gatewayCode, reference, transaction.GatewayStrategies)
+	commitTransactionGateway(paramLog, transaction.ID.Hex(), transaction.Status, gatewayCode, reference, transaction.GatewayStrategies)
 
 	go usecase.PublishTransferCallback(paramLog, corporate, transaction)
 
@@ -213,7 +212,7 @@ func checkUnexecutedGateway(transaction domain.Transaction) string {
 	return gatewayCode
 }
 
-func commitTransactionGateway(transactionID string, status string, gatewayCode string, reference string, gatewayStrategy []domain.GatewayStrategy) {
+func commitTransactionGateway(paramLog *basic.ParamLog, transactionID string, status string, gatewayCode string, reference string, gatewayStrategy []domain.GatewayStrategy) {
 	function := func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().
 			SetReadConcern(readconcern.Snapshot()).
@@ -222,10 +221,10 @@ func commitTransactionGateway(transactionID string, status string, gatewayCode s
 
 		if err != nil {
 			session.AbortTransaction(session)
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "Initialize commit gateway start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "Initialize commit gateway start transaction failed")
 		}
 
-		transaction, err := service.TransactionByID(transactionID, session)
+		transaction, err := service.TransactionByID(paramLog, transactionID, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
@@ -245,7 +244,7 @@ func commitTransactionGateway(transactionID string, status string, gatewayCode s
 		transaction.GatewayReference = reference
 		transaction.GatewayStrategies = gatewayStrategy
 
-		err = service.TransactionUpdateOne(&transaction, session)
+		err = service.TransactionUpdateOne(paramLog, &transaction, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
@@ -262,6 +261,6 @@ func commitTransactionGateway(transactionID string, status string, gatewayCode s
 	)
 
 	if err != nil {
-		log.Error(fmt.Sprintf("Failed commit gateway transaction with id  %v because %v ", transactionID, err.Error()))
+		basic.LogError(paramLog, fmt.Sprintf("Failed commit gateway transaction with id  %v because %v ", transactionID, err.Error()))
 	}
 }

@@ -13,7 +13,6 @@ import (
 	"github.com/kangdjoker/takeme-core/utils/basic"
 	"github.com/kangdjoker/takeme-core/utils/database"
 	"github.com/kangdjoker/takeme-core/utils/storage"
-	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -22,9 +21,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 )
 
-func UserCheck(user domain.User) (dto.User, error) {
+func UserCheck(paramLog *basic.ParamLog, user domain.User) (dto.User, error) {
 
-	result, err := service.UserDTOByID(user.ID.Hex())
+	result, err := service.UserDTOByID(paramLog, user.ID.Hex())
 	if err != nil {
 		return dto.User{}, err
 	}
@@ -32,8 +31,8 @@ func UserCheck(user domain.User) (dto.User, error) {
 	return result, nil
 }
 
-func UserUpgrade(user domain.User, nik string, faceImage string, deviceID string) error {
-	body, err := utils.EKYCEnrollUser(nik, faceImage)
+func UserUpgrade(paramLog *basic.ParamLog, user domain.User, nik string, faceImage string, deviceID string) error {
+	body, err := utils.EKYCEnrollUser(paramLog, nik, faceImage)
 	if err != nil {
 		return err
 	}
@@ -45,16 +44,16 @@ func UserUpgrade(user domain.User, nik string, faceImage string, deviceID string
 		)
 
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "User login start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "User login start transaction failed")
 		}
 
-		user, err = service.UserByID(user.ID.Hex(), session)
+		user, err = service.UserByID(paramLog, user.ID.Hex(), session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
-		err = service.UserVerify(&user, body.DeviceID, body.NIK, body.DigitalID, session)
+		err = service.UserVerify(paramLog, &user, body.DeviceID, body.NIK, body.DigitalID, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
@@ -83,7 +82,7 @@ func UserUpgrade(user domain.User, nik string, faceImage string, deviceID string
 	return nil
 }
 
-func UserSaveBankAccount(user domain.User, name string, bankCode string, accountNumber string) error {
+func UserSaveBankAccount(paramLog *basic.ParamLog, user domain.User, name string, bankCode string, accountNumber string) error {
 	account := domain.Bank{
 		Name:          name,
 		BankCode:      bankCode,
@@ -97,16 +96,16 @@ func UserSaveBankAccount(user domain.User, name string, bankCode string, account
 		)
 
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "User login start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "User login start transaction failed")
 		}
 
-		user, err = service.UserByID(user.ID.Hex(), session)
+		user, err = service.UserByID(paramLog, user.ID.Hex(), session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
-		err = service.UserAddBankAccount(&user, account, session)
+		err = service.UserAddBankAccount(paramLog, &user, account, session)
 		if err != nil {
 			return err
 		}
@@ -133,7 +132,7 @@ func UserSaveBankAccount(user domain.User, name string, bankCode string, account
 	return nil
 }
 
-func UserDeleteBankAccount(user domain.User, name string, bankCode string, accountNumber string) error {
+func UserDeleteBankAccount(paramLog *basic.ParamLog, user domain.User, name string, bankCode string, accountNumber string) error {
 	account := domain.Bank{
 		Name:          name,
 		BankCode:      bankCode,
@@ -147,16 +146,16 @@ func UserDeleteBankAccount(user domain.User, name string, bankCode string, accou
 		)
 
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "User login start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "User login start transaction failed")
 		}
 
-		user, err = service.UserByID(user.ID.Hex(), session)
+		user, err = service.UserByID(paramLog, user.ID.Hex(), session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
-		err = service.UserRemoveBankAccount(&user, account, session)
+		err = service.UserRemoveBankAccount(paramLog, &user, account, session)
 		if err != nil {
 			return err
 		}
@@ -183,10 +182,10 @@ func UserDeleteBankAccount(user domain.User, name string, bankCode string, accou
 	return nil
 }
 
-func CheckUserPhonebook(corporate domain.Corporate, phonebook []domain.Contact) []domain.Contact {
+func CheckUserPhonebook(paramLog *basic.ParamLog, corporate domain.Corporate, phonebook []domain.Contact) []domain.Contact {
 	var members []domain.Contact
 	for _, contact := range phonebook {
-		isExist, name := isPhoneNumberAlreadyExist(corporate, contact.Number)
+		isExist, name := isPhoneNumberAlreadyExist(paramLog, corporate, contact.Number)
 
 		if isExist {
 			members = append(members, domain.Contact{
@@ -199,9 +198,9 @@ func CheckUserPhonebook(corporate domain.Corporate, phonebook []domain.Contact) 
 	return members
 }
 
-func isPhoneNumberAlreadyExist(corporate domain.Corporate, phoneNumber string) (bool, string) {
+func isPhoneNumberAlreadyExist(paramLog *basic.ParamLog, corporate domain.Corporate, phoneNumber string) (bool, string) {
 
-	user, err := service.UserByPhoneNumberWithoutSession(corporate.ID, phoneNumber)
+	user, err := service.UserByPhoneNumberWithoutSession(paramLog, corporate.ID, phoneNumber)
 	if err != nil {
 		return false, ""
 	}
@@ -209,7 +208,7 @@ func isPhoneNumberAlreadyExist(corporate domain.Corporate, phoneNumber string) (
 	return true, user.FullName
 }
 
-func UserSavePIN(user domain.User, encryptedPIN string) error {
+func UserSavePIN(paramLog *basic.ParamLog, user domain.User, encryptedPIN string) error {
 	userSavePIN := func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().
 			SetReadConcern(readconcern.Snapshot()).
@@ -217,16 +216,16 @@ func UserSavePIN(user domain.User, encryptedPIN string) error {
 		)
 
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "User login start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "User login start transaction failed")
 		}
 
-		user, err = service.UserByID(user.ID.Hex(), session)
+		user, err = service.UserByID(paramLog, user.ID.Hex(), session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
-		err = service.UserSavePIN(&user, encryptedPIN, session)
+		err = service.UserSavePIN(paramLog, &user, encryptedPIN, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
@@ -263,16 +262,16 @@ func UserPreForgotPIN(paramLog *basic.ParamLog, user domain.User, encryptedPIN s
 		)
 
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "User login start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "User login start transaction failed")
 		}
 
-		user, err = service.UserByID(user.ID.Hex(), session)
+		user, err = service.UserByID(paramLog, user.ID.Hex(), session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
-		changePINCode, err := service.UserGenerateChangePINCode(&user, encryptedPIN, session)
+		changePINCode, err := service.UserGenerateChangePINCode(paramLog, &user, encryptedPIN, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
@@ -295,7 +294,7 @@ func UserPreForgotPIN(paramLog *basic.ParamLog, user domain.User, encryptedPIN s
 			go utils.SendWAHubungi(paramLog, phoneNumber, changePINCode)
 		}
 
-		go removeForgotPINCode(userID, changePINCode)
+		go removeForgotPINCode(paramLog, userID, changePINCode)
 
 		return nil
 	}
@@ -314,7 +313,7 @@ func UserPreForgotPIN(paramLog *basic.ParamLog, user domain.User, encryptedPIN s
 	return nil
 }
 
-func UserForgotPIN(user domain.User, code string) error {
+func UserForgotPIN(paramLog *basic.ParamLog, user domain.User, code string) error {
 
 	forgotPIN := func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().
@@ -323,22 +322,22 @@ func UserForgotPIN(user domain.User, code string) error {
 		)
 
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "User login start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "User login start transaction failed")
 		}
 
-		user, err = service.UserByID(user.ID.Hex(), session)
+		user, err = service.UserByID(paramLog, user.ID.Hex(), session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
-		err = service.ValidateUserChangePINCode(user, code)
+		err = service.ValidateUserChangePINCode(paramLog, user, code)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
-		err = service.UserChangePIN(&user, session)
+		err = service.UserChangePIN(paramLog, &user, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
@@ -366,7 +365,7 @@ func UserForgotPIN(user domain.User, code string) error {
 	return nil
 }
 
-func UserMainBalanceVA(user domain.User) ([]domain.VirtualAccount, error) {
+func UserMainBalanceVA(paramLog *basic.ParamLog, user domain.User) ([]domain.VirtualAccount, error) {
 	var va []domain.VirtualAccount
 
 	userMainBalanceVA := func(session mongo.SessionContext) error {
@@ -376,7 +375,7 @@ func UserMainBalanceVA(user domain.User) ([]domain.VirtualAccount, error) {
 		)
 
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "User login start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "User login start transaction failed")
 		}
 
 		balance, err := service.BalanceByID(user.MainBalance.Hex(), session)
@@ -409,7 +408,7 @@ func UserMainBalanceVA(user domain.User) ([]domain.VirtualAccount, error) {
 	return va, nil
 }
 
-func UserChangePIN(user domain.User, encryptedOldPIN string, encryptedNewPIN string) error {
+func UserChangePIN(paramLog *basic.ParamLog, user domain.User, encryptedOldPIN string, encryptedNewPIN string) error {
 
 	userChangePIN := func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().
@@ -418,7 +417,7 @@ func UserChangePIN(user domain.User, encryptedOldPIN string, encryptedNewPIN str
 		)
 
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "User login start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "User login start transaction failed")
 		}
 
 		newPIN, err := utils.RSADecrypt(encryptedNewPIN)
@@ -426,23 +425,23 @@ func UserChangePIN(user domain.User, encryptedOldPIN string, encryptedNewPIN str
 			return err
 		}
 
-		err = ValidateFormatPIN(newPIN)
+		err = ValidateFormatPIN(paramLog, newPIN)
 		if err != nil {
 			return err
 		}
 
-		user, err = service.UserByID(user.ID.Hex(), session)
+		user, err = service.UserByID(paramLog, user.ID.Hex(), session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
-		err = ValidateActorPIN(user, encryptedOldPIN)
+		err = ValidateActorPIN(paramLog, user, encryptedOldPIN)
 		if err != nil {
 			return err
 		}
 
-		err = service.UserChangeNewPIN(&user, newPIN, session)
+		err = service.UserChangeNewPIN(paramLog, &user, newPIN, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
@@ -470,7 +469,7 @@ func UserChangePIN(user domain.User, encryptedOldPIN string, encryptedNewPIN str
 	return nil
 }
 
-func UserChangeFaceAsPIN(user domain.User, isFaceAsPIN bool) error {
+func UserChangeFaceAsPIN(paramLog *basic.ParamLog, user domain.User, isFaceAsPIN bool) error {
 	userChangeFaceAsPIN := func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().
 			SetReadConcern(readconcern.Snapshot()).
@@ -478,16 +477,16 @@ func UserChangeFaceAsPIN(user domain.User, isFaceAsPIN bool) error {
 		)
 
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "User login start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "User login start transaction failed")
 		}
 
-		user, err = service.UserByID(user.ID.Hex(), session)
+		user, err = service.UserByID(paramLog, user.ID.Hex(), session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
-		err = service.UserChangeFaceAsPIN(&user, isFaceAsPIN, session)
+		err = service.UserChangeFaceAsPIN(paramLog, &user, isFaceAsPIN, session)
 		if err != nil {
 			return err
 		}
@@ -514,7 +513,7 @@ func UserChangeFaceAsPIN(user domain.User, isFaceAsPIN bool) error {
 	return nil
 }
 
-func UserTransactions(user domain.User, page string, limit string) ([]domain.Transaction, error) {
+func UserTransactions(paramLog *basic.ParamLog, user domain.User, page string, limit string) ([]domain.Transaction, error) {
 	var ownBalances []primitive.ObjectID
 
 	for _, index := range user.ListBalance {
@@ -523,7 +522,7 @@ func UserTransactions(user domain.User, page string, limit string) ([]domain.Tra
 		}
 	}
 
-	transactions, err := service.TransactionsByActorNoSession(user.PhoneNumber, ownBalances, page, limit)
+	transactions, err := service.TransactionsByActorNoSession(paramLog, user.PhoneNumber, ownBalances, page, limit)
 	if err != nil {
 		return []domain.Transaction{}, err
 	}
@@ -531,44 +530,44 @@ func UserTransactions(user domain.User, page string, limit string) ([]domain.Tra
 	return transactions, nil
 }
 
-func UserTemporaryPIN(faceImage string, user domain.User) (string, error) {
-	_, err := utils.EKYCVerifyUser(user.NIK, faceImage, user.DigitalID)
+func UserTemporaryPIN(paramLog *basic.ParamLog, faceImage string, user domain.User) (string, error) {
+	_, err := utils.EKYCVerifyUser(paramLog, user.NIK, faceImage, user.DigitalID)
 	if err != nil {
 		return "", err
 	}
 
-	temporaryPIN := generateTemporaryPIN(user)
-	go removeTemporaryPIN(user)
+	temporaryPIN := generateTemporaryPIN(paramLog, user)
+	go removeTemporaryPIN(paramLog, user)
 
 	return temporaryPIN, nil
 }
 
-func UserVerify(aktaImage multipart.File, aktaHeader *multipart.FileHeader,
+func UserVerify(paramLog *basic.ParamLog, aktaImage multipart.File, aktaHeader *multipart.FileHeader,
 	npwpImage multipart.File, npwpHeader *multipart.FileHeader, nibImage multipart.File,
 	nibHeader *multipart.FileHeader, identityImage multipart.File, identityHeader *multipart.FileHeader,
 	nik string, legalName string, legalAddress string, userID string, verifyType string) error {
 
-	user, err := service.UserByIDNoSession(userID)
+	user, err := service.UserByIDNoSession(paramLog, userID)
 	if err != nil {
 		return err
 	}
 
-	err, akta := storage.SaveFile(aktaImage, *aktaHeader)
+	err, akta := storage.SaveFile(paramLog, aktaImage, *aktaHeader)
 	if err != nil {
 		return err
 	}
 
-	err, npwp := storage.SaveFile(npwpImage, *npwpHeader)
+	err, npwp := storage.SaveFile(paramLog, npwpImage, *npwpHeader)
 	if err != nil {
 		return err
 	}
 
-	err, nib := storage.SaveFile(nibImage, *nibHeader)
+	err, nib := storage.SaveFile(paramLog, nibImage, *nibHeader)
 	if err != nil {
 		return err
 	}
 
-	err, identity := storage.SaveFile(identityImage, *identityHeader)
+	err, identity := storage.SaveFile(paramLog, identityImage, *identityHeader)
 	if err != nil {
 		return err
 	}
@@ -583,7 +582,7 @@ func UserVerify(aktaImage multipart.File, aktaHeader *multipart.FileHeader,
 	user.VerifyData.Type = verifyType
 	user.Verified = true
 
-	err = service.UserUpdateOneNoSession(&user)
+	err = service.UserUpdateOneNoSession(paramLog, &user)
 	if err != nil {
 		return err
 	}
@@ -591,7 +590,7 @@ func UserVerify(aktaImage multipart.File, aktaHeader *multipart.FileHeader,
 	return nil
 }
 
-func removeForgotPINCode(userID string, code string) {
+func removeForgotPINCode(paramLog *basic.ParamLog, userID string, code string) {
 	time.Sleep(120 * time.Second)
 	userRemoveForgot := func(session mongo.SessionContext) error {
 
@@ -604,16 +603,16 @@ func removeForgotPINCode(userID string, code string) {
 			return err
 		}
 
-		user, err := service.UserByID(userID, session)
+		user, err := service.UserByID(paramLog, userID, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
 		if user.ChangePINCode == code {
-			log.Info(fmt.Sprintf("Remove login code for user (%v)", user.PhoneNumber))
+			basic.LogInformation(paramLog, fmt.Sprintf("Remove login code for user (%v)", user.PhoneNumber))
 			user.ChangePINCode = "-"
-			err := service.UserUpdateOne(&user, session)
+			err := service.UserUpdateOne(paramLog, &user, session)
 			if err != nil {
 				session.AbortTransaction(session)
 				return err
@@ -631,20 +630,20 @@ func removeForgotPINCode(userID string, code string) {
 	)
 
 	if err != nil {
-		log.Error(fmt.Sprintf("Failed remove preforgot code for userID (%v)", userID))
+		basic.LogError(paramLog, fmt.Sprintf("Failed remove preforgot code for userID (%v)", userID))
 	}
 }
 
-func generateTemporaryPIN(user domain.User) string {
+func generateTemporaryPIN(paramLog *basic.ParamLog, user domain.User) string {
 	temporaryPIN := utils.GenerateShortCode()
 	user.TemporaryPIN = temporaryPIN
-	database.UpdateOne(domain.USER_COLLECTION, &user)
+	database.UpdateOne(paramLog, domain.USER_COLLECTION, &user)
 
 	return temporaryPIN
 }
 
-func removeTemporaryPIN(user domain.User) {
+func removeTemporaryPIN(paramLog *basic.ParamLog, user domain.User) {
 	time.Sleep(600 * time.Second)
 	user.TemporaryPIN = " "
-	database.UpdateOne(domain.USER_COLLECTION, &user)
+	database.UpdateOne(paramLog, domain.USER_COLLECTION, &user)
 }

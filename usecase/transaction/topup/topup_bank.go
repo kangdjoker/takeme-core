@@ -27,7 +27,7 @@ type TopupBank struct {
 func (self TopupBank) Execute(paramLog *basic.ParamLog, from domain.Bank, balanceID string, amount int,
 	reference string, currency string, requestId string) (domain.Transaction, domain.Balance, error) {
 
-	balance, owner, corporate, err := identifyBalance(balanceID)
+	balance, owner, corporate, err := identifyBalance(paramLog, balanceID)
 	if err != nil {
 		return domain.Transaction{}, domain.Balance{}, err
 	}
@@ -47,7 +47,7 @@ func (self TopupBank) Execute(paramLog *basic.ParamLog, from domain.Bank, balanc
 	transaction, transactionStatement := createTransaction(self.corporate, self.balance, self.from,
 		self.to, self.amount, self.reference, gateway, requestId)
 
-	feeStatement, err := self.transactionUsecase.CreateFeeStatement(corporate, balance, transaction)
+	feeStatement, err := self.transactionUsecase.CreateFeeStatement(paramLog, corporate, balance, transaction)
 	if err != nil {
 		return domain.Transaction{}, domain.Balance{}, err
 	}
@@ -55,7 +55,7 @@ func (self TopupBank) Execute(paramLog *basic.ParamLog, from domain.Bank, balanc
 	statements = append(statements, transactionStatement)
 	statements = append(statements, feeStatement...)
 
-	err = validateCurrency(self.currency, balance)
+	err = validateCurrency(paramLog, self.currency, balance)
 	if err != nil {
 		return domain.Transaction{}, domain.Balance{}, err
 	}
@@ -70,11 +70,11 @@ func (self TopupBank) Execute(paramLog *basic.ParamLog, from domain.Bank, balanc
 	return transaction, balance, nil
 }
 
-func identifyBalance(balanceID string) (domain.Balance, domain.TransactionObject, domain.Corporate, error) {
+func identifyBalance(paramLog *basic.ParamLog, balanceID string) (domain.Balance, domain.TransactionObject, domain.Corporate, error) {
 	balance, err := service.BalanceByIDNoSession(balanceID)
 	if err != nil {
 		return domain.Balance{}, domain.TransactionObject{}, domain.Corporate{},
-			utils.ErrorBadRequest(utils.InvalidBalanceID, "Balance id not found")
+			utils.ErrorBadRequest(paramLog, utils.InvalidBalanceID, "Balance id not found")
 	}
 
 	var balanceOwner domain.TransactionObject
@@ -86,15 +86,15 @@ func identifyBalance(balanceID string) (domain.Balance, domain.TransactionObject
 		corporate, err := service.CorporateByIDNoSession(ownerID)
 		if err != nil {
 			return domain.Balance{}, domain.TransactionObject{}, domain.Corporate{},
-				utils.ErrorBadRequest(utils.CorporateNotFound, "Corporate id not found")
+				utils.ErrorBadRequest(paramLog, utils.CorporateNotFound, "Corporate id not found")
 		}
 
 		balanceOwner = corporate.ToTransactionObject()
 	} else {
-		user, err := service.UserByIDNoSession(ownerID)
+		user, err := service.UserByIDNoSession(paramLog, ownerID)
 		if err != nil {
 			return domain.Balance{}, domain.TransactionObject{}, domain.Corporate{},
-				utils.ErrorBadRequest(utils.UserNotFound, "User id not found")
+				utils.ErrorBadRequest(paramLog, utils.UserNotFound, "User id not found")
 		}
 
 		balanceOwner = user.ToTransactionObject()
@@ -103,7 +103,7 @@ func identifyBalance(balanceID string) (domain.Balance, domain.TransactionObject
 	corporate, err := service.CorporateByIDNoSession(corporateID)
 	if err != nil {
 		return domain.Balance{}, domain.TransactionObject{}, domain.Corporate{},
-			utils.ErrorBadRequest(utils.CorporateNotFound, "Corporate id not found")
+			utils.ErrorBadRequest(paramLog, utils.CorporateNotFound, "Corporate id not found")
 	}
 
 	return balance, balanceOwner, corporate, nil

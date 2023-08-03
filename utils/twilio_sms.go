@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/kangdjoker/takeme-core/utils/basic"
-	log "github.com/sirupsen/logrus"
 )
 
 func SendSMS(paramLog *basic.ParamLog, to string, message string) error {
@@ -35,10 +34,10 @@ func SendSMS(paramLog *basic.ParamLog, to string, message string) error {
 	}, result, "Twilio SMS API ")
 
 	if err != nil || resp.StatusCode() != 201 {
-		return ErrorInternalServer(TwilioApiCallFailed, "Twilio API call falied")
+		return ErrorInternalServer(paramLog, TwilioApiCallFailed, "Twilio API call falied")
 	}
 
-	log.Info(fmt.Sprintf("Twilio API call success : Sending message for %v to %v", to, message))
+	basic.LogInformation(paramLog, fmt.Sprintf("Twilio API call success : Sending message for %v to %v", to, message))
 
 	return nil
 }

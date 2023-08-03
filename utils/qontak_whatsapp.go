@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/kangdjoker/takeme-core/utils/basic"
-	log "github.com/sirupsen/logrus"
 )
 
 func SendWA(paramLog *basic.ParamLog, to string, message string) error {
@@ -46,11 +45,11 @@ func SendWA(paramLog *basic.ParamLog, to string, message string) error {
 	LoggingAPICall(paramLog, resp.StatusCode(), payload, result, "Qontak WA API ")
 
 	if err != nil {
-		log.Info(fmt.Sprintf("Qontak API Call failed"))
-		return ErrorInternalServer(QontakAPICallFailed, err.Error())
+		basic.LogInformation(paramLog, fmt.Sprintf("Qontak API Call failed"))
+		return ErrorInternalServer(paramLog, QontakAPICallFailed, err.Error())
 	}
 
-	log.Info(fmt.Sprintf("Qontak API call "+result.Status+" : Sending message for %v to %v", to, message))
+	basic.LogInformation(paramLog, fmt.Sprintf("Qontak API call "+result.Status+" : Sending message for %v to %v", to, message))
 
 	return nil
 }

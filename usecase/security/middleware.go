@@ -15,8 +15,6 @@ import (
 	"github.com/kangdjoker/takeme-core/service"
 	"github.com/kangdjoker/takeme-core/utils"
 	"github.com/kangdjoker/takeme-core/utils/basic"
-	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
 )
 
 func Middleware(h http.HandlerFunc, secure bool) http.HandlerFunc {
@@ -34,7 +32,6 @@ func Middleware(h http.HandlerFunc, secure bool) http.HandlerFunc {
 		ctx = context.WithValue(ctx, "TAG", requestID)
 		paramLog := basic.ParamLog{Tag: requestID, TrCloser: trCloser, Span: span}
 		ctx = context.WithValue(ctx, "TRLOG", paramLog)
-		logrus.Println("JAEGER.MIDDLEWARE.REQUESTSTART")
 
 		basic.LogInformation(&paramLog, "----------------------------- REQUEST START -----------------------------")
 
@@ -42,7 +39,7 @@ func Middleware(h http.HandlerFunc, secure bool) http.HandlerFunc {
 		var claims domain.Claims
 		var user domain.User
 
-		err := setupContextHeader(r)
+		err := setupContextHeader(&basic.ParamLog{TrCloser: trCloser, Tag: requestID, Span: span}, r)
 		if err != nil {
 			utils.ResponseError(err, w, r)
 			return
@@ -55,9 +52,9 @@ func Middleware(h http.HandlerFunc, secure bool) http.HandlerFunc {
 		}
 
 		// If signature invalid reduce access_attempt
-		err = validateSignature(r, corporate)
+		err = validateSignature(&paramLog, r, corporate)
 		if err != nil {
-			go InvalidCorporateAuth(corporate)
+			go InvalidCorporateAuth(&paramLog, corporate)
 			utils.ResponseError(err, w, r)
 			return
 		}
@@ -69,7 +66,7 @@ func Middleware(h http.HandlerFunc, secure bool) http.HandlerFunc {
 				return
 			}
 
-			user, err = service.UserByIDWithValidation(claims.SocketID, []func(domain.User) error{
+			user, err = service.UserByIDWithValidation(&paramLog, claims.SocketID, []func(*basic.ParamLog, domain.User) error{
 				service.ValidateUserExist,
 				service.ValidateUserLocked,
 			})
@@ -88,11 +85,10 @@ func Middleware(h http.HandlerFunc, secure bool) http.HandlerFunc {
 
 		ctx = context.WithValue(ctx, "data", data)
 		h.ServeHTTP(w, r.WithContext(ctx))
-		logrus.Println("JAEGER.MIDDLEWARE.END.WILLCLOSE")
 	})
 }
 
-func setupContextHeader(r *http.Request) error {
+func setupContextHeader(paramLog *basic.ParamLog, r *http.Request) error {
 	contentType := r.Header.Get("Content-Type")
 	language := r.Header.Get(" Accept-Language")
 	corporate := r.Header.Get("corporate")
@@ -105,27 +101,27 @@ func setupContextHeader(r *http.Request) error {
 	}
 
 	fmt.Println()
-	log.Info(fmt.Sprintf("Header : {contentType : %v, language: %v, corporate: %v, requestID: %v }",
+	basic.LogInformation(paramLog, fmt.Sprintf("Header : {contentType : %v, language: %v, corporate: %v, requestID: %v }",
 		contentType, language, corporate, requestID))
 
 	if corporate == "" || requestID == "" || language == "" || signature == "" {
-		return utils.ErrorBadRequest(utils.InvalidHeader, "Invalid Header")
+		return utils.ErrorBadRequest(paramLog, utils.InvalidHeader, "Invalid Header")
 	}
 
 	return nil
 }
 
-func logPayloadBaseonLength(payload []byte, requestID string, signature string, result string) {
+func logPayloadBaseonLength(paramLog *basic.ParamLog, payload []byte, requestID string, signature string, result string) {
 	if len(payload) <= 4000 {
-		log.Info(fmt.Sprintf("Original Signature for requestID %v : (%v)", requestID, signature))
-		log.Info(fmt.Sprintf("Should be Signature for requestID %v : (%v)", requestID, result))
+		basic.LogInformation(paramLog, fmt.Sprintf("Original Signature for requestID %v : (%v)", requestID, signature))
+		basic.LogInformation(paramLog, fmt.Sprintf("Should be Signature for requestID %v : (%v)", requestID, result))
 	} else {
-		log.Info(fmt.Sprintf("Original Signature for requestID %v : (%v)", requestID, "..."))
-		log.Info(fmt.Sprintf("Should be Signature for requestID %v : (%v)", requestID, "..."))
+		basic.LogInformation(paramLog, fmt.Sprintf("Original Signature for requestID %v : (%v)", requestID, "..."))
+		basic.LogInformation(paramLog, fmt.Sprintf("Should be Signature for requestID %v : (%v)", requestID, "..."))
 	}
 }
 
-func validateSignature(r *http.Request, corporate domain.Corporate) error {
+func validateSignature(paramLog *basic.ParamLog, r *http.Request, corporate domain.Corporate) error {
 
 	// Get secret by corporateID and signature
 	signature := r.Header.Get("signature")
@@ -135,26 +131,28 @@ func validateSignature(r *http.Request, corporate domain.Corporate) error {
 	secretKey := corporate.Secret
 	result := hmacSHA512(payload, []byte(secretKey))
 
-	logPayloadBaseonLength(payload, requestID, signature, result)
+	logPayloadBaseonLength(paramLog, payload, requestID, signature, result)
 
 	if result == signature {
 		return nil
 	}
 
-	return utils.ErrorBadRequest(utils.InvalidCorporateKey, "Invalid secret")
+	return utils.ErrorBadRequest(paramLog, utils.InvalidCorporateKey, "Invalid secret")
 }
 
 func validateJWT(r *http.Request) (domain.Claims, error) {
+	trCloser, span, tag := basic.RequestToTracing(r)
+	paramLog := &basic.ParamLog{TrCloser: trCloser, Span: span, Tag: tag}
 	authorization := r.Header.Get("Authorization")
 	if authorization == "" {
-		return domain.Claims{}, utils.ErrorUnauthorized()
+		return domain.Claims{}, utils.ErrorUnauthorized(paramLog)
 	}
 
 	tokenString := authorization[7:]
 
-	claims, err := utils.JWTDecode(tokenString)
+	claims, err := utils.JWTDecode(paramLog, tokenString)
 	if err != nil {
-		return domain.Claims{}, utils.ErrorUnauthorized()
+		return domain.Claims{}, utils.ErrorUnauthorized(paramLog)
 	}
 
 	return claims, nil
@@ -190,7 +188,6 @@ func MiddlewareWithoutSignature(h http.HandlerFunc, secure bool) http.HandlerFun
 		ctx = context.WithValue(ctx, "TAG", requestID)
 		paramLog := basic.ParamLog{Tag: requestID, TrCloser: trCloser, Span: span}
 		ctx = context.WithValue(ctx, "TRLOG", paramLog)
-		logrus.Println("JAEGER.MiddlewareWithoutSignature.REQUESTSTART,", r.URL.Path)
 
 		var corporate domain.Corporate
 		var claims domain.Claims
@@ -219,19 +216,19 @@ func MiddlewareWithoutSignature(h http.HandlerFunc, secure bool) http.HandlerFun
 
 		ctx = context.WithValue(ctx, "data", data)
 		h.ServeHTTP(w, r.WithContext(ctx))
-		logrus.Println("JAEGER.MiddlewareWithoutSignature.END.WILLCLOSE")
 	})
 }
 
 func AddPayloadContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
+		trCloser, span, tag := basic.RequestToTracing(r)
+		paramLog := &basic.ParamLog{TrCloser: trCloser, Span: span, Tag: tag}
 		// TODO REMOVE THIS TEMPORARY SOLUTION
 		_, _, err := r.FormFile("file")
 		if err != nil {
 			payload, err := ioutil.ReadAll(r.Body)
 			if err != nil {
-				utils.ResponseError(utils.ErrorBadRequest(utils.InvalidRequestPayload, "Invalid payload request"), w, r)
+				utils.ResponseError(utils.ErrorBadRequest(paramLog, utils.InvalidRequestPayload, "Invalid payload request"), w, r)
 				return
 			}
 

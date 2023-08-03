@@ -25,12 +25,12 @@ type AcceptCard struct {
 	transactionUsecase transaction.Base
 }
 
-func (self AcceptCard) Initialize(from domain.Card, balanceID string, amount int,
+func (self AcceptCard) Initialize(paramLog *basic.ParamLog, from domain.Card, balanceID string, amount int,
 	reference string, currency string, returnURL string, externalID string) (string, string, error) {
 
 	gateway := gateway.StripeGateway{}
 
-	status, authURL, err := gateway.ChargeCard(balanceID, amount, returnURL, from, externalID)
+	status, authURL, err := gateway.ChargeCard(paramLog, balanceID, amount, returnURL, from, externalID)
 	if err != nil {
 		return "", "", err
 	}
@@ -38,12 +38,12 @@ func (self AcceptCard) Initialize(from domain.Card, balanceID string, amount int
 	return status, authURL, nil
 }
 
-func (self AcceptCard) InitializeSubscribe(from domain.Card, balanceID string, amount int,
+func (self AcceptCard) InitializeSubscribe(paramLog *basic.ParamLog, from domain.Card, balanceID string, amount int,
 	reference string, currency string, returnURL string, externalID string, interval string) (string, string, string, error) {
 
 	gateway := gateway.StripeGateway{}
 
-	status, authURL, subsID, err := gateway.ChargeCardSubscribe(balanceID, amount, returnURL, from, externalID, interval)
+	status, authURL, subsID, err := gateway.ChargeCardSubscribe(paramLog, balanceID, amount, returnURL, from, externalID, interval)
 	if err != nil {
 		return "", "", subsID, err
 	}
@@ -54,7 +54,7 @@ func (self AcceptCard) InitializeSubscribe(from domain.Card, balanceID string, a
 func (self AcceptCard) Execute(paramLog *basic.ParamLog, from domain.Card, balanceID string, amount int,
 	reference string, currency string, externalID string, requestId string) (domain.Transaction, domain.Balance, error) {
 
-	balance, owner, corporate, err := identifyBalance(balanceID)
+	balance, owner, corporate, err := identifyBalance(paramLog, balanceID)
 	if err != nil {
 		return domain.Transaction{}, domain.Balance{}, err
 	}
@@ -71,13 +71,13 @@ func (self AcceptCard) Execute(paramLog *basic.ParamLog, from domain.Card, balan
 
 	var statements []domain.Statement
 
-	transaction, transactionStatement, err := createTransaction(self.corporate, self.balance, self.from,
+	transaction, transactionStatement, err := createTransaction(paramLog, self.corporate, self.balance, self.from,
 		self.to, self.amount, self.reference, gateway, externalID, requestId)
 	if err != nil {
 		return domain.Transaction{}, domain.Balance{}, err
 	}
 
-	feeStatement, err := self.transactionUsecase.CreateFeeStatement(corporate, balance, transaction)
+	feeStatement, err := self.transactionUsecase.CreateFeeStatement(paramLog, corporate, balance, transaction)
 	if err != nil {
 		return domain.Transaction{}, domain.Balance{}, err
 	}
@@ -85,7 +85,7 @@ func (self AcceptCard) Execute(paramLog *basic.ParamLog, from domain.Card, balan
 	statements = append(statements, transactionStatement)
 	statements = append(statements, feeStatement...)
 
-	err = validateCurrency(self.currency, balance)
+	err = validateCurrency(paramLog, self.currency, balance)
 	if err != nil {
 		return domain.Transaction{}, domain.Balance{}, err
 	}
@@ -100,11 +100,11 @@ func (self AcceptCard) Execute(paramLog *basic.ParamLog, from domain.Card, balan
 	return transaction, balance, nil
 }
 
-func identifyBalance(balanceID string) (domain.Balance, domain.TransactionObject, domain.Corporate, error) {
+func identifyBalance(paramLog *basic.ParamLog, balanceID string) (domain.Balance, domain.TransactionObject, domain.Corporate, error) {
 	balance, err := service.BalanceByIDNoSession(balanceID)
 	if err != nil {
 		return domain.Balance{}, domain.TransactionObject{}, domain.Corporate{},
-			utils.ErrorBadRequest(utils.InvalidBalanceID, "Balance id not found")
+			utils.ErrorBadRequest(paramLog, utils.InvalidBalanceID, "Balance id not found")
 	}
 
 	var balanceOwner domain.TransactionObject
@@ -116,15 +116,15 @@ func identifyBalance(balanceID string) (domain.Balance, domain.TransactionObject
 		corporate, err := service.CorporateByIDNoSession(ownerID)
 		if err != nil {
 			return domain.Balance{}, domain.TransactionObject{}, domain.Corporate{},
-				utils.ErrorBadRequest(utils.CorporateNotFound, "Corporate id not found")
+				utils.ErrorBadRequest(paramLog, utils.CorporateNotFound, "Corporate id not found")
 		}
 
 		balanceOwner = corporate.ToTransactionObject()
 	} else {
-		user, err := service.UserByIDNoSession(ownerID)
+		user, err := service.UserByIDNoSession(paramLog, ownerID)
 		if err != nil {
 			return domain.Balance{}, domain.TransactionObject{}, domain.Corporate{},
-				utils.ErrorBadRequest(utils.UserNotFound, "User id not found")
+				utils.ErrorBadRequest(paramLog, utils.UserNotFound, "User id not found")
 		}
 
 		balanceOwner = user.ToTransactionObject()
@@ -133,13 +133,13 @@ func identifyBalance(balanceID string) (domain.Balance, domain.TransactionObject
 	corporate, err := service.CorporateByIDNoSession(corporateID)
 	if err != nil {
 		return domain.Balance{}, domain.TransactionObject{}, domain.Corporate{},
-			utils.ErrorBadRequest(utils.CorporateNotFound, "Corporate id not found")
+			utils.ErrorBadRequest(paramLog, utils.CorporateNotFound, "Corporate id not found")
 	}
 
 	return balance, balanceOwner, corporate, nil
 }
 
-func createTransaction(corporate domain.Corporate, balance domain.Balance, from domain.Card,
+func createTransaction(paramLog *basic.ParamLog, corporate domain.Corporate, balance domain.Balance, from domain.Card,
 	to domain.TransactionObject, subAmount int, reference string, gateway gateway.Gateway, externalID string, requestId string) (domain.Transaction, domain.Statement, error) {
 
 	var totalFee = 0
@@ -147,14 +147,14 @@ func createTransaction(corporate domain.Corporate, balance domain.Balance, from 
 
 		s, err := strconv.ParseFloat(corporate.FeeUser.AcceptPaymentCard, 64)
 		if err != nil {
-			return domain.Transaction{}, domain.Statement{}, utils.ErrorBadRequest(utils.WrongAcceptCardFee, "Cannot convert accept payment card fee")
+			return domain.Transaction{}, domain.Statement{}, utils.ErrorBadRequest(paramLog, utils.WrongAcceptCardFee, "Cannot convert accept payment card fee")
 		}
 
 		totalFee = int(float64(subAmount) * s)
 	} else {
 		s, err := strconv.ParseFloat(corporate.FeeCorporate.AcceptPaymentCard, 64)
 		if err != nil {
-			return domain.Transaction{}, domain.Statement{}, utils.ErrorBadRequest(utils.WrongAcceptCardFee, "Cannot convert accept payment card fee")
+			return domain.Transaction{}, domain.Statement{}, utils.ErrorBadRequest(paramLog, utils.WrongAcceptCardFee, "Cannot convert accept payment card fee")
 		}
 
 		totalFee = int(float64(subAmount) * s)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -59,11 +60,11 @@ func SessionFindOne(colName string, query bson.M, session mongo.SessionContext) 
 	return result
 }
 
-func SessionUpdateOne(domain domain.BaseModel, session mongo.SessionContext) error {
+func SessionUpdateOne(paramLog *basic.ParamLog, domain domain.BaseModel, session mongo.SessionContext) error {
 	collection := DBClient.Database(os.Getenv("MONGO_DB_NAME")).Collection(domain.CollectionName())
 	document, err := toDoc(domain)
 	if err != nil {
-		return utils.ErrorInternalServer(utils.UpdateFailed, err.Error())
+		return utils.ErrorInternalServer(paramLog, utils.UpdateFailed, err.Error())
 	}
 
 	filter := bson.M{"_id": bson.M{"$eq": domain.GetDocumentID()}}

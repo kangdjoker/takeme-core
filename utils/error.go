@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"runtime"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
 const (
@@ -123,9 +123,9 @@ func (error CustomError) Error() string {
 }
 
 // This method have dynamic description message according to code and language
-func ErrorBadRequest(errorCode int, logMessage string) error {
+func ErrorBadRequest(paramLog *basic.ParamLog, errorCode int, logMessage string) error {
 	_, fn, line, _ := runtime.Caller(1)
-	log.Error(fmt.Sprintf("Bad request on %v at line %v (%v)", fn, line, logMessage))
+	basic.LogError(paramLog, fmt.Sprintf("Bad request on %v at line %v (%v)", fn, line, logMessage))
 
 	return CustomError{
 		HttpStatus: http.StatusBadRequest,
@@ -134,9 +134,9 @@ func ErrorBadRequest(errorCode int, logMessage string) error {
 	}
 }
 
-func ErrorInternalServer(errorCode int, logMessage string) error {
+func ErrorInternalServer(paramLog *basic.ParamLog, errorCode int, logMessage string) error {
 	_, fn, line, _ := runtime.Caller(1)
-	log.Error(fmt.Sprintf("Internal server error on %v at line %v (%v)", fn, line, logMessage))
+	basic.LogError(paramLog, fmt.Sprintf("Internal server error on %v at line %v (%v)", fn, line, logMessage))
 
 	return CustomError{
 		HttpStatus:  http.StatusInternalServerError,
@@ -146,8 +146,8 @@ func ErrorInternalServer(errorCode int, logMessage string) error {
 	}
 }
 
-func ErrorForbidden() error {
-	log.Error("Forbidden operation")
+func ErrorForbidden(paramLog *basic.ParamLog) error {
+	basic.LogError(paramLog, "Forbidden operation")
 
 	return CustomError{
 		HttpStatus:  http.StatusForbidden,
@@ -157,8 +157,8 @@ func ErrorForbidden() error {
 	}
 }
 
-func ErrorUnauthorized() error {
-	log.Error("Unauthorized or invalid token")
+func ErrorUnauthorized(paramLog *basic.ParamLog) error {
+	basic.LogError(paramLog, "Unauthorized or invalid token")
 
 	return CustomError{
 		HttpStatus:  http.StatusUnauthorized,

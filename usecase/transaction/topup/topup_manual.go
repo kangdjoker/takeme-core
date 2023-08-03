@@ -25,7 +25,7 @@ type TopupManual struct {
 func (tm TopupManual) Execute(paramLog *basic.ParamLog, balanceID string, amount int,
 	remark string, currency string) (domain.Transaction, domain.Balance, error) {
 
-	balance, owner, corporate, err := identifyBalance(balanceID)
+	balance, owner, corporate, err := identifyBalance(paramLog, balanceID)
 	if err != nil {
 		return domain.Transaction{}, domain.Balance{}, err
 	}
@@ -45,7 +45,7 @@ func (tm TopupManual) Execute(paramLog *basic.ParamLog, balanceID string, amount
 
 	statements = append(statements, transactionStatement)
 
-	err = validateCurrency(tm.currency, balance)
+	err = validateCurrency(paramLog, tm.currency, balance)
 	if err != nil {
 		return domain.Transaction{}, domain.Balance{}, err
 	}

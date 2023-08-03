@@ -12,19 +12,19 @@ import (
 
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/utils"
-	"github.com/sirupsen/logrus"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
 type BillerBase struct {
 }
 
-func (self BillerBase) BillerPayBPJSTKPMI(transaction domain.Transaction, paymentCode string, currency string, requestId string) (FusBPJSPayResponse, error) {
+func (self BillerBase) BillerPayBPJSTKPMI(paramLog *basic.ParamLog, transaction domain.Transaction, paymentCode string, currency string, requestId string) (FusBPJSPayResponse, error) {
 	// CURL HERE
 	paramB, _ := xml.Marshal(CreateBillerBPJSPMIPaymentRequest(paymentCode, currency, requestId))
 	paramS := string(paramB)
 	url := os.Getenv("FUSINDO_BILLER_URL") + "/fush2h/fusindo.php"
-	logrus.Info("url:" + url)
-	logrus.Info("param:" + paramS)
+	basic.LogInformation(paramLog, "url:"+url)
+	basic.LogInformation(paramLog, "param:"+paramS)
 	res := FusBPJSPayResponse{}
 	client := &http.Client{}
 	var data = strings.NewReader(`req=` + paramS)
@@ -42,17 +42,17 @@ func (self BillerBase) BillerPayBPJSTKPMI(transaction domain.Transaction, paymen
 	if err != nil {
 		return res, err
 	}
-	logrus.Info("bodyResponse:" + string(bodyText))
+	basic.LogInformation(paramLog, "bodyResponse:"+string(bodyText))
 	err = xml.Unmarshal(bodyText, &res)
 	return res, err
 }
-func (billerBase BillerBase) BillerInquiryBPJSTKPMI(paymentCode string, currency string, requestId string) (FusBPJSInqResponse, error) {
+func (billerBase BillerBase) BillerInquiryBPJSTKPMI(paramLog *basic.ParamLog, paymentCode string, currency string, requestId string) (FusBPJSInqResponse, error) {
 	//CURL HERE
 	paramB, _ := xml.Marshal(CreateBillerBPJSPMIInquiryRequest(paymentCode, currency, requestId))
 	paramS := string(paramB)
 	url := os.Getenv("FUSINDO_BILLER_URL") + "/fush2h/fusindo.php"
-	logrus.Info("url:" + url)
-	logrus.Info("param:" + paramS)
+	basic.LogInformation(paramLog, "url:"+url)
+	basic.LogInformation(paramLog, "param:"+paramS)
 	res := FusBPJSInqResponse{}
 	client := &http.Client{}
 	var data = strings.NewReader(`req=` + paramS)
@@ -70,12 +70,12 @@ func (billerBase BillerBase) BillerInquiryBPJSTKPMI(paymentCode string, currency
 	if err != nil {
 		return res, err
 	}
-	logrus.Info("bodyResponse:" + string(bodyText))
+	basic.LogInformation(paramLog, "bodyResponse:"+string(bodyText))
 	err = xml.Unmarshal(bodyText, &res)
 	return res, err
 }
 
-func fusindoCall(cmd string) ([]byte, error) {
+func fusindoCall(paramLog *basic.ParamLog, cmd string) ([]byte, error) {
 
 	billerURL := os.Getenv("FUSINDO_BILLER_URL")
 
@@ -86,7 +86,7 @@ func fusindoCall(cmd string) ([]byte, error) {
 	req, err := http.NewRequest("POST", billerURL, strings.NewReader(data.Encode()))
 
 	if err != nil {
-		return nil, utils.ErrorInternalServer(utils.XenditApiCallFailed, "API Call Failed")
+		return nil, utils.ErrorInternalServer(paramLog, utils.XenditApiCallFailed, "API Call Failed")
 	}
 
 	client := &http.Client{}
@@ -94,12 +94,12 @@ func fusindoCall(cmd string) ([]byte, error) {
 	// now POST it
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, utils.ErrorInternalServer(utils.FusindoApiCallFailed, "API Call Failed")
+		return nil, utils.ErrorInternalServer(paramLog, utils.FusindoApiCallFailed, "API Call Failed")
 	}
 
 	bodyResponse, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, utils.ErrorInternalServer(utils.FusindoApiCallFailed, "API Call Failed")
+		return nil, utils.ErrorInternalServer(paramLog, utils.FusindoApiCallFailed, "API Call Failed")
 	}
 
 	fmt.Println(bodyResponse)

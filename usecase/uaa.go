@@ -32,17 +32,17 @@ func UserSignup(paramLog *basic.ParamLog, fullName string, email string, phoneNu
 		)
 
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "User prelogin start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "User prelogin start transaction failed")
 		}
 
 		// validate user fullname
-		err = service.ValidateUserFullname(fullName)
+		err = service.ValidateUserFullname(paramLog, fullName)
 		if err != nil {
 			return err
 		}
 
 		// validate is user already exist
-		isPending, user, err := service.ValidateUserNotRegisteredYet(corporate, phoneNumber, email, session)
+		isPending, user, err := service.ValidateUserNotRegisteredYet(paramLog, corporate, phoneNumber, email, session)
 		if err != nil {
 			return err
 		}
@@ -53,7 +53,7 @@ func UserSignup(paramLog *basic.ParamLog, fullName string, email string, phoneNu
 				return err
 			}
 		} else {
-			user, err = service.UserCreateUnpending(corporate, user, email, phoneNumber, fullName, session)
+			user, err = service.UserCreateUnpending(paramLog, corporate, user, email, phoneNumber, fullName, session)
 			if err != nil {
 				return err
 			}
@@ -105,33 +105,33 @@ func UserActivation(paramLog *basic.ParamLog, phoneNumber string, corporate doma
 		)
 
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "User login start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "User login start transaction failed")
 		}
 
-		user, err := service.UserByPhoneNumber(corporate.ID, phoneNumber, session)
+		user, err := service.UserByPhoneNumber(paramLog, corporate.ID, phoneNumber, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
-		err = service.ValidateIsUserAlreadyActive(user)
+		err = service.ValidateIsUserAlreadyActive(paramLog, user)
 		if err != nil {
 			return err
 		}
 
-		err = service.ValidateUserActivationCode(user, code)
+		err = service.ValidateUserActivationCode(paramLog, user, code)
 		if err != nil {
 			return err
 		}
 
-		err = service.UserActivate(&user, session)
+		err = service.UserActivate(paramLog, &user, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
 		// Generate JWT
-		tokenString, err := utils.JWTEncode(user, corporate)
+		tokenString, err := utils.JWTEncode(paramLog, user, corporate)
 		if err != nil {
 			return err
 		}
@@ -171,30 +171,30 @@ func UserPrelogin(paramLog *basic.ParamLog, phoneNumber string, corporate domain
 		)
 
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "User prelogin start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "User prelogin start transaction failed")
 		}
 
-		user, err := service.UserByPhoneNumber(corporate.ID, phoneNumber, session)
+		user, err := service.UserByPhoneNumber(paramLog, corporate.ID, phoneNumber, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
-		err = service.ValidateUserLocked(user)
+		err = service.ValidateUserLocked(paramLog, user)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
-		err = service.ValidateUserLoginAttempt(user)
+		err = service.ValidateUserLoginAttempt(paramLog, user)
 		if err != nil {
-			go security.LockUser(user.ID.Hex())
+			go security.LockUser(paramLog, user.ID.Hex())
 
 			session.AbortTransaction(session)
 			return err
 		}
 
-		err = service.UserGenerateLoginCode(&user, session)
+		err = service.UserGenerateLoginCode(paramLog, &user, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
@@ -236,7 +236,7 @@ func UserPrelogin(paramLog *basic.ParamLog, phoneNumber string, corporate domain
 	return nil
 }
 
-func UserLogin(phoneNumber string, corporate domain.Corporate, code string) (string, error) {
+func UserLogin(paramLog *basic.ParamLog, phoneNumber string, corporate domain.Corporate, code string) (string, error) {
 
 	token := ""
 
@@ -247,36 +247,36 @@ func UserLogin(phoneNumber string, corporate domain.Corporate, code string) (str
 		)
 
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "User login start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "User login start transaction failed")
 		}
 
-		user, err := service.UserByPhoneNumber(corporate.ID, phoneNumber, session)
+		user, err := service.UserByPhoneNumber(paramLog, corporate.ID, phoneNumber, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
-		err = service.ValidateUserLocked(user)
+		err = service.ValidateUserLocked(paramLog, user)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
-		err = service.ValidateUserLoginCode(user, code)
+		err = service.ValidateUserLoginCode(paramLog, user, code)
 		if err != nil {
 			// Reduce user access attempt
-			go security.InvalidUserAuth(user)
+			go security.InvalidUserAuth(paramLog, user)
 			session.AbortTransaction(session)
 			return err
 		}
 
 		// Generate JWT
-		tokenString, err := utils.JWTEncode(user, corporate)
+		tokenString, err := utils.JWTEncode(paramLog, user, corporate)
 		if err != nil {
 			return err
 		}
 
-		err = service.UserRefreshAttempt(&user, session)
+		err = service.UserRefreshAttempt(paramLog, &user, session)
 		if err != nil {
 			return err
 		}
@@ -305,7 +305,7 @@ func UserLogin(phoneNumber string, corporate domain.Corporate, code string) (str
 	return token, nil
 }
 
-func UserFaceLogin(phoneNumber string, corporate domain.Corporate, faceImage string) (string, error) {
+func UserFaceLogin(paramLog *basic.ParamLog, phoneNumber string, corporate domain.Corporate, faceImage string) (string, error) {
 
 	token := ""
 
@@ -316,35 +316,35 @@ func UserFaceLogin(phoneNumber string, corporate domain.Corporate, faceImage str
 		)
 
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "User login start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "User login start transaction failed")
 		}
 
-		user, err := service.UserByPhoneNumber(corporate.ID, phoneNumber, session)
+		user, err := service.UserByPhoneNumber(paramLog, corporate.ID, phoneNumber, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
-		err = service.ValidateUserLocked(user)
+		err = service.ValidateUserLocked(paramLog, user)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
-		_, err = utils.EKYCVerifyUser(user.NIK, faceImage, user.DigitalID)
+		_, err = utils.EKYCVerifyUser(paramLog, user.NIK, faceImage, user.DigitalID)
 		if err != nil {
-			go security.InvalidUserAuth(user)
+			go security.InvalidUserAuth(paramLog, user)
 			session.AbortTransaction(session)
 			return err
 		}
 
 		// Generate JWT
-		tokenString, err := utils.JWTEncode(user, corporate)
+		tokenString, err := utils.JWTEncode(paramLog, user, corporate)
 		if err != nil {
 			return err
 		}
 
-		err = service.UserRefreshAttempt(&user, session)
+		err = service.UserRefreshAttempt(paramLog, &user, session)
 		if err != nil {
 			return err
 		}
@@ -386,7 +386,7 @@ func userRemoveLoginCode(paramLog *basic.ParamLog, userID string, loginCode stri
 			return err
 		}
 
-		user, err := service.UserByID(userID, session)
+		user, err := service.UserByID(paramLog, userID, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
@@ -395,7 +395,7 @@ func userRemoveLoginCode(paramLog *basic.ParamLog, userID string, loginCode stri
 		if user.LoginCode == loginCode {
 			basic.LogInformation(paramLog, fmt.Sprintf("Remove login code for user (%v)", user.PhoneNumber))
 			user.LoginCode = "-"
-			err := service.UserUpdateOne(&user, session)
+			err := service.UserUpdateOne(paramLog, &user, session)
 			if err != nil {
 				session.AbortTransaction(session)
 				return err
@@ -430,7 +430,7 @@ func deleteInactiveUser(paramLog *basic.ParamLog, userID string) {
 			return err
 		}
 
-		user, err := service.UserByID(userID, session)
+		user, err := service.UserByID(paramLog, userID, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err

@@ -15,7 +15,6 @@ import (
 	"github.com/kangdjoker/takeme-core/usecase/transaction"
 	"github.com/kangdjoker/takeme-core/utils"
 	"github.com/kangdjoker/takeme-core/utils/basic"
-	"github.com/sirupsen/logrus"
 )
 
 type BPJSTKBiller struct {
@@ -32,14 +31,14 @@ type BPJSTKBiller struct {
 	currency           string
 }
 
-func (biller BPJSTKBiller) Inquiry(paymentCode string, currency string, requestId string) (FusBPJSInqResponse, error) {
-	return biller.billerBase.BillerInquiryBPJSTKPMI(paymentCode, currency, requestId)
+func (biller BPJSTKBiller) Inquiry(paramLog *basic.ParamLog, paymentCode string, currency string, requestId string) (FusBPJSInqResponse, error) {
+	return biller.billerBase.BillerInquiryBPJSTKPMI(paramLog, paymentCode, currency, requestId)
 }
 func (self BPJSTKBiller) Execute(paramLog *basic.ParamLog, corporate domain.Corporate, actor domain.ActorAble,
 	to domain.TransactionObject, balanceID string, encryptedPIN string, externalID string,
 	paymentCode string, currency string, requestId string) (domain.Transaction, interface{}, error) {
 
-	balance, err := identifyBalance(balanceID)
+	balance, err := identifyBalance(paramLog, balanceID)
 	if err != nil {
 		return domain.Transaction{}, nil, err
 	}
@@ -56,7 +55,7 @@ func (self BPJSTKBiller) Execute(paramLog *basic.ParamLog, corporate domain.Corp
 	var statements []domain.Statement
 
 	//Ambil data Inqiry dulu
-	resInquiry, err := self.billerBase.BillerInquiryBPJSTKPMI(paymentCode, currency, strings.ReplaceAll(uuid.New().String(), "-", ""))
+	resInquiry, err := self.billerBase.BillerInquiryBPJSTKPMI(paramLog, paymentCode, currency, strings.ReplaceAll(uuid.New().String(), "-", ""))
 	if err != nil {
 		return domain.Transaction{}, nil, err
 	}
@@ -75,9 +74,9 @@ func (self BPJSTKBiller) Execute(paramLog *basic.ParamLog, corporate domain.Corp
 		return domain.Transaction{}, nil, errors.New("tidak mendapatkan data inquiry")
 	}
 
-	transaction, transactionStatement := createTransaction(self.corporate, self.fromBalance, self.actor, to, totalBayar, externalID, requestId)
+	transaction, transactionStatement := createTransaction(paramLog, self.corporate, self.fromBalance, self.actor, to, totalBayar, externalID, requestId)
 
-	feeStatement, err := self.transactionUsecase.CreateFeeStatement(corporate, self.fromBalance, transaction)
+	feeStatement, err := self.transactionUsecase.CreateFeeStatement(paramLog, corporate, self.fromBalance, transaction)
 	if err != nil {
 		return domain.Transaction{}, nil, err
 	}
@@ -85,18 +84,18 @@ func (self BPJSTKBiller) Execute(paramLog *basic.ParamLog, corporate domain.Corp
 	statements = append(statements, transactionStatement)
 	statements = append(statements, feeStatement...)
 
-	err = validationActor(self.actor, self.fromBalance.ID.Hex(), self.pin)
+	err = validationActor(paramLog, self.actor, self.fromBalance.ID.Hex(), self.pin)
 	if err != nil {
 		return domain.Transaction{}, nil, err
 	}
 
 	err = self.transactionUsecase.Commit(paramLog, statements, &transaction)
 	if err != nil {
-		logrus.Info("Error: " + err.Error())
+		basic.LogInformation(paramLog, "Error: "+err.Error())
 		return domain.Transaction{}, nil, err
 	}
 
-	resPayment, err := self.billerBase.BillerPayBPJSTKPMI(transaction, paymentCode, currency, requestId)
+	resPayment, err := self.billerBase.BillerPayBPJSTKPMI(paramLog, transaction, paymentCode, currency, requestId)
 	if err != nil {
 		return domain.Transaction{}, nil, err
 	}
@@ -108,7 +107,7 @@ func (self BPJSTKBiller) Execute(paramLog *basic.ParamLog, corporate domain.Corp
 
 	//UPDATE Reff
 	transaction.GatewayReference = resPayment.Ftrxid
-	self.transactionUsecase.UpdatingTransactionDetail(&transaction)
+	self.transactionUsecase.UpdatingTransactionDetail(paramLog, &transaction)
 
 	return transaction, dto.BPJSTKPMI{
 		Name:              resPayment.Data2,
@@ -129,16 +128,16 @@ func (self BPJSTKBiller) Execute(paramLog *basic.ParamLog, corporate domain.Corp
 	}, err
 }
 
-func identifyBalance(balanceID string) (domain.Balance, error) {
+func identifyBalance(paramLog *basic.ParamLog, balanceID string) (domain.Balance, error) {
 	balance, err := service.BalanceByIDNoSession(balanceID)
 	if err != nil {
-		return domain.Balance{}, utils.ErrorBadRequest(utils.InvalidBalanceID, "Balance id not found")
+		return domain.Balance{}, utils.ErrorBadRequest(paramLog, utils.InvalidBalanceID, "Balance id not found")
 	}
 
 	return balance, nil
 }
 
-func createTransaction(corporate domain.Corporate, balance domain.Balance, from domain.ActorAble,
+func createTransaction(paramLog *basic.ParamLog, corporate domain.Corporate, balance domain.Balance, from domain.ActorAble,
 	to domain.TransactionObject, subAmount int, externalID string, requestId string) (domain.Transaction, domain.Statement) {
 
 	totalFee := 0
@@ -175,19 +174,19 @@ func createTransaction(corporate domain.Corporate, balance domain.Balance, from 
 	return transcation, statement
 }
 
-func validationActor(actor domain.ActorAble, balanceID string, pin string) error {
+func validationActor(paramLog *basic.ParamLog, actor domain.ActorAble, balanceID string, pin string) error {
 
-	err := usecase.ValidateActorPIN(actor, pin)
+	err := usecase.ValidateActorPIN(paramLog, actor, pin)
 	if err != nil {
 		return err
 	}
 
-	err = usecase.ValidateAccessBalance(actor, balanceID)
+	err = usecase.ValidateAccessBalance(paramLog, actor, balanceID)
 	if err != nil {
 		return err
 	}
 
-	err = usecase.ValidateIsVerify(actor)
+	err = usecase.ValidateIsVerify(paramLog, actor)
 	if err != nil {
 		return err
 	}

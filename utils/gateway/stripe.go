@@ -10,7 +10,6 @@ import (
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/utils"
 	"github.com/kangdjoker/takeme-core/utils/basic"
-	log "github.com/sirupsen/logrus"
 	"github.com/stripe/stripe-go/v73"
 	"github.com/stripe/stripe-go/v73/customer"
 	"github.com/stripe/stripe-go/v73/invoice"
@@ -42,7 +41,7 @@ func (gateway StripeGateway) CallbackVA(w http.ResponseWriter, r *http.Request) 
 	return "", 0, domain.Bank{}, "", nil
 }
 
-func (gateway StripeGateway) CreateTransfer(transaction domain.Transaction) (string, error) {
+func (gateway StripeGateway) CreateTransfer(paramLog *basic.ParamLog, transaction domain.Transaction) (string, error) {
 	return "", nil
 }
 
@@ -50,11 +49,11 @@ func (gateway StripeGateway) CallbackTransfer(w http.ResponseWriter, r *http.Req
 	return "", "", "", nil
 }
 
-func (gateway StripeGateway) Inquiry(bankCode string, accountNumber string) (string, error) {
+func (gateway StripeGateway) Inquiry(paramLog *basic.ParamLog, bankCode string, accountNumber string) (string, error) {
 	return "", nil
 }
 
-func (gateway StripeGateway) ChargeCard(balanceID string, amount int, returnURL string, card domain.Card, externalID string) (string, string, error) {
+func (gateway StripeGateway) ChargeCard(paramLog *basic.ParamLog, balanceID string, amount int, returnURL string, card domain.Card, externalID string) (string, string, error) {
 	stripe.Key = os.Getenv("STRIPE_SECRET")
 
 	expM, err := strconv.ParseInt(card.ExpMonth, 10, 64)
@@ -90,7 +89,7 @@ func (gateway StripeGateway) ChargeCard(balanceID string, amount int, returnURL 
 	pi, err := paymentintent.New(params2)
 
 	if err != nil {
-		return "", "", utils.ErrorInternalServer(utils.StripeAPICallFail, "Stripe API call fail")
+		return "", "", utils.ErrorInternalServer(paramLog, utils.StripeAPICallFail, "Stripe API call fail")
 	}
 
 	params3 := &stripe.PaymentIntentConfirmParams{
@@ -104,7 +103,7 @@ func (gateway StripeGateway) ChargeCard(balanceID string, amount int, returnURL 
 	)
 
 	if err != nil {
-		return "", "", utils.ErrorInternalServer(utils.StripeAPICallFail, "Stripe API call fail")
+		return "", "", utils.ErrorInternalServer(paramLog, utils.StripeAPICallFail, "Stripe API call fail")
 	}
 
 	status := CHARGE_CARD_STATUS_PENDING
@@ -118,7 +117,7 @@ func (gateway StripeGateway) ChargeCard(balanceID string, amount int, returnURL 
 	return status, authURL, nil
 }
 
-func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, returnURL string, card domain.Card, externalID string, interval string) (
+func (gateway StripeGateway) ChargeCardSubscribe(paramLog *basic.ParamLog, balanceID string, amount int, returnURL string, card domain.Card, externalID string, interval string) (
 	string, string, string, error) {
 	stripe.Key = os.Getenv("STRIPE_SECRET")
 	reference := balanceID
@@ -137,7 +136,7 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 	params.AddMetadata("reference", reference)
 	pm, err := paymentmethod.New(params)
 	if err != nil {
-		return "", "", "", utils.ErrorInternalServer(utils.StripeAPICallFail, "Stripe API call fail")
+		return "", "", "", utils.ErrorInternalServer(paramLog, utils.StripeAPICallFail, "Stripe API call fail")
 	}
 
 	paymentMethodID := pm.ID
@@ -170,7 +169,7 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 
 	c, err := customer.New(custParams)
 	if err != nil {
-		return "", "", "", utils.ErrorInternalServer(utils.StripeAPICallFail, "Stripe API call fail")
+		return "", "", "", utils.ErrorInternalServer(paramLog, utils.StripeAPICallFail, "Stripe API call fail")
 	}
 
 	customerID := c.ID
@@ -195,7 +194,7 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 		nil,
 	)
 	if err != nil {
-		return "", "", "", utils.ErrorInternalServer(utils.StripeAPICallFail, "Stripe API call fail")
+		return "", "", "", utils.ErrorInternalServer(paramLog, utils.StripeAPICallFail, "Stripe API call fail")
 	}
 
 	paymentIntentID := in.PaymentIntent.ID
@@ -224,7 +223,7 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 	)
 
 	if err != nil {
-		return "", "", "", utils.ErrorInternalServer(utils.StripeAPICallFail, "Stripe API call fail")
+		return "", "", "", utils.ErrorInternalServer(paramLog, utils.StripeAPICallFail, "Stripe API call fail")
 	}
 
 	status := CHARGE_CARD_STATUS_PENDING
@@ -238,7 +237,7 @@ func (gateway StripeGateway) ChargeCardSubscribe(balanceID string, amount int, r
 	return status, authURL, subscriptionID, nil
 }
 
-func (gateway StripeGateway) CancelSubscribe(subsID string) error {
+func (gateway StripeGateway) CancelSubscribe(paramLog *basic.ParamLog, subsID string) error {
 	stripe.Key = os.Getenv("STRIPE_SECRET")
 
 	_, err := subscription.Cancel(
@@ -246,15 +245,16 @@ func (gateway StripeGateway) CancelSubscribe(subsID string) error {
 		nil,
 	)
 	if err != nil {
-		return utils.ErrorInternalServer(utils.StripeAPICallFail, "Stripe API call fail")
+		return utils.ErrorInternalServer(paramLog, utils.StripeAPICallFail, "Stripe API call fail")
 	}
 
 	return nil
 }
 
 func (gateway StripeGateway) CallbackAcceptPaymentCard(w http.ResponseWriter, r *http.Request) (string, int, domain.Card, string, string, error) {
-
-	log.Info("------------------------ Stripe hit callback card ------------------------")
+	ioCloser, span, tag := basic.RequestToTracing(r)
+	paramLog := &basic.ParamLog{Span: span, TrCloser: ioCloser, Tag: tag}
+	basic.LogInformation(paramLog, "------------------------ Stripe hit callback card ------------------------")
 
 	const MaxBodyBytes = int64(65536)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodyBytes)
@@ -270,7 +270,7 @@ func (gateway StripeGateway) CallbackAcceptPaymentCard(w http.ResponseWriter, r 
 
 	if err != nil {
 		fmt.Println(err.Error())
-		return "", 0, domain.Card{}, "", "", utils.ErrorBadRequest(utils.InvalidSignature, "Invalid signature stripe callback")
+		return "", 0, domain.Card{}, "", "", utils.ErrorBadRequest(paramLog, utils.InvalidSignature, "Invalid signature stripe callback")
 	}
 
 	if event.Type != "payment_intent.succeeded" {
@@ -280,7 +280,7 @@ func (gateway StripeGateway) CallbackAcceptPaymentCard(w http.ResponseWriter, r 
 	var paymentIntent stripe.PaymentIntent
 	err = json.Unmarshal(event.Data.Raw, &paymentIntent)
 	if err != nil {
-		return "", 0, domain.Card{}, "", "", utils.ErrorBadRequest(utils.InvalidRequestPayload, "Invalid payload stripe callback")
+		return "", 0, domain.Card{}, "", "", utils.ErrorBadRequest(paramLog, utils.InvalidRequestPayload, "Invalid payload stripe callback")
 	}
 
 	card := domain.Card{

@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	"github.com/kangdjoker/takeme-core/utils/database"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -24,99 +25,99 @@ func TransactionSaveOne(model *domain.Transaction, session mongo.SessionContext)
 	return nil
 }
 
-func TransactionPendingByCodeNoSession(code string) (domain.Transaction, error) {
+func TransactionPendingByCodeNoSession(paramLog *basic.ParamLog, code string) (domain.Transaction, error) {
 	var transaction domain.Transaction
 	query := bson.M{"transaction_code": code, "status": "Pending"}
 	cursor := database.FindOne(domain.TRANSACTION_COLLECTION, query)
 	err := cursor.Decode(&transaction)
 	if err != nil {
-		return domain.Transaction{}, utils.ErrorInternalServer(utils.QueryFailed, "Query failed")
+		return domain.Transaction{}, utils.ErrorInternalServer(paramLog, utils.QueryFailed, "Query failed")
 	}
 
 	if transaction.TransactionCode == "" {
-		return domain.Transaction{}, utils.ErrorBadRequest(utils.TransactionNotFound, "Transaction not found")
+		return domain.Transaction{}, utils.ErrorBadRequest(paramLog, utils.TransactionNotFound, "Transaction not found")
 	}
 
 	return transaction, nil
 }
 
-func TransactionPendingByReferenceNoSession(code string) (domain.Transaction, error) {
+func TransactionPendingByReferenceNoSession(paramLog *basic.ParamLog, code string) (domain.Transaction, error) {
 	var transaction domain.Transaction
 	query := bson.M{"gateway_reference": code, "status": "Pending"}
 	cursor := database.FindOne(domain.TRANSACTION_COLLECTION, query)
 	err := cursor.Decode(&transaction)
 	if err != nil {
-		return domain.Transaction{}, utils.ErrorInternalServer(utils.QueryFailed, "Query failed")
+		return domain.Transaction{}, utils.ErrorInternalServer(paramLog, utils.QueryFailed, "Query failed")
 	}
 
 	if transaction.TransactionCode == "" {
-		return domain.Transaction{}, utils.ErrorBadRequest(utils.TransactionNotFound, "Transaction not found")
+		return domain.Transaction{}, utils.ErrorBadRequest(paramLog, utils.TransactionNotFound, "Transaction not found")
 	}
 
 	return transaction, nil
 }
 
-func TransactionByGatewayReferenceNoSession(code string) (domain.Transaction, error) {
+func TransactionByGatewayReferenceNoSession(paramLog *basic.ParamLog, code string) (domain.Transaction, error) {
 	var transaction domain.Transaction
 	query := bson.M{"gateway_reference": code}
 	cursor := database.FindOne(domain.TRANSACTION_COLLECTION, query)
 	err := cursor.Decode(&transaction)
 	if err != nil {
-		return domain.Transaction{}, utils.ErrorInternalServer(utils.QueryFailed, "Query failed")
+		return domain.Transaction{}, utils.ErrorInternalServer(paramLog, utils.QueryFailed, "Query failed")
 	}
 
 	if transaction.TransactionCode == "" {
-		return domain.Transaction{}, utils.ErrorBadRequest(utils.TransactionNotFound, "Transaction not found")
+		return domain.Transaction{}, utils.ErrorBadRequest(paramLog, utils.TransactionNotFound, "Transaction not found")
 	}
 
 	return transaction, nil
 }
 
-func TransactionByCodeNoSession(code string) (domain.Transaction, error) {
+func TransactionByCodeNoSession(paramLog *basic.ParamLog, code string) (domain.Transaction, error) {
 	var transaction domain.Transaction
 	query := bson.M{"transaction_code": code}
 	cursor := database.FindOne(domain.TRANSACTION_COLLECTION, query)
 	err := cursor.Decode(&transaction)
 	if err != nil {
-		return domain.Transaction{}, utils.ErrorInternalServer(utils.QueryFailed, "Query failed")
+		return domain.Transaction{}, utils.ErrorInternalServer(paramLog, utils.QueryFailed, "Query failed")
 	}
 
 	if transaction.TransactionCode == "" {
-		return domain.Transaction{}, utils.ErrorBadRequest(utils.TransactionNotFound, "Transaction not found")
+		return domain.Transaction{}, utils.ErrorBadRequest(paramLog, utils.TransactionNotFound, "Transaction not found")
 	}
 
 	return transaction, nil
 }
 
-func TransactionByID(ID string, session mongo.SessionContext) (domain.Transaction, error) {
+func TransactionByID(paramLog *basic.ParamLog, ID string, session mongo.SessionContext) (domain.Transaction, error) {
 	model := domain.Transaction{}
 	cursor := database.SessionFindOneByID(domain.TRANSACTION_COLLECTION, ID, session)
 	err := cursor.Decode(&model)
 	if err != nil {
-		return domain.Transaction{}, utils.ErrorInternalServer(utils.QueryFailed, "Query failed or cannot decode")
+		return domain.Transaction{}, utils.ErrorInternalServer(paramLog, utils.QueryFailed, "Query failed or cannot decode")
 	}
 
 	return model, nil
 }
 
-func TransactionPendingByCode(code string, session mongo.SessionContext) (domain.Transaction, error) {
+func TransactionPendingByCode(paramLog *basic.ParamLog, code string, session mongo.SessionContext) (domain.Transaction, error) {
 	var transaction domain.Transaction
 	query := bson.M{"transaction_code": code, "status": "Pending"}
 	cursor := database.SessionFindOne(domain.TRANSACTION_COLLECTION, query, session)
 	err := cursor.Decode(&transaction)
 	if err != nil {
-		return domain.Transaction{}, utils.ErrorInternalServer(utils.QueryFailed, "Query failed")
+		return domain.Transaction{}, utils.ErrorInternalServer(paramLog, utils.QueryFailed, "Query failed")
 	}
 
 	if transaction.TransactionCode == "" {
-		return domain.Transaction{}, utils.ErrorBadRequest(utils.TransactionNotFound, "Transaction not found")
+		return domain.Transaction{}, utils.ErrorBadRequest(paramLog, utils.TransactionNotFound, "Transaction not found")
 	}
 
 	return transaction, nil
 }
 
-func TransactionUpdateOne(model *domain.Transaction, session mongo.SessionContext) error {
-	err := database.SessionUpdateOne(model, session)
+func TransactionUpdateOne(paramLog *basic.ParamLog, model *domain.Transaction, session mongo.SessionContext) error {
+	err := database.SessionUpdateOne(paramLog, model, session)
 	if err != nil {
 		return err
 	}
@@ -124,7 +125,7 @@ func TransactionUpdateOne(model *domain.Transaction, session mongo.SessionContex
 	return nil
 }
 
-func TransactionsByActorNoSession(accountNumber string, ownBalance []primitive.ObjectID, page string, limit string) ([]domain.Transaction, error) {
+func TransactionsByActorNoSession(paramLog *basic.ParamLog, accountNumber string, ownBalance []primitive.ObjectID, page string, limit string) ([]domain.Transaction, error) {
 
 	query := bson.M{}
 	orQuery := []bson.M{}
@@ -137,11 +138,11 @@ func TransactionsByActorNoSession(accountNumber string, ownBalance []primitive.O
 	query["$or"] = orQuery
 
 	var transaction []domain.Transaction
-	cursor, err := database.Find(domain.TRANSACTION_COLLECTION, query, page, limit)
+	cursor, err := database.Find(paramLog, domain.TRANSACTION_COLLECTION, query, page, limit)
 	err = cursor.All(context.TODO(), &transaction)
 
 	if err != nil {
-		return []domain.Transaction{}, utils.ErrorInternalServer(utils.QueryFailed, "Query failed")
+		return []domain.Transaction{}, utils.ErrorInternalServer(paramLog, utils.QueryFailed, "Query failed")
 	}
 
 	return transaction, nil

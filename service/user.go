@@ -9,6 +9,7 @@ import (
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/domain/dto"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	"github.com/kangdjoker/takeme-core/utils/database"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -52,7 +53,7 @@ func UserCreate(corporate domain.Corporate, email string, phoneNumber string, fu
 	return model, nil
 }
 
-func UserCreateUnpending(corporate domain.Corporate, userPending domain.User, email string, phoneNumber string, fullName string,
+func UserCreateUnpending(paramLog *basic.ParamLog, corporate domain.Corporate, userPending domain.User, email string, phoneNumber string, fullName string,
 	session mongo.SessionContext) (domain.User, error) {
 
 	activationCode := utils.GenerateShortCode()
@@ -77,7 +78,7 @@ func UserCreateUnpending(corporate domain.Corporate, userPending domain.User, em
 	userPending.Avatar = ""
 	userPending.FaceAsPIN = false
 
-	err := UserUpdateOne(&userPending, session)
+	err := UserUpdateOne(paramLog, &userPending, session)
 	if err != nil {
 		return domain.User{}, err
 	}
@@ -85,13 +86,13 @@ func UserCreateUnpending(corporate domain.Corporate, userPending domain.User, em
 	return userPending, nil
 }
 
-func UserActivate(user *domain.User, session mongo.SessionContext) error {
+func UserActivate(paramLog *basic.ParamLog, user *domain.User, session mongo.SessionContext) error {
 
 	user.Active = true
 	user.ActivationCode = ""
 	user.Pending = false
 
-	err := UserUpdateOne(user, session)
+	err := UserUpdateOne(paramLog, user, session)
 	if err != nil {
 		return err
 	}
@@ -108,8 +109,8 @@ func UserSaveOne(model *domain.User, session mongo.SessionContext) error {
 	return nil
 }
 
-func UserUpdateOne(model *domain.User, session mongo.SessionContext) error {
-	err := database.SessionUpdateOne(model, session)
+func UserUpdateOne(paramLog *basic.ParamLog, model *domain.User, session mongo.SessionContext) error {
+	err := database.SessionUpdateOne(paramLog, model, session)
 	if err != nil {
 		return err
 	}
@@ -117,8 +118,8 @@ func UserUpdateOne(model *domain.User, session mongo.SessionContext) error {
 	return nil
 }
 
-func UserUpdateOneNoSession(model *domain.User) error {
-	err := database.UpdateOne(domain.USER_COLLECTION, model)
+func UserUpdateOneNoSession(paramLog *basic.ParamLog, model *domain.User) error {
+	err := database.UpdateOne(paramLog, domain.USER_COLLECTION, model)
 	if err != nil {
 		return err
 	}
@@ -126,55 +127,55 @@ func UserUpdateOneNoSession(model *domain.User) error {
 	return nil
 }
 
-func UserByID(ID string, session mongo.SessionContext) (domain.User, error) {
+func UserByID(paramLog *basic.ParamLog, ID string, session mongo.SessionContext) (domain.User, error) {
 	model := domain.User{}
 	cursor := database.SessionFindOneByID(domain.USER_COLLECTION, ID, session)
 	err := cursor.Decode(&model)
 	if err != nil {
-		return domain.User{}, utils.ErrorInternalServer(utils.QueryFailed, "Query failed or cannot decode")
+		return domain.User{}, utils.ErrorInternalServer(paramLog, utils.QueryFailed, "Query failed or cannot decode")
 	}
 
 	return model, nil
 }
 
-func UserByIDNoSession(ID string) (domain.User, error) {
+func UserByIDNoSession(paramLog *basic.ParamLog, ID string) (domain.User, error) {
 	model := domain.User{}
 	cursor := database.FindOneByID(domain.USER_COLLECTION, ID)
 	err := cursor.Decode(&model)
 	if err != nil {
-		return domain.User{}, utils.ErrorInternalServer(utils.QueryFailed, "Query failed or cannot decode")
+		return domain.User{}, utils.ErrorInternalServer(paramLog, utils.QueryFailed, "Query failed or cannot decode")
 	}
 
 	return model, nil
 }
 
-func UserByPhoneNumber(corporateID primitive.ObjectID, phoneNumber string, session mongo.SessionContext) (domain.User, error) {
+func UserByPhoneNumber(paramLog *basic.ParamLog, corporateID primitive.ObjectID, phoneNumber string, session mongo.SessionContext) (domain.User, error) {
 	model := domain.User{}
 	query := bson.M{"phone_number": phoneNumber, "corporate_id": corporateID, "pending": false}
 	cursor := database.SessionFindOne(domain.USER_COLLECTION, query, session)
 	cursor.Decode(&model)
 
 	if model.PhoneNumber == "" {
-		return domain.User{}, utils.ErrorBadRequest(utils.UserNotFound, "User not found")
+		return domain.User{}, utils.ErrorBadRequest(paramLog, utils.UserNotFound, "User not found")
 	}
 
 	return model, nil
 }
 
-func UserByPhoneNumberWithoutSession(corporateID primitive.ObjectID, phoneNumber string) (domain.User, error) {
+func UserByPhoneNumberWithoutSession(paramLog *basic.ParamLog, corporateID primitive.ObjectID, phoneNumber string) (domain.User, error) {
 	model := domain.User{}
 	query := bson.M{"phone_number": phoneNumber, "corporate_id": corporateID, "pending": false}
 	cursor := database.FindOne(domain.USER_COLLECTION, query)
 	cursor.Decode(&model)
 
 	if model.PhoneNumber == "" {
-		return domain.User{}, utils.ErrorBadRequest(utils.UserNotFound, "User not found")
+		return domain.User{}, utils.ErrorBadRequest(paramLog, utils.UserNotFound, "User not found")
 	}
 
 	return model, nil
 }
 
-func ValidateUserNotRegisteredYet(corporate domain.Corporate, phoneNumber string, email string,
+func ValidateUserNotRegisteredYet(paramLog *basic.ParamLog, corporate domain.Corporate, phoneNumber string, email string,
 	session mongo.SessionContext) (bool, domain.User, error) {
 
 	isPending := false
@@ -193,22 +194,22 @@ func ValidateUserNotRegisteredYet(corporate domain.Corporate, phoneNumber string
 	}
 
 	if model.PhoneNumber != "" {
-		return isPending, model, utils.ErrorBadRequest(utils.UserAlreadyExist, "User already exist")
+		return isPending, model, utils.ErrorBadRequest(paramLog, utils.UserAlreadyExist, "User already exist")
 	}
 
 	return isPending, model, nil
 }
 
-func UserByIDWithValidation(ID string, validations []func(user domain.User) error) (domain.User, error) {
+func UserByIDWithValidation(paramLog *basic.ParamLog, ID string, validations []func(paramLog *basic.ParamLog, user domain.User) error) (domain.User, error) {
 	model := domain.User{}
 	cursor := database.FindOneByID(domain.USER_COLLECTION, ID)
 	err := cursor.Decode(&model)
 	if err != nil {
-		return domain.User{}, utils.ErrorInternalServer(utils.QueryFailed, "Query failed or cannot decode")
+		return domain.User{}, utils.ErrorInternalServer(paramLog, utils.QueryFailed, "Query failed or cannot decode")
 	}
 
 	for _, element := range validations {
-		err := element(model)
+		err := element(paramLog, model)
 		if err != nil {
 			return domain.User{}, err
 		}
@@ -217,14 +218,14 @@ func UserByIDWithValidation(ID string, validations []func(user domain.User) erro
 	return model, nil
 }
 
-func UserReduceAccessAttempt(userID string, session mongo.SessionContext) error {
+func UserReduceAccessAttempt(paramLog *basic.ParamLog, userID string, session mongo.SessionContext) error {
 
-	user, err := UserByID(userID, session)
+	user, err := UserByID(paramLog, userID, session)
 	if err != nil {
 		return err
 	}
 
-	err = ValidateUserLocked(user)
+	err = ValidateUserLocked(paramLog, user)
 	if err != nil {
 		return err
 	}
@@ -237,7 +238,7 @@ func UserReduceAccessAttempt(userID string, session mongo.SessionContext) error 
 		user.AccessAttempt -= 1
 	}
 
-	err = UserUpdateOne(&user, session)
+	err = UserUpdateOne(paramLog, &user, session)
 	if err != nil {
 		return err
 	}
@@ -245,11 +246,11 @@ func UserReduceAccessAttempt(userID string, session mongo.SessionContext) error 
 	return nil
 }
 
-func UserGenerateLoginCode(user *domain.User, session mongo.SessionContext) error {
+func UserGenerateLoginCode(paramLog *basic.ParamLog, user *domain.User, session mongo.SessionContext) error {
 	user.LoginAttempt -= 1
 	user.LoginCode = utils.GenerateShortCode()
 
-	err := UserUpdateOne(user, session)
+	err := UserUpdateOne(paramLog, user, session)
 	if err != nil {
 		return err
 	}
@@ -257,13 +258,13 @@ func UserGenerateLoginCode(user *domain.User, session mongo.SessionContext) erro
 	return nil
 }
 
-func UserRefreshAttempt(user *domain.User, session mongo.SessionContext) error {
+func UserRefreshAttempt(paramLog *basic.ParamLog, user *domain.User, session mongo.SessionContext) error {
 	attempt, _ := strconv.Atoi(os.Getenv("SECURITY_ATTEMPT"))
 	user.LoginAttempt = int8(attempt)
 	user.AccessAttempt = int8(attempt)
 	user.LoginCode = "-"
 
-	err := UserUpdateOne(user, session)
+	err := UserUpdateOne(paramLog, user, session)
 	if err != nil {
 		return err
 	}
@@ -271,13 +272,13 @@ func UserRefreshAttempt(user *domain.User, session mongo.SessionContext) error {
 	return nil
 }
 
-func UserLock(user *domain.User, session mongo.SessionContext) error {
+func UserLock(paramLog *basic.ParamLog, user *domain.User, session mongo.SessionContext) error {
 
 	user.Active = false
 	user.AccessAttempt = 0
 	user.LoginAttempt = 0
 
-	err := UserUpdateOne(user, session)
+	err := UserUpdateOne(paramLog, user, session)
 	if err != nil {
 		return err
 	}
@@ -285,13 +286,13 @@ func UserLock(user *domain.User, session mongo.SessionContext) error {
 	return nil
 }
 
-func UserUnlock(user *domain.User, session mongo.SessionContext) error {
+func UserUnlock(paramLog *basic.ParamLog, user *domain.User, session mongo.SessionContext) error {
 	attempt, _ := strconv.Atoi(os.Getenv("SECURITY_ATTEMPT"))
 	user.Active = true
 	user.AccessAttempt = int8(attempt)
 	user.LoginAttempt = int8(attempt)
 
-	err := UserUpdateOne(user, session)
+	err := UserUpdateOne(paramLog, user, session)
 	if err != nil {
 		return err
 	}
@@ -299,16 +300,16 @@ func UserUnlock(user *domain.User, session mongo.SessionContext) error {
 	return nil
 }
 
-func UserSavePIN(user *domain.User, pin string, session mongo.SessionContext) error {
+func UserSavePIN(paramLog *basic.ParamLog, user *domain.User, pin string, session mongo.SessionContext) error {
 
 	pin, err := utils.RSADecrypt(pin)
 	if err != nil {
-		return utils.ErrorInternalServer(utils.DecryptError, err.Error())
+		return utils.ErrorInternalServer(paramLog, utils.DecryptError, err.Error())
 	}
 
 	user.PIN = pin
 
-	err = UserUpdateOne(user, session)
+	err = UserUpdateOne(paramLog, user, session)
 	if err != nil {
 		return err
 	}
@@ -316,17 +317,17 @@ func UserSavePIN(user *domain.User, pin string, session mongo.SessionContext) er
 	return nil
 }
 
-func UserGenerateChangePINCode(user *domain.User, pin string, session mongo.SessionContext) (string, error) {
+func UserGenerateChangePINCode(paramLog *basic.ParamLog, user *domain.User, pin string, session mongo.SessionContext) (string, error) {
 
 	pin, err := utils.RSADecrypt(pin)
 	if err != nil {
-		return "", utils.ErrorInternalServer(utils.DecryptError, err.Error())
+		return "", utils.ErrorInternalServer(paramLog, utils.DecryptError, err.Error())
 	}
 
 	user.ChangePIN = pin
 	user.ChangePINCode = utils.GenerateShortCode()
 
-	err = UserUpdateOne(user, session)
+	err = UserUpdateOne(paramLog, user, session)
 	if err != nil {
 		return "", err
 	}
@@ -334,12 +335,12 @@ func UserGenerateChangePINCode(user *domain.User, pin string, session mongo.Sess
 	return user.ChangePINCode, nil
 }
 
-func UserChangePIN(user *domain.User, session mongo.SessionContext) error {
+func UserChangePIN(paramLog *basic.ParamLog, user *domain.User, session mongo.SessionContext) error {
 	user.PIN = user.ChangePIN
 	user.ChangePIN = " "
 	user.ChangePINCode = " "
 
-	err := UserUpdateOne(user, session)
+	err := UserUpdateOne(paramLog, user, session)
 	if err != nil {
 		return err
 	}
@@ -347,10 +348,10 @@ func UserChangePIN(user *domain.User, session mongo.SessionContext) error {
 	return nil
 }
 
-func UserChangeNewPIN(user *domain.User, newPIN string, session mongo.SessionContext) error {
+func UserChangeNewPIN(paramLog *basic.ParamLog, user *domain.User, newPIN string, session mongo.SessionContext) error {
 	user.PIN = newPIN
 
-	err := UserUpdateOne(user, session)
+	err := UserUpdateOne(paramLog, user, session)
 	if err != nil {
 		return err
 	}
@@ -358,10 +359,10 @@ func UserChangeNewPIN(user *domain.User, newPIN string, session mongo.SessionCon
 	return nil
 }
 
-func UserChangeFaceAsPIN(user *domain.User, isFaceAsPIN bool, session mongo.SessionContext) error {
+func UserChangeFaceAsPIN(paramLog *basic.ParamLog, user *domain.User, isFaceAsPIN bool, session mongo.SessionContext) error {
 	user.FaceAsPIN = isFaceAsPIN
 
-	err := UserUpdateOne(user, session)
+	err := UserUpdateOne(paramLog, user, session)
 	if err != nil {
 		return err
 	}
@@ -369,13 +370,13 @@ func UserChangeFaceAsPIN(user *domain.User, isFaceAsPIN bool, session mongo.Sess
 	return nil
 }
 
-func UserAddBankAccount(user *domain.User, bankAccount domain.Bank, session mongo.SessionContext) error {
+func UserAddBankAccount(paramLog *basic.ParamLog, user *domain.User, bankAccount domain.Bank, session mongo.SessionContext) error {
 	existinglistBank := user.SavedBankAccount
 	existinglistBank = append(existinglistBank, bankAccount)
 
 	user.SavedBankAccount = existinglistBank
 
-	err := UserUpdateOne(user, session)
+	err := UserUpdateOne(paramLog, user, session)
 	if err != nil {
 		return err
 	}
@@ -383,7 +384,7 @@ func UserAddBankAccount(user *domain.User, bankAccount domain.Bank, session mong
 	return nil
 }
 
-func UserRemoveBankAccount(user *domain.User, bankAccount domain.Bank, session mongo.SessionContext) error {
+func UserRemoveBankAccount(paramLog *basic.ParamLog, user *domain.User, bankAccount domain.Bank, session mongo.SessionContext) error {
 	existListBank := user.SavedBankAccount
 	var newListBank = existListBank
 	for index, bank := range existListBank {
@@ -395,7 +396,7 @@ func UserRemoveBankAccount(user *domain.User, bankAccount domain.Bank, session m
 
 	user.SavedBankAccount = newListBank
 
-	err := UserUpdateOne(user, session)
+	err := UserUpdateOne(paramLog, user, session)
 	if err != nil {
 		return err
 	}
@@ -403,14 +404,14 @@ func UserRemoveBankAccount(user *domain.User, bankAccount domain.Bank, session m
 	return nil
 }
 
-func UserVerify(user *domain.User, deviceID string, nik string, digitalID string, session mongo.SessionContext) error {
+func UserVerify(paramLog *basic.ParamLog, user *domain.User, deviceID string, nik string, digitalID string, session mongo.SessionContext) error {
 	user.Verified = true
 	user.DeviceID = deviceID
 	user.NIK = nik
 	// user.ImageUpgrade = payload.Image
 	user.DigitalID = digitalID
 
-	err := UserUpdateOne(user, session)
+	err := UserUpdateOne(paramLog, user, session)
 	if err != nil {
 		return err
 	}
@@ -418,7 +419,7 @@ func UserVerify(user *domain.User, deviceID string, nik string, digitalID string
 	return nil
 }
 
-func UserDTOByID(userID string) (dto.User, error) {
+func UserDTOByID(paramLog *basic.ParamLog, userID string) (dto.User, error) {
 
 	objectID, err := primitive.ObjectIDFromHex(userID)
 
@@ -473,16 +474,16 @@ func UserDTOByID(userID string) (dto.User, error) {
 	}
 
 	var result []dto.User
-	cursor, err := database.Aggregate(domain.USER_COLLECTION, query)
+	cursor, err := database.Aggregate(paramLog, domain.USER_COLLECTION, query)
 	cursor.All(context.TODO(), &result)
 	if err != nil {
-		return dto.User{}, utils.ErrorInternalServer(utils.QueryFailed, "Query failed or cannot decode")
+		return dto.User{}, utils.ErrorInternalServer(paramLog, utils.QueryFailed, "Query failed or cannot decode")
 	}
 
 	return result[0], nil
 }
 
-func UsersDTOFindByID(usersID []string) ([]dto.User, error) {
+func UsersDTOFindByID(paramLog *basic.ParamLog, usersID []string) ([]dto.User, error) {
 
 	var queryUsers []bson.M
 	for _, element := range usersID {
@@ -545,10 +546,10 @@ func UsersDTOFindByID(usersID []string) ([]dto.User, error) {
 	}
 
 	var result []dto.User
-	cursor, err := database.Aggregate(domain.USER_COLLECTION, query)
+	cursor, err := database.Aggregate(paramLog, domain.USER_COLLECTION, query)
 	cursor.All(context.TODO(), &result)
 	if err != nil {
-		return []dto.User{}, utils.ErrorInternalServer(utils.QueryFailed, "Query failed or cannot decode")
+		return []dto.User{}, utils.ErrorInternalServer(paramLog, utils.QueryFailed, "Query failed or cannot decode")
 	}
 
 	return result, nil
@@ -563,59 +564,59 @@ func UserDeleteInactive(user *domain.User, session mongo.SessionContext) error {
 	return nil
 }
 
-func ValidateUserLocked(user domain.User) error {
+func ValidateUserLocked(paramLog *basic.ParamLog, user domain.User) error {
 	if user.Active == false {
-		return utils.ErrorBadRequest(utils.UserLocked, "User Locked")
+		return utils.ErrorBadRequest(paramLog, utils.UserLocked, "User Locked")
 	}
 
 	return nil
 }
 
-func ValidateUserExist(user domain.User) error {
+func ValidateUserExist(paramLog *basic.ParamLog, user domain.User) error {
 	if user.PhoneNumber == "" {
-		return utils.ErrorUnauthorized()
+		return utils.ErrorUnauthorized(paramLog)
 	}
 
 	return nil
 }
 
-func ValidateUserLoginCode(user domain.User, loginCode string) error {
+func ValidateUserLoginCode(paramLog *basic.ParamLog, user domain.User, loginCode string) error {
 
 	if user.LoginCode != loginCode {
-		return utils.ErrorBadRequest(utils.InvalidLoginCode, "Invalid login code")
+		return utils.ErrorBadRequest(paramLog, utils.InvalidLoginCode, "Invalid login code")
 	}
 
 	return nil
 }
 
-func ValidateUserFullname(fullName string) error {
+func ValidateUserFullname(paramLog *basic.ParamLog, fullName string) error {
 	if utils.IsContainSpecialCharacter(fullName) {
-		return utils.ErrorBadRequest(utils.InvalidNameFormat, "Fullname error")
+		return utils.ErrorBadRequest(paramLog, utils.InvalidNameFormat, "Fullname error")
 	}
 
 	return nil
 }
 
-func ValidateUserActivationCode(user domain.User, activationCode string) error {
+func ValidateUserActivationCode(paramLog *basic.ParamLog, user domain.User, activationCode string) error {
 
 	if user.ActivationCode != activationCode {
-		return utils.ErrorBadRequest(utils.InvalidActivationCode, "Invalid activation code")
+		return utils.ErrorBadRequest(paramLog, utils.InvalidActivationCode, "Invalid activation code")
 	}
 
 	return nil
 }
 
-func ValidateIsUserAlreadyActive(user domain.User) error {
+func ValidateIsUserAlreadyActive(paramLog *basic.ParamLog, user domain.User) error {
 	if user.Active {
-		return utils.ErrorBadRequest(utils.UserAlreadyActive, "User already active")
+		return utils.ErrorBadRequest(paramLog, utils.UserAlreadyActive, "User already active")
 	}
 
 	return nil
 }
 
-func ValidateUserLoginAttempt(user domain.User) error {
+func ValidateUserLoginAttempt(paramLog *basic.ParamLog, user domain.User) error {
 	if user.LoginAttempt <= 0 {
-		return utils.ErrorBadRequest(utils.UserLocked, "User already locked")
+		return utils.ErrorBadRequest(paramLog, utils.UserLocked, "User already locked")
 	}
 
 	return nil
@@ -630,19 +631,19 @@ func removeBankAccountByIndex(s []domain.Bank, index int) []domain.Bank {
 	return result
 }
 
-func ValidateUserChangePINCode(user domain.User, changePINCode string) error {
+func ValidateUserChangePINCode(paramLog *basic.ParamLog, user domain.User, changePINCode string) error {
 
 	if user.ChangePINCode != changePINCode {
-		return utils.ErrorBadRequest(utils.InvalidCode, "Invalid code")
+		return utils.ErrorBadRequest(paramLog, utils.InvalidCode, "Invalid code")
 	}
 
 	return nil
 }
 
-func ValidateUserPIN(user domain.User, pin string) error {
+func ValidateUserPIN(paramLog *basic.ParamLog, user domain.User, pin string) error {
 
 	if pin != user.PIN {
-		return utils.ErrorBadRequest(utils.InvalidPIN, "Invalid Old PIN")
+		return utils.ErrorBadRequest(paramLog, utils.InvalidPIN, "Invalid Old PIN")
 	}
 
 	return nil

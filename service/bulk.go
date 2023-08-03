@@ -6,6 +6,7 @@ import (
 
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	"github.com/kangdjoker/takeme-core/utils/database"
 )
 
@@ -36,7 +37,7 @@ func CreateBulkInquiry(corporate domain.Corporate, totalBulk int, reference stri
 	return bulk
 }
 
-func CreateBulkTransfer(corporate domain.Corporate, totalBulk int, reference string,
+func CreateBulkTransfer(paramLog *basic.ParamLog, corporate domain.Corporate, totalBulk int, reference string,
 	transfers []domain.Transfer, actor domain.ActorObject, balance domain.Balance) (domain.BulkTransfer, error) {
 
 	bulk := domain.BulkTransfer{
@@ -53,7 +54,7 @@ func CreateBulkTransfer(corporate domain.Corporate, totalBulk int, reference str
 	subAmount := 0
 	for _, transfer := range transfers {
 		if transfer.ExternalID == "" || transfer.ExternalID == " " {
-			return domain.BulkTransfer{}, utils.ErrorBadRequest(utils.ExternalIDNotFound, "External ID Not Found")
+			return domain.BulkTransfer{}, utils.ErrorBadRequest(paramLog, utils.ExternalIDNotFound, "External ID Not Found")
 		}
 
 		transfer.Number = number
@@ -96,8 +97,8 @@ func BulkTransferByID(ID string) (domain.BulkTransfer, error) {
 	return model, nil
 }
 
-func SaveBulkInquiry(bulk *domain.BulkInquiry) error {
-	err := database.SaveOne(domain.BULK_INQUIRY_COLLECTION, bulk)
+func SaveBulkInquiry(paramLog *basic.ParamLog, bulk *domain.BulkInquiry) error {
+	err := database.SaveOne(paramLog, domain.BULK_INQUIRY_COLLECTION, bulk)
 	if err != nil {
 		return err
 	}
@@ -105,8 +106,8 @@ func SaveBulkInquiry(bulk *domain.BulkInquiry) error {
 	return nil
 }
 
-func SaveBulkTransfer(bulk *domain.BulkTransfer) error {
-	err := database.SaveOne(domain.BULK_TRANSFER_COLLECTION, bulk)
+func SaveBulkTransfer(paramLog *basic.ParamLog, bulk *domain.BulkTransfer) error {
+	err := database.SaveOne(paramLog, domain.BULK_TRANSFER_COLLECTION, bulk)
 	if err != nil {
 		return err
 	}
@@ -114,8 +115,8 @@ func SaveBulkTransfer(bulk *domain.BulkTransfer) error {
 	return nil
 }
 
-func BulkInquiryUpdateOne(model *domain.BulkInquiry) error {
-	err := database.UpdateOne(domain.BULK_INQUIRY_COLLECTION, model)
+func BulkInquiryUpdateOne(paramLog *basic.ParamLog, model *domain.BulkInquiry) error {
+	err := database.UpdateOne(paramLog, domain.BULK_INQUIRY_COLLECTION, model)
 	if err != nil {
 		return err
 	}
@@ -123,8 +124,8 @@ func BulkInquiryUpdateOne(model *domain.BulkInquiry) error {
 	return nil
 }
 
-func BulkTransferUpdateOne(model *domain.BulkTransfer) error {
-	err := database.UpdateOne(domain.BULK_TRANSFER_COLLECTION, model)
+func BulkTransferUpdateOne(paramLog *basic.ParamLog, model *domain.BulkTransfer) error {
+	err := database.UpdateOne(paramLog, domain.BULK_TRANSFER_COLLECTION, model)
 	if err != nil {
 		return err
 	}

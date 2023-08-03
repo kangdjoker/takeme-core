@@ -18,12 +18,12 @@ func CreateBulkInquiry(paramLog *basic.ParamLog, corporate domain.Corporate, ref
 
 	totalBulk := len(banks)
 	if totalBulk == 0 {
-		return domain.BulkInquiry{}, utils.ErrorBadRequest(utils.BulkListEmpty, "Bulk list empty")
+		return domain.BulkInquiry{}, utils.ErrorBadRequest(paramLog, utils.BulkListEmpty, "Bulk list empty")
 	}
 
 	bulk := service.CreateBulkInquiry(corporate, totalBulk, reference, banks, actor)
 
-	err := service.SaveBulkInquiry(&bulk)
+	err := service.SaveBulkInquiry(paramLog, &bulk)
 	if err != nil {
 		return domain.BulkInquiry{}, err
 	}
@@ -33,25 +33,25 @@ func CreateBulkInquiry(paramLog *basic.ParamLog, corporate domain.Corporate, ref
 	return bulk, nil
 }
 
-func CreateBulkTransfer(corporate domain.Corporate, reference string, transfers []domain.Transfer,
+func CreateBulkTransfer(paramLog *basic.ParamLog, corporate domain.Corporate, reference string, transfers []domain.Transfer,
 	actor domain.ActorObject, balanceID string) (domain.BulkTransfer, error) {
 
 	totalBulk := len(transfers)
 	if totalBulk == 0 {
-		return domain.BulkTransfer{}, utils.ErrorBadRequest(utils.BulkListEmpty, "Bulk list empty")
+		return domain.BulkTransfer{}, utils.ErrorBadRequest(paramLog, utils.BulkListEmpty, "Bulk list empty")
 	}
 
 	balance, err := service.BalanceByIDNoSession(balanceID)
 	if err != nil || balance.Owner.Type == "" {
-		return domain.BulkTransfer{}, utils.ErrorBadRequest(utils.InvalidBalanceID, "Balance not found")
+		return domain.BulkTransfer{}, utils.ErrorBadRequest(paramLog, utils.InvalidBalanceID, "Balance not found")
 	}
 
-	bulk, err := service.CreateBulkTransfer(corporate, totalBulk, reference, transfers, actor, balance)
+	bulk, err := service.CreateBulkTransfer(paramLog, corporate, totalBulk, reference, transfers, actor, balance)
 	if err != nil {
 		return domain.BulkTransfer{}, err
 	}
 
-	err = service.SaveBulkTransfer(&bulk)
+	err = service.SaveBulkTransfer(paramLog, &bulk)
 	if err != nil {
 		return domain.BulkTransfer{}, err
 	}
@@ -64,20 +64,20 @@ func ActorExecuteBulkTransfer(paramLog *basic.ParamLog, corporate domain.Corpora
 
 	bulk, err := service.BulkTransferByID(bulkID)
 	if err != nil || bulk.Time == "" || bulk.Status != domain.BULK_UNEXECUTED_STATUS {
-		return domain.BulkTransfer{}, utils.ErrorBadRequest(utils.BulkNotFound, "Bulk Not found or already executed")
+		return domain.BulkTransfer{}, utils.ErrorBadRequest(paramLog, utils.BulkNotFound, "Bulk Not found or already executed")
 	}
 
-	err = usecase.ValidateActorPIN(user, pin)
+	err = usecase.ValidateActorPIN(paramLog, user, pin)
 	if err != nil {
 		return domain.BulkTransfer{}, err
 	}
 
-	err = usecase.ValidateAccessBalance(user, bulk.BalanceID.Hex())
+	err = usecase.ValidateAccessBalance(paramLog, user, bulk.BalanceID.Hex())
 	if err != nil {
 		return domain.BulkTransfer{}, err
 	}
 
-	err = usecase.ValidateIsVerify(user)
+	err = usecase.ValidateIsVerify(paramLog, user)
 	if err != nil {
 		return domain.BulkTransfer{}, err
 	}
@@ -142,7 +142,7 @@ func executeBulkInquiry(paramLog *basic.ParamLog, corporate domain.Corporate, ac
 
 	bulk.List = result
 	bulk.Status = domain.BULK_COMPLETED_STATUS
-	go service.BulkInquiryUpdateOne(&bulk)
+	go service.BulkInquiryUpdateOne(paramLog, &bulk)
 
 	go usecase.PublishBulkCallback(paramLog, corporate, actor, bulk.ID.Hex(), bulk.Status, corporate.BulkInquiryCallbackURL)
 }
@@ -150,7 +150,7 @@ func executeBulkInquiry(paramLog *basic.ParamLog, corporate domain.Corporate, ac
 func executeBulkTransfer(paramLog *basic.ParamLog, corporate domain.Corporate, user domain.ActorAble, pin string, bulk domain.BulkTransfer, requestId string) {
 
 	bulk.Status = domain.BULK_PROGRESS_STATUS
-	service.BulkTransferUpdateOne(&bulk)
+	service.BulkTransferUpdateOne(paramLog, &bulk)
 
 	transfers := bulk.List
 	for index, transfer := range transfers {
@@ -173,6 +173,6 @@ func executeBulkTransfer(paramLog *basic.ParamLog, corporate domain.Corporate, u
 	}
 
 	bulk.Status = domain.BULK_COMPLETED_STATUS
-	service.BulkTransferUpdateOne(&bulk)
+	service.BulkTransferUpdateOne(paramLog, &bulk)
 	go usecase.PublishBulkCallback(paramLog, corporate, bulk.Owner, bulk.ID.Hex(), bulk.Status, corporate.BulkTransferCallbackURL)
 }

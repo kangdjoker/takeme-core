@@ -8,6 +8,7 @@ import (
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/service"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
 // source = user
@@ -57,12 +58,12 @@ func (self *CalculateFee) Initialize(corporate domain.Corporate, balance domain.
 	self.transactionType = transaction.Type
 }
 
-func (self *CalculateFee) CalculateByOwnerAndTransaction() ([]domain.Statement, error) {
+func (self *CalculateFee) CalculateByOwnerAndTransaction(paramLog *basic.ParamLog) ([]domain.Statement, error) {
 	var err error
 	if self.balanceType == domain.ACTOR_TYPE_USER {
-		err = self.balanceUser(self.corporate, self.balance, self.transaction)
+		err = self.balanceUser(paramLog, self.corporate, self.balance, self.transaction)
 	} else {
-		err = self.balanceCorporate(self.corporate, self.balance, self.transaction)
+		err = self.balanceCorporate(paramLog, self.corporate, self.balance, self.transaction)
 	}
 
 	return self.result, err
@@ -94,7 +95,7 @@ func (self *CalculateFee) RollbackFeeStatement(statements []domain.Statement) []
 	return result
 }
 
-func (self *CalculateFee) balanceUser(corporate domain.Corporate, userBalance domain.Balance, transaction domain.Transaction) error {
+func (self *CalculateFee) balanceUser(paramLog *basic.ParamLog, corporate domain.Corporate, userBalance domain.Balance, transaction domain.Transaction) error {
 	if self.transactionType == domain.TRANSFER_BANK {
 		a, err := balanceUserTransferBank(corporate, userBalance, transaction)
 		if err != nil {
@@ -117,7 +118,7 @@ func (self *CalculateFee) balanceUser(corporate domain.Corporate, userBalance do
 
 		self.result = a
 	} else if self.transactionType == domain.ACCEPT_PAYMENT_CARD {
-		a, err := balanceUserAcceptPaymentCard(corporate, userBalance, transaction)
+		a, err := balanceUserAcceptPaymentCard(paramLog, corporate, userBalance, transaction)
 		if err != nil {
 			return err
 		}
@@ -128,7 +129,7 @@ func (self *CalculateFee) balanceUser(corporate domain.Corporate, userBalance do
 	return nil
 }
 
-func (self *CalculateFee) balanceCorporate(corporate domain.Corporate, corporateBalance domain.Balance, transaction domain.Transaction) error {
+func (self *CalculateFee) balanceCorporate(paramLog *basic.ParamLog, corporate domain.Corporate, corporateBalance domain.Balance, transaction domain.Transaction) error {
 	if self.transactionType == domain.TRANSFER_BANK {
 		a, err := balanceCorporateTransferBank(corporate, corporateBalance, transaction)
 		if err != nil {
@@ -158,7 +159,7 @@ func (self *CalculateFee) balanceCorporate(corporate domain.Corporate, corporate
 
 		self.result = a
 	} else if self.transactionType == domain.ACCEPT_PAYMENT_CARD {
-		a, err := balanceCorporateAcceptPaymentCard(corporate, corporateBalance, transaction)
+		a, err := balanceCorporateAcceptPaymentCard(paramLog, corporate, corporateBalance, transaction)
 		if err != nil {
 			return err
 		}
@@ -350,7 +351,7 @@ func balanceCorporateDeductBalance(corporate domain.Corporate, corporateBalance 
 }
 
 // TODO PROVIDE LOGIC FOR PRINCIPAL CAN ACCEPT MONEY FROM MULTICURRENCY TRANSACTION
-func balanceCorporateAcceptPaymentCard(corporate domain.Corporate, corporateBalance domain.Balance, transaction domain.Transaction) ([]domain.Statement, error) {
+func balanceCorporateAcceptPaymentCard(paramLog *basic.ParamLog, corporate domain.Corporate, corporateBalance domain.Balance, transaction domain.Transaction) ([]domain.Statement, error) {
 	var result []domain.Statement
 	if IsNotPrincipal(corporate) && IsNotIDRCurrency(transaction.Currency) {
 		principal, err := service.CorporateByIDNoSession(corporate.Parent.Hex())
@@ -360,7 +361,7 @@ func balanceCorporateAcceptPaymentCard(corporate domain.Corporate, corporateBala
 
 		percentageFee, err := strconv.ParseFloat(corporate.FeeCorporate.AcceptPaymentCard, 64)
 		if err != nil {
-			return result, utils.ErrorBadRequest(utils.WrongAcceptCardFee, "Cannot convert accept payment card fee")
+			return result, utils.ErrorBadRequest(paramLog, utils.WrongAcceptCardFee, "Cannot convert accept payment card fee")
 		}
 
 		corporateFee := int(float64(transaction.SubAmount) * percentageFee)
@@ -378,11 +379,11 @@ func balanceCorporateAcceptPaymentCard(corporate domain.Corporate, corporateBala
 }
 
 // TODO PROVIDE LOGIC FOR PRINCIPAL CAN ACCEPT MONEY FROM MULTICURRENCY TRANSACTION
-func balanceUserAcceptPaymentCard(corporate domain.Corporate, userBalance domain.Balance, transaction domain.Transaction) ([]domain.Statement, error) {
+func balanceUserAcceptPaymentCard(paramLog *basic.ParamLog, corporate domain.Corporate, userBalance domain.Balance, transaction domain.Transaction) ([]domain.Statement, error) {
 	var result []domain.Statement
 	percentageFee, err := strconv.ParseFloat(corporate.FeeUser.AcceptPaymentCard, 64)
 	if err != nil {
-		return result, utils.ErrorBadRequest(utils.WrongAcceptCardFee, "Cannot convert accept payment card fee")
+		return result, utils.ErrorBadRequest(paramLog, utils.WrongAcceptCardFee, "Cannot convert accept payment card fee")
 	}
 
 	userFee := int(float64(transaction.SubAmount) * percentageFee)
@@ -400,7 +401,7 @@ func balanceUserAcceptPaymentCard(corporate domain.Corporate, userBalance domain
 
 		percentageFee, err := strconv.ParseFloat(corporate.FeeCorporate.AcceptPaymentCard, 64)
 		if err != nil {
-			return result, utils.ErrorBadRequest(utils.WrongAcceptCardFee, "Cannot convert accept payment card fee")
+			return result, utils.ErrorBadRequest(paramLog, utils.WrongAcceptCardFee, "Cannot convert accept payment card fee")
 		}
 
 		principal, err := service.CorporateByIDNoSession(corporate.Parent.Hex())

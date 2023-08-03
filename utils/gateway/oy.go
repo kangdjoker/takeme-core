@@ -10,7 +10,6 @@ import (
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/utils"
 	"github.com/kangdjoker/takeme-core/utils/basic"
-	log "github.com/sirupsen/logrus"
 )
 
 type OYGateway struct {
@@ -58,7 +57,7 @@ func (gateway OYGateway) CreateTransfer(paramLog *basic.ParamLog, transaction do
 	utils.LoggingAPICall(paramLog, resp.StatusCode(), payload, result, "OY Transfer API Call ")
 
 	if err != nil {
-		return "TIMEOUT", utils.ErrorInternalServer(utils.OYApiCallFailed, err.Error())
+		return "TIMEOUT", utils.ErrorInternalServer(paramLog, utils.OYApiCallFailed, err.Error())
 	}
 
 	reference := result.Reference
@@ -71,8 +70,9 @@ func (gateway OYGateway) CreateTransfer(paramLog *basic.ParamLog, transaction do
 }
 
 func (gateway OYGateway) CallbackTransfer(w http.ResponseWriter, r *http.Request) (string, string, string, error) {
-
-	log.Info("------------------------ OY hit callback transfer ------------------------")
+	ioCloser, span, tag := basic.RequestToTracing(r)
+	paramLog := &basic.ParamLog{Span: span, TrCloser: ioCloser, Tag: tag}
+	basic.LogInformation(paramLog, "------------------------ OY hit callback transfer ------------------------")
 
 	var payload OYTransferCallbackPayload
 	err := utils.LoadPayload(r, &payload)
@@ -97,7 +97,7 @@ func (gateway OYGateway) Inquiry(paramLog *basic.ParamLog, bankCode string, acco
 
 	bankCode = utils.ConvertBankCodeOY(bankCode)
 	if bankCode == "" {
-		return "", utils.ErrorBadRequest(utils.BankCodeNotFound, "Inquiry bank code OY not found")
+		return "", utils.ErrorBadRequest(paramLog, utils.BankCodeNotFound, "Inquiry bank code OY not found")
 	}
 
 	var result OYInquiryResponse
@@ -116,21 +116,21 @@ func (gateway OYGateway) Inquiry(paramLog *basic.ParamLog, bankCode string, acco
 		SetBody(payload).
 		SetResult(&result).Post(url)
 
-	log.Info("url:" + url)
+	basic.LogInformation(paramLog, "url:"+url)
 	bh, _ := json.Marshal(header)
-	log.Info("header:" + string(bh))
+	basic.LogInformation(paramLog, "header:"+string(bh))
 	utils.LoggingAPICall(paramLog, resp.StatusCode(), payload, result, "OY Inquiry API Call ")
 
 	if err != nil {
-		return "", utils.ErrorInternalServer(utils.OYApiCallFailed, err.Error())
+		return "", utils.ErrorInternalServer(paramLog, utils.OYApiCallFailed, err.Error())
 	}
 
 	if result.Status.Code == "209" {
-		return "", utils.ErrorBadRequest(utils.InquiryAccountHolderNameNotFound, "Account holder name is empty string")
+		return "", utils.ErrorBadRequest(paramLog, utils.InquiryAccountHolderNameNotFound, "Account holder name is empty string")
 	}
 
 	if result.Status.Code != "000" {
-		return "", utils.ErrorInternalServer(utils.OYApiCallFailed, "OY Inquiry API Call ")
+		return "", utils.ErrorInternalServer(paramLog, utils.OYApiCallFailed, "OY Inquiry API Call ")
 	}
 
 	return result.AccountName, nil

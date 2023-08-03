@@ -44,7 +44,7 @@ func (self *RollbackTransferBank) ExecuteRollback(paramLog *basic.ParamLog) erro
 		self.transaction.TransactionCode,
 		self.transaction.SubAmount)
 
-	feeStatements, err := self.transactionUsecase.RollbackFeeStatement(self.corporate, self.balance, self.transaction)
+	feeStatements, err := self.transactionUsecase.RollbackFeeStatement(paramLog, self.corporate, self.balance, self.transaction)
 	if err != nil {
 		return err
 	}

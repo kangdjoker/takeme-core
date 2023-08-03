@@ -13,7 +13,6 @@ import (
 	"github.com/kangdjoker/takeme-core/utils"
 	"github.com/kangdjoker/takeme-core/utils/basic"
 	"github.com/kangdjoker/takeme-core/utils/database"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readconcern"
@@ -24,12 +23,12 @@ import (
 type Base struct {
 }
 
-func (self Base) CreateFeeStatement(corporate domain.Corporate, balance domain.Balance,
+func (self Base) CreateFeeStatement(paramLog *basic.ParamLog, corporate domain.Corporate, balance domain.Balance,
 	transaction domain.Transaction) ([]domain.Statement, error) {
 	feeCalculator := usecase.CalculateFee{}
 	feeCalculator.Initialize(corporate, balance, transaction)
 
-	statements, err := feeCalculator.CalculateByOwnerAndTransaction()
+	statements, err := feeCalculator.CalculateByOwnerAndTransaction(paramLog)
 	if err != nil {
 		return []domain.Statement{}, err
 	}
@@ -37,12 +36,12 @@ func (self Base) CreateFeeStatement(corporate domain.Corporate, balance domain.B
 	return statements, nil
 }
 
-func (self Base) RollbackFeeStatement(corporate domain.Corporate, balance domain.Balance,
+func (self Base) RollbackFeeStatement(paramLog *basic.ParamLog, corporate domain.Corporate, balance domain.Balance,
 	transaction domain.Transaction) ([]domain.Statement, error) {
 	feeCalculator := usecase.CalculateFee{}
 	feeCalculator.Initialize(corporate, balance, transaction)
 
-	feeStatements, err := feeCalculator.CalculateByOwnerAndTransaction()
+	feeStatements, err := feeCalculator.CalculateByOwnerAndTransaction(paramLog)
 	statements := feeCalculator.RollbackFeeStatement(feeStatements)
 
 	if err != nil {
@@ -60,14 +59,14 @@ func (self Base) Commit(paramLog *basic.ParamLog, statements []domain.Statement,
 		)
 
 		if err != nil {
-			logrus.Info("Error: " + err.Error())
+			basic.LogInformation(paramLog, "Error: "+err.Error())
 			session.AbortTransaction(session)
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
 		}
 
 		err = service.TransactionSaveOne(transaction, session)
 		if err != nil {
-			logrus.Info("Error: " + err.Error())
+			basic.LogInformation(paramLog, "Error: "+err.Error())
 			session.AbortTransaction(session)
 			if strings.Contains(err.Error(), "E11000") {
 				return utils.CustomError{
@@ -83,7 +82,7 @@ func (self Base) Commit(paramLog *basic.ParamLog, statements []domain.Statement,
 
 		err = adjustBalanceWithStatement(paramLog, statements, session)
 		if err != nil {
-			logrus.Info("Error: " + err.Error())
+			basic.LogInformation(paramLog, "Error: "+err.Error())
 			session.AbortTransaction(session)
 			return err
 		}
@@ -106,7 +105,7 @@ func (self Base) Commit(paramLog *basic.ParamLog, statements []domain.Statement,
 	return nil
 }
 
-func (self Base) UpdatingTransactionDetail(transaction *domain.Transaction) error {
+func (self Base) UpdatingTransactionDetail(paramLog *basic.ParamLog, transaction *domain.Transaction) error {
 	function := func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().
 			SetReadConcern(readconcern.Snapshot()).
@@ -114,12 +113,12 @@ func (self Base) UpdatingTransactionDetail(transaction *domain.Transaction) erro
 		)
 
 		if err != nil {
-			logrus.Info("Error: " + err.Error())
+			basic.LogError(paramLog, "Error: "+err.Error())
 			session.AbortTransaction(session)
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
 		}
 
-		err = service.TransactionUpdateOne(transaction, session)
+		err = service.TransactionUpdateOne(paramLog, transaction, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
@@ -152,7 +151,7 @@ func (self Base) CommitRollback(paramLog *basic.ParamLog, statements []domain.St
 
 		if err != nil {
 			session.AbortTransaction(session)
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
 		}
 
 		err = adjustBalanceWithStatement(paramLog, statements, session)
@@ -183,7 +182,7 @@ func adjustBalanceWithStatement(paramLog *basic.ParamLog, statements []domain.St
 
 	for _, statement := range statements {
 		if statement.Deposit != 0 {
-			err := usecase.DepositBalance(statement, session)
+			err := usecase.DepositBalance(paramLog, statement, session)
 			if err != nil {
 				return err
 			}

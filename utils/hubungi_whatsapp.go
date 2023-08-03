@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/kangdjoker/takeme-core/utils/basic"
-	log "github.com/sirupsen/logrus"
 )
 
 func SendWAHubungi(paramLog *basic.ParamLog, to string, message string) error {
@@ -51,11 +50,11 @@ func SendWAHubungi(paramLog *basic.ParamLog, to string, message string) error {
 	LoggingAPICall(paramLog, resp.StatusCode(), payload, result, "Hubungi WA API ")
 
 	if err != nil {
-		log.Info(fmt.Sprintf("Hubungi API Call failed"))
-		return ErrorInternalServer(QontakAPICallFailed, err.Error())
+		basic.LogInformation(paramLog, fmt.Sprintf("Hubungi API Call failed"))
+		return ErrorInternalServer(paramLog, QontakAPICallFailed, err.Error())
 	}
 
-	log.Info(fmt.Sprintf("Hubungi API call "+strconv.Itoa(result.Status)+" : Sending message for %v to %v", to, message))
+	basic.LogInformation(paramLog, fmt.Sprintf("Hubungi API call "+strconv.Itoa(result.Status)+" : Sending message for %v to %v", to, message))
 
 	return nil
 }

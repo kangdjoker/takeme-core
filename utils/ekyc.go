@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
-	log "github.com/sirupsen/logrus"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
-func EKYCEnrollUser(nik string, faceBase64 string) (EkycRequestEnroll, error) {
+func EKYCEnrollUser(paramLog *basic.ParamLog, nik string, faceBase64 string) (EkycRequestEnroll, error) {
 	body := createEkycEnrollPayloadUser(nik, faceBase64)
-	_, err := callEnroll(body)
+	_, err := callEnroll(paramLog, body)
 	if err != nil {
 		return EkycRequestEnroll{}, err
 	}
@@ -20,9 +20,9 @@ func EKYCEnrollUser(nik string, faceBase64 string) (EkycRequestEnroll, error) {
 	return body, nil
 }
 
-func EKYCEnroll(nik string, faceBase64 string) (EkycRequestEnroll, error) {
+func EKYCEnroll(paramLog *basic.ParamLog, nik string, faceBase64 string) (EkycRequestEnroll, error) {
 	body := createEkycEnrollPayload(nik, faceBase64)
-	_, err := callEnroll(body)
+	_, err := callEnroll(paramLog, body)
 	if err != nil {
 		return EkycRequestEnroll{}, err
 	}
@@ -30,9 +30,9 @@ func EKYCEnroll(nik string, faceBase64 string) (EkycRequestEnroll, error) {
 	return body, nil
 }
 
-func EKYCVerify(nik string, faceBase64 string) (EkycRequestVerify, error) {
+func EKYCVerify(paramLog *basic.ParamLog, nik string, faceBase64 string) (EkycRequestVerify, error) {
 	body := createEkycVerifyPayload(nik, faceBase64)
-	_, err := callVerify(body)
+	_, err := callVerify(paramLog, body)
 	if err != nil {
 		return EkycRequestVerify{}, err
 	}
@@ -40,9 +40,9 @@ func EKYCVerify(nik string, faceBase64 string) (EkycRequestVerify, error) {
 	return body, nil
 }
 
-func EKYCVerifyUser(nik string, faceBase64 string, digitalID string) (EkycRequestVerify, error) {
+func EKYCVerifyUser(paramLog *basic.ParamLog, nik string, faceBase64 string, digitalID string) (EkycRequestVerify, error) {
 	body := createEkycVerifyPayloadUser(nik, faceBase64, digitalID)
-	_, err := callVerify(body)
+	_, err := callVerify(paramLog, body)
 	if err != nil {
 		return EkycRequestVerify{}, err
 	}
@@ -147,8 +147,8 @@ func createTransactionID() string {
 	return transactionID
 }
 
-func callEnroll(body EkycRequestEnroll) (EkycResponseEnroll, error) {
-	log.Info(fmt.Sprintf("EKYC Request Body : %v", body))
+func callEnroll(paramLog *basic.ParamLog, body EkycRequestEnroll) (EkycResponseEnroll, error) {
+	basic.LogInformation(paramLog, fmt.Sprintf("EKYC Request Body : %v", body))
 
 	client := resty.New()
 	var result EkycResponseEnroll
@@ -167,21 +167,21 @@ func callEnroll(body EkycRequestEnroll) (EkycResponseEnroll, error) {
 	json.Unmarshal(resp.Body(), &result)
 
 	if err != nil {
-		return EkycResponseEnroll{}, ErrorInternalServer(EKYCCallError, err.Error())
+		return EkycResponseEnroll{}, ErrorInternalServer(paramLog, EKYCCallError, err.Error())
 	}
 
-	loggingEkycResponse(resp)
+	loggingEkycResponse(paramLog, resp)
 
-	log.Info(fmt.Sprintf("Error : %v", resp))
+	basic.LogInformation(paramLog, fmt.Sprintf("Error : %v", resp))
 	if result.ErrorCode != "1000" {
-		return EkycResponseEnroll{}, ErrorBadRequest(BiometricFail, "Biometric failed")
+		return EkycResponseEnroll{}, ErrorBadRequest(paramLog, BiometricFail, "Biometric failed")
 	}
 
 	return result, nil
 }
 
-func callVerify(body EkycRequestVerify) (EkycResponseVerify, error) {
-	log.Info(fmt.Sprintf("EKYC Request Body : %v", body))
+func callVerify(paramLog *basic.ParamLog, body EkycRequestVerify) (EkycResponseVerify, error) {
+	basic.LogInformation(paramLog, fmt.Sprintf("EKYC Request Body : %v", body))
 
 	client := resty.New()
 	var result EkycResponseVerify
@@ -199,26 +199,26 @@ func callVerify(body EkycRequestVerify) (EkycResponseVerify, error) {
 	json.Unmarshal(resp.Body(), &result)
 
 	if err != nil {
-		return EkycResponseVerify{}, ErrorInternalServer(EKYCCallError, err.Error())
+		return EkycResponseVerify{}, ErrorInternalServer(paramLog, EKYCCallError, err.Error())
 	}
 
-	loggingEkycResponse(resp)
+	loggingEkycResponse(paramLog, resp)
 
 	if result.ErrorCode != "1000" {
-		return EkycResponseVerify{}, ErrorBadRequest(BiometricFail, "Biometric failed")
+		return EkycResponseVerify{}, ErrorBadRequest(paramLog, BiometricFail, "Biometric failed")
 	}
 
 	if result.VerificationResult == false {
-		return EkycResponseVerify{}, ErrorBadRequest(FaceNotRecognize, "Biometric failed")
+		return EkycResponseVerify{}, ErrorBadRequest(paramLog, FaceNotRecognize, "Biometric failed")
 	}
 
 	return result, nil
 }
 
-func loggingEkycResponse(resp *resty.Response) {
-	log.Info(fmt.Sprintf("EKYC Response Status : %v", resp.Status()))
-	log.Info(fmt.Sprintf("EKYC Response Headers : %v", resp.Header()))
-	log.Info(fmt.Sprintf("EKYC Response Body : %v", resp))
+func loggingEkycResponse(paramLog *basic.ParamLog, resp *resty.Response) {
+	basic.LogInformation(paramLog, fmt.Sprintf("EKYC Response Status : %v", resp.Status()))
+	basic.LogInformation(paramLog, fmt.Sprintf("EKYC Response Headers : %v", resp.Header()))
+	basic.LogInformation(paramLog, fmt.Sprintf("EKYC Response Body : %v", resp))
 }
 
 type EkycRequestEnroll struct {

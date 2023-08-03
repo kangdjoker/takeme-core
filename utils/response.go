@@ -11,11 +11,9 @@ import (
 
 	"github.com/kangdjoker/takeme-core/utils/basic"
 	opentracingLog "github.com/opentracing/opentracing-go/log"
-	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
 )
 
-var ResponseDescription, _ = readPropertiesFile("message.properties")
+var ResponseDescription, _ = readPropertiesFile(&basic.ParamLog{}, "message.properties")
 
 type CustomSuccess struct {
 	Code        int         `json:"code"`
@@ -27,7 +25,6 @@ type CustomSuccess struct {
 func ResponseError(errr error, w http.ResponseWriter, r *http.Request) {
 	trCloser, span, tag := basic.RequestToTracing(r)
 	if span != nil {
-		logrus.Info("JAEGER.ResponseError")
 		(*span).SetTag("error", true)
 		(*span).LogFields(opentracingLog.Object("ResponseError", errr.Error()))
 	}
@@ -63,7 +60,6 @@ func ResponseSuccessCustom(data interface{}, w http.ResponseWriter, r *http.Requ
 	trCloser, span, tag := basic.RequestToTracing(r)
 	if span != nil {
 		b, _ := json.Marshal(data)
-		logrus.Info("JAEGER.ResponseSuccessCustom")
 		(*span).LogFields(opentracingLog.Object("ResponseSuccessCustom", string(b)))
 	}
 
@@ -79,7 +75,6 @@ func ResponseSuccess(data interface{}, w http.ResponseWriter, r *http.Request) {
 	trCloser, span, tag := basic.RequestToTracing(r)
 	if span != nil {
 		b, _ := json.Marshal(data)
-		logrus.Info("JAEGER.ResponseSuccess")
 		(*span).LogFields(opentracingLog.Object("ResponseSuccessCustom", string(b)))
 	}
 	// TODO CHANGE CODE AS PARAM FOR MORE DYNAMICALLY SUCCESS RESPONSE
@@ -108,7 +103,7 @@ func ResponseSuccess(data interface{}, w http.ResponseWriter, r *http.Request) {
 
 type ErrorDescription map[string]string
 
-func readPropertiesFile(filename string) (ErrorDescription, error) {
+func readPropertiesFile(paramLog *basic.ParamLog, filename string) (ErrorDescription, error) {
 	config := ErrorDescription{}
 
 	if len(filename) == 0 {
@@ -116,7 +111,7 @@ func readPropertiesFile(filename string) (ErrorDescription, error) {
 	}
 	file, err := os.Open(filename)
 	if err != nil {
-		log.Error(err)
+		basic.LogError(paramLog, err)
 		return nil, err
 	}
 	defer file.Close()
@@ -136,7 +131,7 @@ func readPropertiesFile(filename string) (ErrorDescription, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		basic.LogError(paramLog, err)
 		return nil, err
 	}
 

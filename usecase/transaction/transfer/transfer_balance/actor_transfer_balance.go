@@ -29,22 +29,22 @@ type ActorTransferBalance struct {
 func (self ActorTransferBalance) Execute(paramLog *basic.ParamLog, corporate domain.Corporate, actor domain.ActorAble,
 	toBalanceID string, fromBalanceID string, subAmount int, encryptedPIN string, externalID string, isTopupType bool, requestId string) (domain.Transaction, error) {
 
-	fromBalance, err := identifyBalance(fromBalanceID)
+	fromBalance, err := identifyBalance(paramLog, fromBalanceID)
 	if err != nil {
 		return domain.Transaction{}, err
 	}
 
-	from, err := usecase.ActorObjectToActor(fromBalance.Owner.ToActorObject())
+	from, err := usecase.ActorObjectToActor(paramLog, fromBalance.Owner.ToActorObject())
 	if err != nil {
 		return domain.Transaction{}, err
 	}
 
-	toBalance, err := identifyBalance(toBalanceID)
+	toBalance, err := identifyBalance(paramLog, toBalanceID)
 	if err != nil {
 		return domain.Transaction{}, err
 	}
 
-	to, err := usecase.ActorObjectToActor(toBalance.Owner.ToActorObject())
+	to, err := usecase.ActorObjectToActor(paramLog, toBalance.Owner.ToActorObject())
 	if err != nil {
 		return domain.Transaction{}, err
 	}
@@ -64,7 +64,7 @@ func (self ActorTransferBalance) Execute(paramLog *basic.ParamLog, corporate dom
 
 	var statements []domain.Statement
 
-	err = validateCurrency(fromBalance, toBalance)
+	err = validateCurrency(paramLog, fromBalance, toBalance)
 	if err != nil {
 		return domain.Transaction{}, err
 	}
@@ -72,7 +72,7 @@ func (self ActorTransferBalance) Execute(paramLog *basic.ParamLog, corporate dom
 	transaction, transactionStatement := createTransaction(self.corporate, self.fromBalance, self.actor, self.from, self.to,
 		self.toBalance, self.subAmount, self.externalID, isTopupType, requestId)
 
-	feeStatement, err := self.transactionUsecase.CreateFeeStatement(corporate, self.fromBalance, transaction)
+	feeStatement, err := self.transactionUsecase.CreateFeeStatement(paramLog, corporate, self.fromBalance, transaction)
 	if err != nil {
 		return domain.Transaction{}, err
 	}
@@ -81,18 +81,18 @@ func (self ActorTransferBalance) Execute(paramLog *basic.ParamLog, corporate dom
 	statements = append(statements, feeStatement...)
 
 	if self.actor.GetActorType() == domain.ACTOR_TYPE_USER {
-		err = validationActorUser(self.actor, self.fromBalance.ID.Hex(), self.pin)
+		err = validationActorUser(paramLog, self.actor, self.fromBalance.ID.Hex(), self.pin)
 		if err != nil {
 			return domain.Transaction{}, err
 		}
 	} else {
-		err = validationActorCorporate(self.actor, fromBalance, corporate, self.pin)
+		err = validationActorCorporate(paramLog, self.actor, fromBalance, corporate, self.pin)
 		if err != nil {
 			return domain.Transaction{}, err
 		}
 	}
 
-	err = validationTransaction(transaction)
+	err = validationTransaction(paramLog, transaction)
 	if err != nil {
 		return domain.Transaction{}, err
 	}
@@ -159,28 +159,28 @@ func createTransaction(corporate domain.Corporate, fromBalance domain.Balance, a
 	return transaction, statements
 }
 
-func identifyBalance(balanceID string) (domain.Balance, error) {
+func identifyBalance(paramLog *basic.ParamLog, balanceID string) (domain.Balance, error) {
 	balance, err := service.BalanceByIDNoSession(balanceID)
 	if err != nil {
-		return domain.Balance{}, utils.ErrorBadRequest(utils.InvalidBalanceID, "Balance id not found")
+		return domain.Balance{}, utils.ErrorBadRequest(paramLog, utils.InvalidBalanceID, "Balance id not found")
 	}
 
 	return balance, nil
 }
 
-func validationActorUser(actor domain.ActorAble, balanceID string, pin string) error {
+func validationActorUser(paramLog *basic.ParamLog, actor domain.ActorAble, balanceID string, pin string) error {
 
-	err := usecase.ValidateActorPIN(actor, pin)
+	err := usecase.ValidateActorPIN(paramLog, actor, pin)
 	if err != nil {
 		return err
 	}
 
-	err = usecase.ValidateAccessBalance(actor, balanceID)
+	err = usecase.ValidateAccessBalance(paramLog, actor, balanceID)
 	if err != nil {
 		return err
 	}
 
-	err = usecase.ValidateIsVerify(actor)
+	err = usecase.ValidateIsVerify(paramLog, actor)
 	if err != nil {
 		return err
 	}
@@ -188,18 +188,18 @@ func validationActorUser(actor domain.ActorAble, balanceID string, pin string) e
 	return nil
 }
 
-func validationActorCorporate(actor domain.ActorAble, balance domain.Balance, corporate domain.Corporate, pin string) error {
+func validationActorCorporate(paramLog *basic.ParamLog, actor domain.ActorAble, balance domain.Balance, corporate domain.Corporate, pin string) error {
 
-	err := usecase.ValidateActorPIN(actor, pin)
+	err := usecase.ValidateActorPIN(paramLog, actor, pin)
 	if err != nil {
 		return err
 	}
 
 	if balance.CorporateID != balance.CorporateID {
-		return utils.ErrorBadRequest(utils.InvalidBalanceAccess, "Invalid balance access")
+		return utils.ErrorBadRequest(paramLog, utils.InvalidBalanceAccess, "Invalid balance access")
 	}
 
-	err = usecase.ValidateIsVerify(actor)
+	err = usecase.ValidateIsVerify(paramLog, actor)
 	if err != nil {
 		return err
 	}
@@ -207,13 +207,13 @@ func validationActorCorporate(actor domain.ActorAble, balance domain.Balance, co
 	return nil
 }
 
-func validationTransaction(transaction domain.Transaction) error {
-	err := validateMaximum(transaction)
+func validationTransaction(paramLog *basic.ParamLog, transaction domain.Transaction) error {
+	err := validateMaximum(paramLog, transaction)
 	if err != nil {
 		return err
 	}
 
-	err = validateMinimum(transaction)
+	err = validateMinimum(paramLog, transaction)
 	if err != nil {
 		return err
 	}

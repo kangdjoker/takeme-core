@@ -22,7 +22,7 @@ func CreateBalanceUser(paramLog *basic.ParamLog, user domain.ActorAble, corporat
 	var balance domain.Balance
 
 	if utils.IsContainSpecialCharacter(balanceName) {
-		return domain.Balance{}, utils.ErrorBadRequest(utils.InvalidNameFormat, "Name balance error")
+		return domain.Balance{}, utils.ErrorBadRequest(paramLog, utils.InvalidNameFormat, "Name balance error")
 	}
 
 	createBalanceForUser := func(session mongo.SessionContext) error {
@@ -33,7 +33,7 @@ func CreateBalanceUser(paramLog *basic.ParamLog, user domain.ActorAble, corporat
 		)
 
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
 		}
 
 		balance, err = service.BalanceCreate(corporate.ID,
@@ -48,7 +48,7 @@ func CreateBalanceUser(paramLog *basic.ParamLog, user domain.ActorAble, corporat
 			return err
 		}
 
-		user, err := service.UserByID(user.GetActorID().Hex(), session)
+		user, err := service.UserByID(paramLog, user.GetActorID().Hex(), session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
@@ -59,14 +59,14 @@ func CreateBalanceUser(paramLog *basic.ParamLog, user domain.ActorAble, corporat
 			Access:    domain.ACCESS_BALANCE_OWNER,
 		})
 
-		err = service.UserUpdateOne(&user, session)
+		err = service.UserUpdateOne(paramLog, &user, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
 		createVABalance(paramLog, &balance, user.FullName)
-		err = service.BalanceUpdate(balance, session)
+		err = service.BalanceUpdate(paramLog, balance, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
@@ -83,7 +83,7 @@ func CreateBalanceUser(paramLog *basic.ParamLog, user domain.ActorAble, corporat
 	)
 
 	if err != nil {
-		return balance, utils.ErrorInternalServer(utils.DBStartTransactionFailed,
+		return balance, utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed,
 			fmt.Sprintf("Failed initialize balance for user (%v)", user.GetActorID()))
 	}
 
@@ -94,7 +94,7 @@ func CreateBalanceCorporate(paramLog *basic.ParamLog, corp domain.ActorAble, cor
 	var balance domain.Balance
 
 	if utils.IsContainSpecialCharacter(balanceName) {
-		return domain.Balance{}, utils.ErrorBadRequest(utils.InvalidNameFormat, "Name balance error")
+		return domain.Balance{}, utils.ErrorBadRequest(paramLog, utils.InvalidNameFormat, "Name balance error")
 	}
 
 	createBalanceForCorporate := func(session mongo.SessionContext) error {
@@ -104,7 +104,7 @@ func CreateBalanceCorporate(paramLog *basic.ParamLog, corp domain.ActorAble, cor
 		)
 
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
 		}
 
 		balance, err = service.BalanceCreate(
@@ -131,14 +131,14 @@ func CreateBalanceCorporate(paramLog *basic.ParamLog, corp domain.ActorAble, cor
 			Access:    domain.ACCESS_BALANCE_OWNER,
 		})
 
-		err = service.CorporateUpdateOne(&corp, session)
+		err = service.CorporateUpdateOne(paramLog, &corp, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
 		createVABalance(paramLog, &balance, corporate.Name)
-		err = service.BalanceUpdate(balance, session)
+		err = service.BalanceUpdate(paramLog, balance, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
@@ -155,7 +155,7 @@ func CreateBalanceCorporate(paramLog *basic.ParamLog, corp domain.ActorAble, cor
 	)
 
 	if err != nil {
-		return balance, utils.ErrorInternalServer(utils.DBStartTransactionFailed,
+		return balance, utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed,
 			fmt.Sprintf("Failed initialize balance for corporate (%v)", corporate.GetActorID()))
 	}
 
@@ -172,7 +172,7 @@ func InitializeBalanceUser(paramLog *basic.ParamLog, user domain.ActorAble, corp
 		)
 
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
 		}
 
 		balance, err = service.BalanceInitialization(user.GetActorID(),
@@ -188,7 +188,7 @@ func InitializeBalanceUser(paramLog *basic.ParamLog, user domain.ActorAble, corp
 			return err
 		}
 
-		user, err := service.UserByID(user.GetActorID().Hex(), session)
+		user, err := service.UserByID(paramLog, user.GetActorID().Hex(), session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
@@ -201,14 +201,14 @@ func InitializeBalanceUser(paramLog *basic.ParamLog, user domain.ActorAble, corp
 			Access:    domain.ACCESS_BALANCE_OWNER,
 		})
 
-		err = service.UserUpdateOne(&user, session)
+		err = service.UserUpdateOne(paramLog, &user, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
 		createVABalance(paramLog, &balance, user.FullName)
-		err = service.BalanceUpdate(balance, session)
+		err = service.BalanceUpdate(paramLog, balance, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
@@ -225,7 +225,7 @@ func InitializeBalanceUser(paramLog *basic.ParamLog, user domain.ActorAble, corp
 	)
 
 	if err != nil {
-		return balance, utils.ErrorInternalServer(utils.DBStartTransactionFailed,
+		return balance, utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed,
 			fmt.Sprintf("Failed initialize balance for user (%v)", user.GetActorID()))
 	}
 
@@ -241,7 +241,7 @@ func InitializeBalanceCorporate(paramLog *basic.ParamLog, corp domain.ActorAble,
 		)
 
 		if err != nil {
-			return utils.ErrorInternalServer(utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
+			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
 		}
 
 		balance, err = service.BalanceInitialization(corp.GetActorID(),
@@ -270,14 +270,14 @@ func InitializeBalanceCorporate(paramLog *basic.ParamLog, corp domain.ActorAble,
 			Access:    domain.ACCESS_BALANCE_OWNER,
 		})
 
-		err = service.CorporateUpdateOne(&corp, session)
+		err = service.CorporateUpdateOne(paramLog, &corp, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
 		}
 
 		createVABalance(paramLog, &balance, corporate.Name)
-		err = service.BalanceUpdate(balance, session)
+		err = service.BalanceUpdate(paramLog, balance, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
@@ -294,7 +294,7 @@ func InitializeBalanceCorporate(paramLog *basic.ParamLog, corp domain.ActorAble,
 	)
 
 	if err != nil {
-		return balance, utils.ErrorInternalServer(utils.DBStartTransactionFailed,
+		return balance, utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed,
 			fmt.Sprintf("Failed initialize balance for corporate (%v)", corporate.GetActorID()))
 	}
 
@@ -311,12 +311,12 @@ func WithdrawBalance(paramLog *basic.ParamLog, statement domain.Statement, sessi
 	}
 	basic.LogInformation(paramLog, "balance.Amount: "+strconv.Itoa(balance.Amount)+", "+strconv.Itoa(amount))
 	if balance.Amount < amount {
-		return utils.ErrorBadRequest(utils.InsufficientBalance, "Insufficient balance")
+		return utils.ErrorBadRequest(paramLog, utils.InsufficientBalance, "Insufficient balance")
 	}
 
 	balance.Amount = balance.Amount - amount
 
-	err = service.BalanceUpdate(balance, session)
+	err = service.BalanceUpdate(paramLog, balance, session)
 	if err != nil {
 		return err
 	}
@@ -331,7 +331,7 @@ func WithdrawBalance(paramLog *basic.ParamLog, statement domain.Statement, sessi
 	return nil
 }
 
-func DepositBalance(statement domain.Statement, session mongo.SessionContext) error {
+func DepositBalance(paramLog *basic.ParamLog, statement domain.Statement, session mongo.SessionContext) error {
 	balanceID := statement.BalanceID.Hex()
 	amount := statement.Deposit
 
@@ -342,7 +342,7 @@ func DepositBalance(statement domain.Statement, session mongo.SessionContext) er
 
 	balance.Amount = balance.Amount + amount
 
-	err = service.BalanceUpdate(balance, session)
+	err = service.BalanceUpdate(paramLog, balance, session)
 	if err != nil {
 		return err
 	}
@@ -357,14 +357,14 @@ func DepositBalance(statement domain.Statement, session mongo.SessionContext) er
 	return nil
 }
 
-func StatementByBalanceID(balanceID string, page string, limit string) ([]domain.Statement, error) {
+func StatementByBalanceID(paramLog *basic.ParamLog, balanceID string, page string, limit string) ([]domain.Statement, error) {
 	balance, err := service.BalanceByIDNoSession(balanceID)
 	if err != nil || balance.Owner.Type == "" {
-		return []domain.Statement{}, utils.ErrorBadRequest(utils.InvalidBalanceID, "Balance not found")
+		return []domain.Statement{}, utils.ErrorBadRequest(paramLog, utils.InvalidBalanceID, "Balance not found")
 
 	}
 
-	statements, err := service.StatementsByBalanceID(balance.ID, page, limit)
+	statements, err := service.StatementsByBalanceID(paramLog, balance.ID, page, limit)
 	if err != nil {
 		return []domain.Statement{}, err
 	}
@@ -372,36 +372,36 @@ func StatementByBalanceID(balanceID string, page string, limit string) ([]domain
 	return statements, nil
 }
 
-func ShareBalance(corporate domain.Corporate, balanceID string, access string, actorID string, pin string) error {
+func ShareBalance(paramLog *basic.ParamLog, corporate domain.Corporate, balanceID string, access string, actorID string, pin string) error {
 
-	err := ValidateActorPIN(corporate, pin)
+	err := ValidateActorPIN(paramLog, corporate, pin)
 	if err != nil {
 		return err
 	}
 
 	balance, err := service.BalanceByIDNoSession(balanceID)
 	if err != nil || balance.Owner.Type == "" {
-		return utils.ErrorBadRequest(utils.InvalidBalanceID, "Balance not found")
+		return utils.ErrorBadRequest(paramLog, utils.InvalidBalanceID, "Balance not found")
 	}
 
-	actor, err := ActorByID(actorID)
+	actor, err := ActorByID(paramLog, actorID)
 	if err != nil {
 		return err
 	}
 
 	if access != domain.ACCESS_BALANCE_SHARED && access != domain.ACCESS_BALANCE_VIEW_ONLY {
-		return utils.ErrorBadRequest(utils.InvalidAccessType, "Invalid request access type")
+		return utils.ErrorBadRequest(paramLog, utils.InvalidAccessType, "Invalid request access type")
 	}
 
 	if balance.CorporateID != corporate.ID {
-		return utils.ErrorBadRequest(utils.InvalidAccessType, "Invalid balance scope")
+		return utils.ErrorBadRequest(paramLog, utils.InvalidAccessType, "Invalid balance scope")
 	}
 
 	if IsAccessBalanceAlreadyHave(actor, balanceID) {
-		return utils.ErrorBadRequest(utils.AccessBalanceAlreadyHave, "Access balance already have")
+		return utils.ErrorBadRequest(paramLog, utils.AccessBalanceAlreadyHave, "Access balance already have")
 	}
 
-	err = ActorAddBalance(actor, domain.AccessBalance{
+	err = ActorAddBalance(paramLog, actor, domain.AccessBalance{
 		BalanceID: balance.ID,
 		Access:    access,
 	})
@@ -413,28 +413,28 @@ func ShareBalance(corporate domain.Corporate, balanceID string, access string, a
 	return nil
 }
 
-func RevokeBalance(corporate domain.Corporate, balanceID string, revokeFrom string, pin string) error {
+func RevokeBalance(paramLog *basic.ParamLog, corporate domain.Corporate, balanceID string, revokeFrom string, pin string) error {
 
-	err := ValidateActorPIN(corporate, pin)
+	err := ValidateActorPIN(paramLog, corporate, pin)
 	if err != nil {
 		return err
 	}
 
 	balance, err := service.BalanceByIDNoSession(balanceID)
 	if err != nil || balance.Owner.Type == "" {
-		return utils.ErrorBadRequest(utils.InvalidBalanceID, "Balance not found")
+		return utils.ErrorBadRequest(paramLog, utils.InvalidBalanceID, "Balance not found")
 	}
 
-	actor, err := ActorByID(revokeFrom)
+	actor, err := ActorByID(paramLog, revokeFrom)
 	if err != nil {
 		return err
 	}
 
 	if balance.CorporateID != corporate.ID {
-		return utils.ErrorBadRequest(utils.InvalidAccessType, "Invalid balance scope")
+		return utils.ErrorBadRequest(paramLog, utils.InvalidAccessType, "Invalid balance scope")
 	}
 
-	err = ActorRemoveBalance(actor, balanceID)
+	err = ActorRemoveBalance(paramLog, actor, balanceID)
 	if err != nil {
 		return err
 	}
@@ -442,23 +442,23 @@ func RevokeBalance(corporate domain.Corporate, balanceID string, revokeFrom stri
 	return nil
 }
 
-func CreateRequestAccesssBalance(corporate domain.Corporate, requester domain.ActorAble,
+func CreateRequestAccesssBalance(paramLog *basic.ParamLog, corporate domain.Corporate, requester domain.ActorAble,
 	balanceID string, access string) (domain.RequestAccessBalance, error) {
 
 	balance, err := service.BalanceByIDNoSession(balanceID)
 	if err != nil || balance.Owner.Type == "" {
-		return domain.RequestAccessBalance{}, utils.ErrorBadRequest(utils.InvalidBalanceID, "Balance not found")
+		return domain.RequestAccessBalance{}, utils.ErrorBadRequest(paramLog, utils.InvalidBalanceID, "Balance not found")
 	}
 
 	if access != domain.ACCESS_BALANCE_SHARED && access != domain.ACCESS_BALANCE_VIEW_ONLY {
-		return domain.RequestAccessBalance{}, utils.ErrorBadRequest(utils.InvalidAccessType, "Invalid request access type")
+		return domain.RequestAccessBalance{}, utils.ErrorBadRequest(paramLog, utils.InvalidAccessType, "Invalid request access type")
 	}
 
 	if IsAccessBalanceAlreadyHave(requester, balanceID) {
-		return domain.RequestAccessBalance{}, utils.ErrorBadRequest(utils.AccessBalanceAlreadyHave, "Access balance already have")
+		return domain.RequestAccessBalance{}, utils.ErrorBadRequest(paramLog, utils.AccessBalanceAlreadyHave, "Access balance already have")
 	}
 
-	request, err := service.CreateRAB(corporate, balance, requester.ToActorObject(), balance.Owner, access)
+	request, err := service.CreateRAB(paramLog, corporate, balance, requester.ToActorObject(), balance.Owner, access)
 	if err != nil {
 		return domain.RequestAccessBalance{}, err
 	}
@@ -466,8 +466,8 @@ func CreateRequestAccesssBalance(corporate domain.Corporate, requester domain.Ac
 	return request, nil
 }
 
-func ListRequesterAccesssBalance(actor domain.ActorAble, status string) ([]domain.RequestAccessBalance, error) {
-	result, err := service.RABByRequsterID(actor.GetActorID().Hex(), status)
+func ListRequesterAccesssBalance(paramLog *basic.ParamLog, actor domain.ActorAble, status string) ([]domain.RequestAccessBalance, error) {
+	result, err := service.RABByRequsterID(paramLog, actor.GetActorID().Hex(), status)
 	if err != nil {
 		return []domain.RequestAccessBalance{}, err
 	}
@@ -475,8 +475,8 @@ func ListRequesterAccesssBalance(actor domain.ActorAble, status string) ([]domai
 	return result, nil
 }
 
-func ListOwnerAccesssBalance(actor domain.ActorAble, status string) ([]domain.RequestAccessBalance, error) {
-	result, err := service.RABByOwnerID(actor.GetActorID().Hex(), status)
+func ListOwnerAccesssBalance(paramLog *basic.ParamLog, actor domain.ActorAble, status string) ([]domain.RequestAccessBalance, error) {
+	result, err := service.RABByOwnerID(paramLog, actor.GetActorID().Hex(), status)
 	if err != nil {
 		return []domain.RequestAccessBalance{}, err
 	}
@@ -484,14 +484,14 @@ func ListOwnerAccesssBalance(actor domain.ActorAble, status string) ([]domain.Re
 	return result, nil
 }
 
-func ProccedRAB(requestID string, status string, owner domain.ActorAble, pin string) (domain.RequestAccessBalance, error) {
+func ProccedRAB(paramLog *basic.ParamLog, requestID string, status string, owner domain.ActorAble, pin string) (domain.RequestAccessBalance, error) {
 
-	request, err := service.RABByID(requestID)
+	request, err := service.RABByID(paramLog, requestID)
 	if err != nil {
-		return domain.RequestAccessBalance{}, utils.ErrorBadRequest(utils.RequestAccessBalanceNotFound, "Balance not found")
+		return domain.RequestAccessBalance{}, utils.ErrorBadRequest(paramLog, utils.RequestAccessBalanceNotFound, "Balance not found")
 	}
 
-	requester, err := ActorObjectToActor(request.BalanceRequester)
+	requester, err := ActorObjectToActor(paramLog, request.BalanceRequester)
 	if err != nil {
 		return domain.RequestAccessBalance{}, err
 	}
@@ -499,18 +499,18 @@ func ProccedRAB(requestID string, status string, owner domain.ActorAble, pin str
 	balanceID := request.BalanceID.Hex()
 
 	if request.Status != domain.REQUEST_ACCESS_BALANCE_STATUS_PENDING {
-		return domain.RequestAccessBalance{}, utils.ErrorBadRequest(utils.RequestAccessBalanceAlreadyProcced, "Request already procced")
+		return domain.RequestAccessBalance{}, utils.ErrorBadRequest(paramLog, utils.RequestAccessBalanceAlreadyProcced, "Request already procced")
 	}
 
 	if IsAccessBalanceAlreadyHave(requester, balanceID) {
-		return domain.RequestAccessBalance{}, utils.ErrorBadRequest(utils.AccessBalanceAlreadyHave, "Access balance already have")
+		return domain.RequestAccessBalance{}, utils.ErrorBadRequest(paramLog, utils.AccessBalanceAlreadyHave, "Access balance already have")
 	}
 
 	if !IsBalanceOwner(owner, balanceID) {
-		return domain.RequestAccessBalance{}, utils.ErrorBadRequest(utils.InvalidBalanceOwner, "Invalid balance access")
+		return domain.RequestAccessBalance{}, utils.ErrorBadRequest(paramLog, utils.InvalidBalanceOwner, "Invalid balance access")
 	}
 
-	err = ValidateActorPIN(owner, pin)
+	err = ValidateActorPIN(paramLog, owner, pin)
 	if err != nil {
 		return domain.RequestAccessBalance{}, err
 	}
@@ -519,7 +519,7 @@ func ProccedRAB(requestID string, status string, owner domain.ActorAble, pin str
 
 	if status == domain.REQUEST_ACCESS_BALANCE_STATUS_APPROVE {
 
-		err = ActorAddBalance(requester, domain.AccessBalance{
+		err = ActorAddBalance(paramLog, requester, domain.AccessBalance{
 			BalanceID: request.BalanceID,
 			Access:    request.Access,
 		})
@@ -530,7 +530,7 @@ func ProccedRAB(requestID string, status string, owner domain.ActorAble, pin str
 
 	}
 
-	err = service.RABUpdateOne(&request)
+	err = service.RABUpdateOne(paramLog, &request)
 	if err != nil {
 		return domain.RequestAccessBalance{}, err
 	}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/utils"
+	"github.com/kangdjoker/takeme-core/utils/basic"
 	"github.com/kangdjoker/takeme-core/utils/database"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -63,15 +64,15 @@ func DepositTransactionStatement(balanceID primitive.ObjectID, time string, tran
 	}
 }
 
-func StatementsByBalanceID(balanceID primitive.ObjectID, page string, limit string) ([]domain.Statement, error) {
+func StatementsByBalanceID(paramLog *basic.ParamLog, balanceID primitive.ObjectID, page string, limit string) ([]domain.Statement, error) {
 	query := bson.M{"balance_id": balanceID}
 
 	var results []domain.Statement
-	cursor, err := database.Find(domain.STATEMENT_COLLECTION_NAME, query, page, limit)
+	cursor, err := database.Find(paramLog, domain.STATEMENT_COLLECTION_NAME, query, page, limit)
 	err = cursor.All(context.TODO(), &results)
 
 	if err != nil {
-		return []domain.Statement{}, utils.ErrorInternalServer(utils.QueryFailed, "Query failed")
+		return []domain.Statement{}, utils.ErrorInternalServer(paramLog, utils.QueryFailed, "Query failed")
 	}
 
 	return results, nil
