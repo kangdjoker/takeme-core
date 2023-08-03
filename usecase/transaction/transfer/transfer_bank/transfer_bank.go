@@ -99,6 +99,7 @@ func (self TransferBank) CreateTransferGateway(paramLog *basic.ParamLog, transac
 	reference := ""
 	var err error
 	gatewayCode := changeGatewayStrategy(&transaction)
+	basic.LogInformation(paramLog, "gatewayCode:"+gatewayCode)
 
 	switch gatewayCode {
 	case gateway.OY:

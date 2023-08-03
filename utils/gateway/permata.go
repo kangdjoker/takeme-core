@@ -85,17 +85,17 @@ func (gw PermataGateway) CreateTransfer(paramLog *basic.ParamLog, transaction do
 	utils.LoggingAPICall(paramLog, resp.StatusCode(), payload, result, "Permata Payment API Call ")
 
 	if err != nil {
-		return "", utils.ErrorInternalServer(utils.OYApiCallFailed, err.Error())
+		return requestId, utils.ErrorInternalServer(utils.PermataApiCallFailed, err.Error())
 	}
 
 	if len(result.ResponseCode) >= 3 {
 		if result.ResponseCode[:3] == "200" {
 			return result.BeneficiaryAccountName, nil
 		} else {
-			return "", utils.ErrorBadRequest(utils.InquiryAccountHolderNameNotFound, result.ResponseMessage)
+			return requestId, utils.ErrorBadRequest(utils.InquiryAccountHolderNameNotFound, result.ResponseMessage)
 		}
 	} else {
-		return "", utils.ErrorBadRequest(utils.InquiryAccountHolderNameNotFound, "Unknown response")
+		return requestId, utils.ErrorBadRequest(utils.InquiryAccountHolderNameNotFound, "Unknown response")
 	}
 }
 func (gw PermataGateway) CallbackTransfer(w http.ResponseWriter, r *http.Request) (string, string, string, error) {

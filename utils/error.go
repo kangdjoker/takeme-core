@@ -108,6 +108,7 @@ const (
 	DBStartTransactionFailed  = 935
 	StripeAPICallFail         = 936
 	SaveFileFailed            = 937
+	PermataApiCallFailed      = 938
 )
 
 type CustomError struct {
