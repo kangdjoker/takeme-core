@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	opentracingLog "github.com/opentracing/opentracing-go/log"
+
 	"github.com/kangdjoker/takeme-core/domain"
 	"github.com/kangdjoker/takeme-core/service"
 	"github.com/kangdjoker/takeme-core/utils"
@@ -175,13 +177,14 @@ func MiddlewareWithoutSignature(h http.HandlerFunc, secure bool) http.HandlerFun
 		trCloser, span := basic.SetupTracer("takeme-dashboard", "Prelogin")
 		defer (*trCloser).Close()
 		defer (*span).Finish()
+		(*span).LogFields(opentracingLog.Object("MiddlewareWithoutSignature", r.URL.Path))
 		requestID := r.Header.Get("requestID")
 		ctx := context.WithValue(r.Context(), "TRACESPAN", span)
 		ctx = context.WithValue(ctx, "TRACECLOSER", trCloser)
 		ctx = context.WithValue(ctx, "TAG", requestID)
 		paramLog := basic.ParamLog{Tag: requestID, TrCloser: trCloser, Span: span}
 		ctx = context.WithValue(ctx, "TRLOG", paramLog)
-		logrus.Println("JAEGER.MiddlewareWithoutSignature.REQUESTSTART")
+		logrus.Println("JAEGER.MiddlewareWithoutSignature.REQUESTSTART,", r.URL.Path)
 
 		var corporate domain.Corporate
 		var claims domain.Claims
@@ -210,6 +213,7 @@ func MiddlewareWithoutSignature(h http.HandlerFunc, secure bool) http.HandlerFun
 
 		ctx = context.WithValue(r.Context(), "data", data)
 		h.ServeHTTP(w, r.WithContext(ctx))
+		logrus.Println("JAEGER.MiddlewareWithoutSignature.END.WILLCLOSE")
 	})
 }
 
