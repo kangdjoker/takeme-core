@@ -30,6 +30,7 @@ func Middleware(h http.HandlerFunc, secure bool) http.HandlerFunc {
 		paramLog := basic.ParamLog{Tag: requestID, TrCloser: trCloser, Span: span}
 		ctx = context.WithValue(ctx, "TRLOG", paramLog)
 		logrus.Println("JAEGER.MIDDLEWARE.REQUESTSTART")
+
 		basic.LogInformation(&paramLog, "----------------------------- REQUEST START -----------------------------")
 
 		var corporate domain.Corporate
@@ -171,8 +172,17 @@ func hmacSHA512(data, secret []byte) string {
 func MiddlewareWithoutSignature(h http.HandlerFunc, secure bool) http.HandlerFunc {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		trCloser, span := basic.SetupTracer("takeme-dashboard", "Prelogin")
+		defer (*trCloser).Close()
+		defer (*span).Finish()
+		requestID := r.Header.Get("requestID")
+		ctx := context.WithValue(r.Context(), "TRACESPAN", span)
+		ctx = context.WithValue(ctx, "TRACECLOSER", trCloser)
+		ctx = context.WithValue(ctx, "TAG", requestID)
+		paramLog := basic.ParamLog{Tag: requestID, TrCloser: trCloser, Span: span}
+		ctx = context.WithValue(ctx, "TRLOG", paramLog)
+		logrus.Println("JAEGER.MiddlewareWithoutSignature.REQUESTSTART")
 
-		var ctx context.Context
 		var corporate domain.Corporate
 		var claims domain.Claims
 		var err error
