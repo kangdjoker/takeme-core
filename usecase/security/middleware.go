@@ -22,7 +22,7 @@ import (
 func Middleware(h http.HandlerFunc, secure bool) http.HandlerFunc {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		trCloser, span := basic.SetupTracer("Middleware")
+		trCloser, span := basic.SetupTracer(r.URL.Path)
 		defer (*trCloser).Close()
 		defer (*span).Finish()
 		requestID := r.Header.Get("requestID")
@@ -177,7 +177,7 @@ func hmacSHA512(data, secret []byte) string {
 func MiddlewareWithoutSignature(h http.HandlerFunc, secure bool) http.HandlerFunc {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		trCloser, span := basic.SetupTracer("Middleware")
+		trCloser, span := basic.SetupTracer(r.URL.Path)
 		defer (*trCloser).Close()
 		defer (*span).Finish()
 		(*span).LogFields(opentracingLog.Object("MiddlewareWithoutSignature", r.URL.Path))
