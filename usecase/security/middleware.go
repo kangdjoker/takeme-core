@@ -86,7 +86,7 @@ func Middleware(h http.HandlerFunc, secure bool) http.HandlerFunc {
 			"corporate": corporate,
 		}
 
-		ctx = context.WithValue(r.Context(), "data", data)
+		ctx = context.WithValue(ctx, "data", data)
 		h.ServeHTTP(w, r.WithContext(ctx))
 		logrus.Println("JAEGER.MIDDLEWARE.END.WILLCLOSE")
 	})
@@ -217,7 +217,7 @@ func MiddlewareWithoutSignature(h http.HandlerFunc, secure bool) http.HandlerFun
 			"corporate": corporate,
 		}
 
-		ctx = context.WithValue(r.Context(), "data", data)
+		ctx = context.WithValue(ctx, "data", data)
 		h.ServeHTTP(w, r.WithContext(ctx))
 		logrus.Println("JAEGER.MiddlewareWithoutSignature.END.WILLCLOSE")
 	})
