@@ -84,9 +84,9 @@ func (self UserTransferBank) Execute(paramLog *basic.ParamLog, corporate domain.
 		return domain.Transaction{}, err
 	}
 
-	go self.transferBankBase.CreateTransferGateway(paramLog, transaction, requestId)
+	err = self.transferBankBase.CreateTransferGateway(paramLog, transaction, requestId)
 
-	return transaction, nil
+	return transaction, err
 }
 
 func identifyBalance(paramLog *basic.ParamLog, balanceID string) (domain.Balance, error) {

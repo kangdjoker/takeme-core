@@ -89,7 +89,7 @@ func (self TransferBank) SetupGateway(transaction *domain.Transaction) {
 	}
 }
 
-func (self TransferBank) CreateTransferGateway(paramLog *basic.ParamLog, transaction domain.Transaction, requestID string) {
+func (self TransferBank) CreateTransferGateway(paramLog *basic.ParamLog, transaction domain.Transaction, requestID string) error {
 	oy := gateway.OYGateway{}
 	mmbc := gateway.MMBCGateway{}
 	xendit := gateway.XenditGateway{}
@@ -121,12 +121,12 @@ func (self TransferBank) CreateTransferGateway(paramLog *basic.ParamLog, transac
 
 	commitTransactionGateway(paramLog, transaction.ID.Hex(), transaction.Status, gatewayCode, reference, transaction.GatewayStrategies)
 
-	if err != nil {
-		self.CreateTransferGateway(paramLog, transaction, requestID)
-		return
-	}
+	// if err != nil {
+	// 	self.CreateTransferGateway(paramLog, transaction, requestID)
+	// 	return
+	// }
 
-	return
+	return err
 }
 
 func (self TransferBank) ProcessCallbackGatewayTransfer(paramLog *basic.ParamLog, gatewayCode string, transactionCode string, reference string,
@@ -156,8 +156,8 @@ func (self TransferBank) ProcessCallbackGatewayTransfer(paramLog *basic.ParamLog
 	}
 
 	if nextGateway != "" && (status == domain.FAILED_STATUS || status == domain.REFUND_STATUS) {
-		go self.CreateTransferGateway(paramLog, transaction, requestId)
-		return domain.Transaction{}, nil
+		err = self.CreateTransferGateway(paramLog, transaction, requestId)
+		return domain.Transaction{}, err
 	}
 
 	if nextGateway == "" && (status == domain.FAILED_STATUS || status == domain.REFUND_STATUS) {

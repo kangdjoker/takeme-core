@@ -43,7 +43,7 @@ func (gw PermataGateway) CreateTransfer(paramLog *basic.ParamLog, transaction do
 			BeneficiaryAccountEmail: "",
 			Currency:                "IDR",
 			Amount:                  strconv.Itoa(transaction.Amount),
-			Remark:                  "",
+			Remark:                  transaction.Notes,
 			CustomerReference:       "",
 		}
 		url = os.Getenv("PERMATA_PAYMENT_INTRABANK_API_URL")
@@ -59,7 +59,7 @@ func (gw PermataGateway) CreateTransfer(paramLog *basic.ParamLog, transaction do
 			BeneficiaryBankName:               transaction.To.InstitutionName,
 			BeneficiaryAccountEmail:           "",
 			BeneficiaryAccountType:            "SVGS",
-			Remark:                            "",
+			Remark:                            transaction.Notes,
 			ChargeBearerCode:                  "DEBT",
 			BeneficiaryCustomerIdNumber:       "01",
 			BeneficiaryCustomerType:           "01",
@@ -89,7 +89,7 @@ func (gw PermataGateway) CreateTransfer(paramLog *basic.ParamLog, transaction do
 
 	if len(result.ResponseCode) >= 3 {
 		if result.ResponseCode[:3] == "200" {
-			return result.BeneficiaryAccountName, nil
+			return requestId, nil
 		} else {
 			return requestId, utils.ErrorBadRequest(paramLog, utils.InquiryAccountHolderNameNotFound, result.ResponseMessage)
 		}
