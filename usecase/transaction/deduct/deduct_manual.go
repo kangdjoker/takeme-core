@@ -23,7 +23,7 @@ type DeductManual struct {
 }
 
 func (tm DeductManual) Execute(paramLog *basic.ParamLog, balanceID string, amount int,
-	remark string, currency string) (domain.Transaction, domain.Balance, error) {
+	remark string) (domain.Transaction, domain.Balance, error) {
 
 	balance, owner, corporate, err := identifyBalance(paramLog, balanceID)
 	if err != nil {
@@ -36,7 +36,7 @@ func (tm DeductManual) Execute(paramLog *basic.ParamLog, balanceID string, amoun
 	tm.amount = amount
 	tm.remark = remark
 	tm.transactionUsecase = transaction.Base{}
-	tm.currency = currency
+	tm.currency = balance.Currency
 
 	var statements []domain.Statement
 
