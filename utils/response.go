@@ -45,7 +45,10 @@ func ResponseError(errr error, w http.ResponseWriter, r *http.Request) {
 
 	// Only bad request description read from message.properties
 	if err.HttpStatus == 400 && err.Code != 821 {
-		err.Description = ResponseDescription[fmt.Sprintf("%v.%v", err.Code, language)]
+		description := ResponseDescription[fmt.Sprintf("%v.%v", err.Code, language)]
+		if description != "" {
+			err.Description = description
+		}
 	}
 
 	body, _ := json.Marshal(err)

@@ -91,7 +91,13 @@ func (gw PermataGateway) CreateTransfer(paramLog *basic.ParamLog, transaction do
 		if result.ResponseCode[:3] == "200" {
 			return requestId, nil
 		} else {
-			return requestId, utils.ErrorBadRequest(paramLog, utils.InquiryAccountHolderNameNotFound, result.ResponseMessage)
+			i, _ := strconv.Atoi(result.ResponseCode)
+			return requestId, utils.CustomError{
+				HttpStatus:  http.StatusBadRequest,
+				Code:        i,
+				Description: result.ResponseMessage,
+				Time:        time.Now().Format(os.Getenv("TIME_FORMAT")),
+			}
 		}
 	} else {
 		return requestId, utils.ErrorBadRequest(paramLog, utils.InquiryAccountHolderNameNotFound, "Unknown response")
