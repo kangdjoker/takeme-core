@@ -6,8 +6,8 @@ import (
 	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
-func validateCurrency(paramLog *basic.ParamLog, incomeCurrency string, balance domain.Balance) error {
-	if incomeCurrency != balance.Currency {
+func validateCurrency(paramLog *basic.ParamLog, from domain.Balance, to domain.Balance) error {
+	if from.Currency != to.Currency {
 		return utils.ErrorBadRequest(paramLog, utils.CurrencyError, "Transaction cross currency")
 	}
 

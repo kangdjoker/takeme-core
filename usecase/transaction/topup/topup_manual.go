@@ -45,7 +45,7 @@ func (tm TopupManual) Execute(paramLog *basic.ParamLog, balanceID string, amount
 
 	statements = append(statements, transactionStatement)
 
-	err = validateCurrency(paramLog, tm.currency, balance)
+	err = validateCurrency(paramLog, balance, balance)
 	if err != nil {
 		return domain.Transaction{}, domain.Balance{}, err
 	}

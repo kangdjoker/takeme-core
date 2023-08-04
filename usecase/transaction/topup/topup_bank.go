@@ -55,7 +55,7 @@ func (self TopupBank) Execute(paramLog *basic.ParamLog, from domain.Bank, balanc
 	statements = append(statements, transactionStatement)
 	statements = append(statements, feeStatement...)
 
-	err = validateCurrency(paramLog, self.currency, balance)
+	err = validateCurrency(paramLog, balance, balance)
 	if err != nil {
 		return domain.Transaction{}, domain.Balance{}, err
 	}
