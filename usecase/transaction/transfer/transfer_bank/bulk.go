@@ -156,7 +156,7 @@ func executeBulkTransfer(paramLog *basic.ParamLog, corporate domain.Corporate, u
 	for index, transfer := range transfers {
 		usecase := UserTransferBank{}
 		trx, err := usecase.Execute(paramLog, corporate, user, transfer.ToBankAccount.ToTransactionObject(),
-			bulk.BalanceID.Hex(), transfer.Amount, pin, transfer.ExternalID, requestId)
+			bulk.BalanceID.Hex(), transfer.Amount, pin, "", transfer.ExternalID, requestId)
 		if err != nil {
 			err, ok := err.(utils.CustomError)
 			if !ok {

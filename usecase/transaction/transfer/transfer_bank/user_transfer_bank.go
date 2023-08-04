@@ -27,7 +27,7 @@ type UserTransferBank struct {
 }
 
 func (self UserTransferBank) Execute(paramLog *basic.ParamLog, corporate domain.Corporate, actor domain.ActorAble,
-	to domain.TransactionObject, balanceID string, subAmount int, encryptedPIN string, externalID string, requestId string) (domain.Transaction, error) {
+	to domain.TransactionObject, balanceID string, subAmount int, encryptedPIN string, notes string, externalID string, requestId string) (domain.Transaction, error) {
 
 	balance, err := identifyBalance(paramLog, balanceID)
 	if err != nil {
@@ -52,7 +52,7 @@ func (self UserTransferBank) Execute(paramLog *basic.ParamLog, corporate domain.
 
 	var statements []domain.Statement
 
-	transaction, transactionStatement := createTransaction(self.corporate, self.fromBalance, self.actor, self.from, to, subAmount, externalID, requestId)
+	transaction, transactionStatement := createTransaction(self.corporate, self.fromBalance, self.actor, self.from, to, subAmount, notes, externalID, requestId)
 
 	feeStatement, err := self.transactionUsecase.CreateFeeStatement(paramLog, corporate, self.fromBalance, transaction)
 	if err != nil {
@@ -99,7 +99,7 @@ func identifyBalance(paramLog *basic.ParamLog, balanceID string) (domain.Balance
 }
 
 func createTransaction(corporate domain.Corporate, balance domain.Balance, actor domain.ActorAble, from domain.TransactionObject,
-	to domain.TransactionObject, subAmount int, externalID string, requestId string) (domain.Transaction, domain.Statement) {
+	to domain.TransactionObject, subAmount int, notes string, externalID string, requestId string) (domain.Transaction, domain.Statement) {
 
 	totalFee := 0
 	if actor.GetActorType() == domain.ACTOR_TYPE_USER {
@@ -122,7 +122,7 @@ func createTransaction(corporate domain.Corporate, balance domain.Balance, actor
 		SubAmount:        subAmount,
 		Amount:           subAmount + totalFee,
 		Time:             time.Now().Format(os.Getenv("TIME_FORMAT")),
-		Notes:            "",
+		Notes:            notes,
 		Status:           domain.PENDING_STATUS,
 		Unpaid:           false,
 		ExternalID:       externalID,
