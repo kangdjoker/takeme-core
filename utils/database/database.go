@@ -296,7 +296,7 @@ func Update(paramLog *basic.ParamLog, colName string, filter bson.M, changes bso
 
 func DeleteOne(paramLog *basic.ParamLog, colName string, domain domain.BaseModel) error {
 	collection := DBClient.Database(os.Getenv("MONGO_DB_NAME")).Collection(colName)
-	_, err := collection.DeleteOne(context.TODO(), bson.M{"ID": domain.GetDocumentID()})
+	_, err := collection.DeleteOne(context.TODO(), bson.M{"_id": domain.GetDocumentID()})
 	if err != nil {
 		return utils.ErrorInternalServer(paramLog, utils.DeleteFailed, err.Error())
 	}
