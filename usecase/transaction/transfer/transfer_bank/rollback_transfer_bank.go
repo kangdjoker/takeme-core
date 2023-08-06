@@ -43,8 +43,7 @@ func (self *RollbackTransferBank) ExecuteRollback(paramLog *basic.ParamLog) erro
 		self.balance.ID, time.Now().Format(os.Getenv("TIME_FORMAT")),
 		self.transaction.TransactionCode,
 		self.transaction.SubAmount)
-	basic.LogInformation(paramLog, "transactionStatement")
-	basic.LogInformation(paramLog, transactionStatement)
+	basic.LogInformation2(paramLog, "transactionStatement", transactionStatement)
 
 	basic.LogInformation(paramLog, "RollbackFeeStatement")
 	feeStatements, err := self.transactionUsecase.RollbackFeeStatement(paramLog, self.corporate, self.balance, self.transaction)
@@ -52,8 +51,7 @@ func (self *RollbackTransferBank) ExecuteRollback(paramLog *basic.ParamLog) erro
 		return err
 	}
 	basic.LogInformation(paramLog, "RollbackFeeStatement.success")
-	basic.LogInformation(paramLog, "feeStatements")
-	basic.LogInformation(paramLog, feeStatements)
+	basic.LogInformation2(paramLog, "feeStatements", feeStatements)
 
 	var statements []domain.Statement
 	statements = append(statements, transactionStatement)

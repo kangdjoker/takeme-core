@@ -124,9 +124,9 @@ func LogUpdate(model Log, session mongo.SessionContext) error {
 	return nil
 }
 
-func logInformation(isError bool, paramLog *ParamLog, data interface{}) (Log, error) {
+func logInformation(isError bool, paramLog *ParamLog, logTag string, data interface{}) (Log, error) {
 	if paramLog.Span != nil {
-		(*paramLog.Span).LogFields(opentracingLog.Object("logInformation", data))
+		(*paramLog.Span).LogFields(opentracingLog.Object(logTag, data))
 	}
 	var log Log
 
@@ -166,13 +166,19 @@ func LogError(paramLog *ParamLog, data interface{}) (Log, error) {
 	if DBClient == nil {
 		return Log{}, errors.New("No DB Client")
 	}
-	return logInformation(true, paramLog, data)
+	return logInformation(true, paramLog, "logError", data)
 }
 func LogInformation(paramLog *ParamLog, data interface{}) (Log, error) {
 	if DBClient == nil {
 		return Log{}, errors.New("No DB Client")
 	}
-	return logInformation(false, paramLog, data)
+	return logInformation(false, paramLog, "logInformation", data)
+}
+func LogInformation2(paramLog *ParamLog, logTag string, data interface{}) (Log, error) {
+	if DBClient == nil {
+		return Log{}, errors.New("No DB Client")
+	}
+	return logInformation(false, paramLog, logTag, data)
 }
 func SessionSaveOne(domain domain.BaseModel, session mongo.SessionContext) error {
 

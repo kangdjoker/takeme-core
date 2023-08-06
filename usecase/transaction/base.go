@@ -148,11 +148,13 @@ func (self Base) CommitRollback(paramLog *basic.ParamLog, statements []domain.St
 			SetReadConcern(readconcern.Snapshot()).
 			SetWriteConcern(writeconcern.New(writeconcern.WMajority())),
 		)
+		basic.LogInformation(paramLog, "StartTransaction")
 
 		if err != nil {
 			session.AbortTransaction(session)
 			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
 		}
+		basic.LogInformation(paramLog, "adjustBalanceWithStatement")
 
 		err = adjustBalanceWithStatement(paramLog, statements, session)
 		if err != nil {
@@ -182,11 +184,13 @@ func adjustBalanceWithStatement(paramLog *basic.ParamLog, statements []domain.St
 
 	for _, statement := range statements {
 		if statement.Deposit != 0 {
+			basic.LogInformation2(paramLog, "adjustBalanceWithStatement.Deposit", statement)
 			err := usecase.DepositBalance(paramLog, statement, session)
 			if err != nil {
 				return err
 			}
 		} else if statement.Withdraw != 0 {
+			basic.LogInformation2(paramLog, "adjustBalanceWithStatement.Withdraw", statement)
 			err := usecase.WithdrawBalance(paramLog, statement, session)
 			if err != nil {
 				return err
