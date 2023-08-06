@@ -43,6 +43,7 @@ func (self *RollbackTransferBank) ExecuteRollback(paramLog *basic.ParamLog) erro
 		self.balance.ID, time.Now().Format(os.Getenv("TIME_FORMAT")),
 		self.transaction.TransactionCode,
 		self.transaction.SubAmount)
+	transactionStatement.Reference = transactionStatement.Reference + ":rollback"
 	basic.LogInformation2(paramLog, "transactionStatement", transactionStatement)
 
 	basic.LogInformation(paramLog, "RollbackFeeStatement")
