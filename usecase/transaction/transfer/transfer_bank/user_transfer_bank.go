@@ -84,7 +84,7 @@ func (self UserTransferBank) Execute(paramLog *basic.ParamLog, corporate domain.
 		return domain.Transaction{}, err
 	}
 
-	err = self.transferBankBase.CreateTransferGateway(paramLog, transaction, requestId)
+	err = self.transferBankBase.CreateTransferGateway(paramLog, &transaction, requestId)
 
 	return transaction, err
 }

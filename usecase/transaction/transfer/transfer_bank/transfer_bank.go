@@ -90,7 +90,7 @@ func (self TransferBank) SetupGateway(transaction *domain.Transaction) {
 	}
 }
 
-func (self TransferBank) CreateTransferGateway(paramLog *basic.ParamLog, transaction domain.Transaction, requestID string) error {
+func (self TransferBank) CreateTransferGateway(paramLog *basic.ParamLog, transaction *domain.Transaction, requestID string) error {
 	oy := gateway.OYGateway{}
 	mmbc := gateway.MMBCGateway{}
 	xendit := gateway.XenditGateway{}
@@ -98,18 +98,18 @@ func (self TransferBank) CreateTransferGateway(paramLog *basic.ParamLog, transac
 
 	reference := ""
 	var err error
-	gatewayCode := changeGatewayStrategy(&transaction)
+	gatewayCode := changeGatewayStrategy(transaction)
 	basic.LogInformation(paramLog, "gatewayCode:"+gatewayCode)
 
 	switch gatewayCode {
 	case gateway.OY:
-		reference, err = oy.CreateTransfer(paramLog, transaction)
+		reference, err = oy.CreateTransfer(paramLog, *transaction)
 	case gateway.Permata:
 		reference, err = permata.CreateTransfer(paramLog, transaction, requestID)
 	case gateway.MMBC:
-		reference, err = mmbc.CreateTransfer(paramLog, transaction)
+		reference, err = mmbc.CreateTransfer(paramLog, *transaction)
 	case gateway.Xendit:
-		reference, err = xendit.CreateTransfer(paramLog, transaction)
+		reference, err = xendit.CreateTransfer(paramLog, *transaction)
 	}
 	rollback := false
 	basic.LogInformation(paramLog, "reference:"+reference)
@@ -135,7 +135,7 @@ func (self TransferBank) CreateTransferGateway(paramLog *basic.ParamLog, transac
 		basic.LogInformation(paramLog, "doing rollback")
 		transaction.Status = domain.FAILED_STATUS
 		rollbackUsecase := RollbackTransferBank{}
-		rollbackUsecase.Initialize(transaction)
+		rollbackUsecase.Initialize(*transaction)
 		rollbackUsecase.ExecuteRollback(paramLog)
 
 	}
@@ -177,7 +177,7 @@ func (self TransferBank) ProcessCallbackGatewayTransfer(paramLog *basic.ParamLog
 	}
 
 	if nextGateway != "" && (status == domain.FAILED_STATUS || status == domain.REFUND_STATUS) {
-		err = self.CreateTransferGateway(paramLog, transaction, requestId)
+		err = self.CreateTransferGateway(paramLog, &transaction, requestId)
 		return domain.Transaction{}, err
 	}
 
