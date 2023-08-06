@@ -132,10 +132,12 @@ func (self TransferBank) CreateTransferGateway(paramLog *basic.ParamLog, transac
 	}
 
 	if gatewayCode == "" || rollback {
+		basic.LogInformation(paramLog, "doing rollback")
 		transaction.Status = domain.FAILED_STATUS
 		rollbackUsecase := RollbackTransferBank{}
 		rollbackUsecase.Initialize(transaction)
 		rollbackUsecase.ExecuteRollback(paramLog)
+
 	}
 
 	commitTransactionGateway(paramLog, transaction.ID.Hex(), transaction.Status, gatewayCode, reference, transaction.GatewayStrategies)
