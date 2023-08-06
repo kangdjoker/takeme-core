@@ -59,14 +59,14 @@ func (self Base) Commit(paramLog *basic.ParamLog, statements []domain.Statement,
 		)
 
 		if err != nil {
-			basic.LogInformation(paramLog, "Error: "+err.Error())
+			basic.LogError2(paramLog, "Commit.Error", err)
 			session.AbortTransaction(session)
 			return utils.ErrorInternalServer(paramLog, utils.DBStartTransactionFailed, "Initialize balance start transaction failed")
 		}
 
 		err = service.TransactionSaveOne(transaction, session)
 		if err != nil {
-			basic.LogInformation(paramLog, "Error: "+err.Error())
+			basic.LogError2(paramLog, "Commit.TransactionSaveOne", err)
 			session.AbortTransaction(session)
 			if strings.Contains(err.Error(), "E11000") {
 				return utils.CustomError{
@@ -82,7 +82,7 @@ func (self Base) Commit(paramLog *basic.ParamLog, statements []domain.Statement,
 
 		err = adjustBalanceWithStatement(paramLog, statements, session)
 		if err != nil {
-			basic.LogInformation(paramLog, "Error: "+err.Error())
+			basic.LogError2(paramLog, "Commit.adjustBalanceWithStatement", err)
 			session.AbortTransaction(session)
 			return err
 		}

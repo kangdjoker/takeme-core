@@ -29,8 +29,12 @@ func (self TopupBank) Execute(paramLog *basic.ParamLog, from domain.Bank, balanc
 
 	balance, owner, corporate, err := identifyBalance(paramLog, balanceID)
 	if err != nil {
+		basic.LogError2(paramLog, "identifyBalance", err)
 		return domain.Transaction{}, domain.Balance{}, err
 	}
+	basic.LogInformation2(paramLog, "balance", balance)
+	basic.LogInformation2(paramLog, "owner", owner)
+	basic.LogInformation2(paramLog, "corporate", corporate)
 
 	gateway := gateway.XenditGateway{}
 	self.corporate = corporate
@@ -46,24 +50,32 @@ func (self TopupBank) Execute(paramLog *basic.ParamLog, from domain.Bank, balanc
 
 	transaction, transactionStatement := createTransaction(self.corporate, self.balance, self.from,
 		self.to, self.amount, self.reference, gateway, requestId)
+	basic.LogInformation2(paramLog, "transaction", transaction)
+	basic.LogInformation2(paramLog, "transactionStatement", transactionStatement)
 
 	feeStatement, err := self.transactionUsecase.CreateFeeStatement(paramLog, corporate, balance, transaction)
 	if err != nil {
+		basic.LogError2(paramLog, "CreateFeeStatement", err)
 		return domain.Transaction{}, domain.Balance{}, err
 	}
+	basic.LogInformation2(paramLog, "feeStatement", feeStatement)
 
 	statements = append(statements, transactionStatement)
 	statements = append(statements, feeStatement...)
 
 	err = validateCurrency(paramLog, balance, balance)
 	if err != nil {
+		basic.LogError2(paramLog, "validateCurrency", err)
 		return domain.Transaction{}, domain.Balance{}, err
 	}
+	basic.LogInformation(paramLog, "validateCurrency.Success")
 
 	err = self.transactionUsecase.Commit(paramLog, statements, &transaction)
 	if err != nil {
+		basic.LogError2(paramLog, "transactionUsecase.Commit", err)
 		return domain.Transaction{}, domain.Balance{}, err
 	}
+	basic.LogInformation(paramLog, "transactionUsecase.Commit.Success")
 
 	go usecase.PublishTopupCallback(paramLog, corporate, balance, transaction)
 
