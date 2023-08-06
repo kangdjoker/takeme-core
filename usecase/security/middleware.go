@@ -86,6 +86,28 @@ func Middleware(h http.HandlerFunc, secure bool) http.HandlerFunc {
 	})
 }
 
+func MiddlewareLogOnly(h http.HandlerFunc, secure bool) http.HandlerFunc {
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		trCloser, span := basic.SetupTracer(r.Method + ":" + r.URL.Path)
+		defer (*trCloser).Close()
+		defer (*span).Finish()
+		requestID := r.Header.Get("requestID")
+		if requestID != "" {
+			(*span).SetTag("requestID", requestID)
+		}
+		ctx := context.WithValue(r.Context(), "TRACESPAN", span)
+		ctx = context.WithValue(ctx, "TRACECLOSER", trCloser)
+		ctx = context.WithValue(ctx, "TAG", requestID)
+		paramLog := basic.ParamLog{Tag: requestID, TrCloser: trCloser, Span: span}
+		ctx = context.WithValue(ctx, "TRLOG", paramLog)
+
+		basic.LogInformation(&paramLog, "----------------------------- REQUEST START -----------------------------")
+
+		h.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
 func setupContextHeader(paramLog *basic.ParamLog, r *http.Request) error {
 	contentType := r.Header.Get("Content-Type")
 	language := r.Header.Get(" Accept-Language")
