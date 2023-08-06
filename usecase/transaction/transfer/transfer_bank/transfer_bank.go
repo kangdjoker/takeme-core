@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/kangdjoker/takeme-core/domain"
@@ -111,12 +112,18 @@ func (self TransferBank) CreateTransferGateway(paramLog *basic.ParamLog, transac
 		reference, err = xendit.CreateTransfer(paramLog, transaction)
 	}
 	rollback := false
+	basic.LogInformation(paramLog, "reference:"+reference)
+	if err != nil {
+		basic.LogError(paramLog, err)
+	}
 	if err == nil {
+		basic.LogInformation(paramLog, "No Error:COMPLETED_STATUS")
 		//CONFIRM TRANSFER
 		transaction.Status = domain.COMPLETED_STATUS
 	} else {
 		errce, ok := err.(utils.CustomError)
 		if ok {
+			basic.LogInformation(paramLog, "Error:It is CustomError:"+strconv.Itoa(errce.Code))
 			if errce.Code > 0 {
 				//REVERT
 				rollback = true
