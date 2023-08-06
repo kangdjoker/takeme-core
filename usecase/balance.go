@@ -339,6 +339,7 @@ func DepositBalance(paramLog *basic.ParamLog, statement domain.Statement, sessio
 	if err != nil {
 		return err
 	}
+	basic.LogInformation2(paramLog, "BalanceByID", balance)
 
 	balance.Amount = balance.Amount + amount
 
@@ -347,6 +348,7 @@ func DepositBalance(paramLog *basic.ParamLog, statement domain.Statement, sessio
 		return err
 	}
 
+	basic.LogInformation2(paramLog, "BalanceUpdate", balance)
 	statement.Balance = balance.Amount
 
 	err = service.StatementSaveOne(statement, session)
@@ -354,6 +356,7 @@ func DepositBalance(paramLog *basic.ParamLog, statement domain.Statement, sessio
 		return err
 	}
 
+	basic.LogInformation(paramLog, "StatementSaveOne")
 	return nil
 }
 
