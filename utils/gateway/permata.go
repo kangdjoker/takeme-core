@@ -88,8 +88,8 @@ func (gw PermataGateway) CreateTransfer(paramLog *basic.ParamLog, transaction *d
 	}
 
 	if len(result.ResponseCode) >= 3 {
-		transaction.To.Name = result.BeneficiaryAccountName
 		if result.ResponseCode[:3] == "200" {
+			transaction.To.Name = transaction.From.Name
 			return requestId, nil
 		} else {
 			i, _ := strconv.Atoi(result.ResponseCode)
