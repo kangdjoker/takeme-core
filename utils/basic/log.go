@@ -162,6 +162,12 @@ func logInformation(isError bool, paramLog *ParamLog, logTag string, data interf
 
 	return log, nil
 }
+func LogError2(paramLog *ParamLog, tagLog string, data interface{}) (Log, error) {
+	if DBClient == nil {
+		return Log{}, errors.New("No DB Client")
+	}
+	return logInformation(true, paramLog, tagLog, data)
+}
 func LogError(paramLog *ParamLog, data interface{}) (Log, error) {
 	if DBClient == nil {
 		return Log{}, errors.New("No DB Client")

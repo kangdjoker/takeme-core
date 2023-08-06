@@ -158,10 +158,11 @@ func (self Base) CommitRollback(paramLog *basic.ParamLog, statements []domain.St
 
 		err = adjustBalanceWithStatement(paramLog, statements, session)
 		if err != nil {
+			basic.LogError2(paramLog, "adjustBalanceWithStatement", err)
 			session.AbortTransaction(session)
 			return err
 		}
-
+		basic.LogInformation(paramLog, "adjustBalanceWithStatement.success")
 		return database.CommitWithRetry(session)
 
 	}

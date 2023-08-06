@@ -60,6 +60,7 @@ func (self *RollbackTransferBank) ExecuteRollback(paramLog *basic.ParamLog) erro
 	basic.LogInformation(paramLog, "CommitRollback")
 	err = self.transactionUsecase.CommitRollback(paramLog, statements)
 	if err != nil {
+		basic.LogError2(paramLog, "CommitRollback.Error", err)
 		return err
 	}
 	basic.LogInformation(paramLog, "CommitRollback.Success")
