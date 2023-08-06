@@ -85,7 +85,7 @@ func (self UserTransferBank) Execute(paramLog *basic.ParamLog, corporate domain.
 	}
 
 	err = self.transferBankBase.CreateTransferGateway(paramLog, &transaction, requestId)
-
+	go usecase.PublishTransferCallback(paramLog, corporate, transaction)
 	return transaction, err
 }
 

@@ -63,19 +63,20 @@ func PublishDeductCallback(paramLog *basic.ParamLog, corporate domain.Corporate,
 }
 
 func PublishTransferCallback(paramLog *basic.ParamLog, corporate domain.Corporate, transaction domain.Transaction) {
-	minute := 1
+	// minute := 1
 
-	for {
-		payload := createTransferPayload(corporate, transaction)
-		err := callbackTransferHTTP(paramLog, corporate, transaction, payload)
-		if err != nil {
-			minute = minute * 5
-			time.Sleep(time.Duration(minute) * time.Minute)
-			continue
-		}
+	// for {
+	payload := createTransferPayload(corporate, transaction)
+	// err := callbackTransferHTTP(paramLog, corporate, transaction, payload)
+	callbackTransferHTTP(paramLog, corporate, transaction, payload)
+	// if err != nil {
+	// 	minute = minute * 5
+	// 	time.Sleep(time.Duration(minute) * time.Minute)
+	// 	continue
+	// }
 
-		return
-	}
+	// return
+	// }
 }
 
 func PublishAcceptPaymentCallback(paramLog *basic.ParamLog, corporate domain.Corporate, balance domain.Balance, transaction domain.Transaction) {
