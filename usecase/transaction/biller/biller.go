@@ -131,9 +131,9 @@ func CreateBillerBPJSPMIInquiryRequest(paymentCode string, currency string, requ
 	return FusBPJSInq{
 		Fusindo{
 			CMD:      "inq_bpjs_pmi." + paymentCode + "." + strings.ToUpper(currency),
-			Password: os.Getenv("FUSINDO_BILLER_USERNAME"),
+			Password: os.Getenv("FUSINDO_BILLER_PASSWORD"),
 			TRXID:    requestId,
-			User:     os.Getenv("FUSINDO_BILLER_PASSWORD"),
+			User:     os.Getenv("FUSINDO_BILLER_USERNAME"),
 		},
 	}
 }
@@ -141,9 +141,9 @@ func CreateBillerBPJSPMIPaymentRequest(paymentCode string, currency string, requ
 	return FusBPJSPay{
 		Fusindo{
 			CMD:      "pay_bpjs_pmi." + paymentCode + "." + strings.ToUpper(currency),
-			Password: os.Getenv("FUSINDO_BILLER_USERNAME"),
+			Password: os.Getenv("FUSINDO_BILLER_PASSWORD"),
 			TRXID:    requestId,
-			User:     os.Getenv("FUSINDO_BILLER_PASSWORD"),
+			User:     os.Getenv("FUSINDO_BILLER_USERNAME"),
 		},
 	}
 }
