@@ -110,10 +110,22 @@ func (self TransferBank) CreateTransferGateway(paramLog *basic.ParamLog, transac
 	case gateway.Xendit:
 		reference, err = xendit.CreateTransfer(paramLog, transaction)
 	}
+	rollback := false
+	if err == nil {
+		//CONFIRM TRANSFER
+		transaction.Status = domain.COMPLETED_STATUS
+	} else {
+		errce, ok := err.(utils.CustomError)
+		if ok {
+			if errce.Code > 0 {
+				//REVERT
+				rollback = true
+			}
+		}
+	}
 
-	if gatewayCode == "" {
+	if gatewayCode == "" || rollback {
 		transaction.Status = domain.FAILED_STATUS
-
 		rollbackUsecase := RollbackTransferBank{}
 		rollbackUsecase.Initialize(transaction)
 		rollbackUsecase.ExecuteRollback(paramLog)
