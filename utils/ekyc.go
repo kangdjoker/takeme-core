@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -10,44 +11,55 @@ import (
 	"github.com/kangdjoker/takeme-core/utils/basic"
 )
 
-func EKYCEnrollUser(paramLog *basic.ParamLog, nik string, faceBase64 string) (EkycRequestEnroll, error) {
-	body := createEkycEnrollPayloadUser(nik, faceBase64)
-	_, err := callEnroll(paramLog, body)
+func EKYCEnrollUser(paramLog *basic.ParamLog, nik string, faceBase64 string) (EkycRequest, error) {
+	body := createEKycPayload(nik, faceBase64)
+	_, err := callEkycRequest(paramLog, body)
 	if err != nil {
-		return EkycRequestEnroll{}, err
+		return EkycRequest{}, err
 	}
 
 	return body, nil
 }
 
-func EKYCEnroll(paramLog *basic.ParamLog, nik string, faceBase64 string) (EkycRequestEnroll, error) {
-	body := createEkycEnrollPayload(nik, faceBase64)
-	_, err := callEnroll(paramLog, body)
+func EKYCEnroll(paramLog *basic.ParamLog, nik string, faceBase64 string) (EkycRequest, error) {
+	body := createEKycPayload(nik, faceBase64)
+	_, err := callEkycRequest(paramLog, body)
 	if err != nil {
-		return EkycRequestEnroll{}, err
+		return EkycRequest{}, err
 	}
 
 	return body, nil
 }
 
-func EKYCVerify(paramLog *basic.ParamLog, nik string, faceBase64 string) (EkycRequestVerify, error) {
-	body := createEkycVerifyPayload(nik, faceBase64)
-	_, err := callVerify(paramLog, body)
+func EKYCVerify(paramLog *basic.ParamLog, nik string, faceBase64 string) (EkycRequest, error) {
+	body := createEKycPayload(nik, faceBase64)
+	_, err := callEkycRequest(paramLog, body)
 	if err != nil {
-		return EkycRequestVerify{}, err
+		return EkycRequest{}, err
 	}
 
 	return body, nil
 }
 
-func EKYCVerifyUser(paramLog *basic.ParamLog, nik string, faceBase64 string, digitalID string) (EkycRequestVerify, error) {
-	body := createEkycVerifyPayloadUser(nik, faceBase64, digitalID)
-	_, err := callVerify(paramLog, body)
+func EKYCVerifyUser(paramLog *basic.ParamLog, nik string, faceBase64 string, digitalID string) (EkycRequest, error) {
+	body := createEKycPayload(nik, faceBase64)
+	_, err := callEkycRequest(paramLog, body)
 	if err != nil {
-		return EkycRequestVerify{}, err
+		return EkycRequest{}, err
 	}
 
 	return body, nil
+}
+
+func createEKycPayload(nik string, faceBase64 string) EkycRequest {
+	return EkycRequest{
+		Nik:       nik,
+		Fotourl:   faceBase64,
+		Authkey:   os.Getenv("EKYC_AUTH_KEY"),
+		Username:  os.Getenv("EKYC_USERNAME"),
+		DigitalID: "TAKEME-" + nik,
+		DeviceID:  "DEVICE-" + nik,
+	}
 }
 
 func createEkycEnrollPayload(nik string, faceBase64 string) EkycRequestEnroll {
@@ -147,6 +159,47 @@ func createTransactionID() string {
 	return transactionID
 }
 
+func callEkycRequest(paramLog *basic.ParamLog, body EkycRequest) (EkycResponse, error) {
+	basic.LogInformation(paramLog, fmt.Sprintf("EKYC Request Body : %v", body))
+
+	client := resty.New()
+	var result EkycResponse
+
+	b, err := json.Marshal(body)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	var reqBody map[string]string
+
+	json.Unmarshal(b, &reqBody)
+
+	delete(reqBody, "device_Id")
+	delete(reqBody, "digital_Id")
+
+	resp, err := client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(reqBody).
+		Post(os.Getenv("EKYC_URL"))
+
+	json.Unmarshal(resp.Body(), &result)
+
+	log.Println(string(resp.Body()), " Status code", resp.StatusCode())
+
+	if err != nil {
+		return EkycResponse{}, ErrorInternalServer(paramLog, EKYCCallError, err.Error())
+	}
+
+	loggingEkycResponse(paramLog, resp)
+
+	basic.LogInformation(paramLog, fmt.Sprintf("Error : %v", resp))
+	if result.Status != "SUCCESS" {
+		return EkycResponse{}, ErrorBadRequest(paramLog, BiometricFail, "Biometric failed")
+	}
+
+	return result, nil
+}
+
 func callEnroll(paramLog *basic.ParamLog, body EkycRequestEnroll) (EkycResponseEnroll, error) {
 	basic.LogInformation(paramLog, fmt.Sprintf("EKYC Request Body : %v", body))
 
@@ -235,6 +288,33 @@ type EkycRequestEnroll struct {
 	VerifyBeforeEnroll string       `json:"verifyBeforeEnroll"`
 	FaceThreshold      string       `json:"faceThreshold"`
 	Biometrics         []Biometrics `json:"biometrics"`
+}
+
+type EkycRequest struct {
+	Nik       string `json:"nik"`
+	Username  string `json:"username"`
+	Authkey   string `json:"authkey"`
+	Fotourl   string `json:"fotourl"`
+	DigitalID string `json:"digital_Id"`
+	DeviceID  string `json:"device_Id"`
+}
+
+type EkycResponse struct {
+	ID     int    `json:"id"`
+	Status string `json:"status"`
+	Result struct {
+		Data struct {
+			Liveness struct {
+				Data struct {
+					Score       float64 `json:"score"`
+					Quality     float64 `json:"quality"`
+					Probability float64 `json:"probability"`
+				} `json:"data"`
+				Result bool `json:"result"`
+			} `json:"liveness"`
+		} `json:"data"`
+		Status int `json:"status"`
+	} `json:"result"`
 }
 
 type EkycRequestVerify struct {
