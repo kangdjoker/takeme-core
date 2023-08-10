@@ -193,7 +193,7 @@ func callEkycRequest(paramLog *basic.ParamLog, body EkycRequest) (EkycResponse, 
 	loggingEkycResponse(paramLog, resp)
 
 	basic.LogInformation(paramLog, fmt.Sprintf("Error : %v", resp))
-	if result.Status != "SUCCESS" {
+	if !result.Result.Data.Liveness.Result {
 		return EkycResponse{}, ErrorBadRequest(paramLog, BiometricFail, "Biometric failed")
 	}
 
