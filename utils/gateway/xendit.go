@@ -62,7 +62,7 @@ func (gateway XenditGateway) CreateVA(paramLog *basic.ParamLog, balanceID string
 func (gateway XenditGateway) TransferToPartner1(paramLog *basic.ParamLog, payload string, header http.Header, query url.Values) {
 	client := &http.Client{}
 	var data = strings.NewReader(payload)
-	url := os.Getenv("PARTNERCALLBACK1_URL") + "?" + query.Encode()
+	url := os.Getenv("PARTNERCALLBACK1_URL_PAID") + "?" + query.Encode()
 	basic.LogInformation2(paramLog, "TransferToPartner1.URL", url)
 	req, err := http.NewRequest("POST", url, data)
 	if err != nil {
