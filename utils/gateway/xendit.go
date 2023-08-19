@@ -102,10 +102,13 @@ func (gateway XenditGateway) CallbackVA(w http.ResponseWriter, r *http.Request) 
 	//TRANSFER TO PARTNER IF MATCH
 	b, _ := json.Marshal(payload)
 
-	indexPartner1 := strings.Index(payload.BalanceID, "VA-RMTFS")
-	basic.LogInformation2(paramLog, "IndexPartner1", indexPartner1)
-	if indexPartner1 == 0 {
-		gateway.TransferToPartner1(paramLog, string(b), r.Header, r.URL.Query())
+	keyword := os.Getenv("PARTNERCALLBACK1_KEYWORD")
+	if keyword != "" {
+		indexPartner1 := strings.Index(payload.BalanceID, keyword)
+		basic.LogInformation2(paramLog, "IndexPartner1", map[string]interface{}{"keyword": keyword, "index": indexPartner1})
+		if indexPartner1 == 0 {
+			gateway.TransferToPartner1(paramLog, string(b), r.Header, r.URL.Query())
+		}
 	}
 
 	basic.LogInformation(paramLog, "Xendit topup callback payload :"+string(b))
