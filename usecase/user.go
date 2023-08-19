@@ -53,7 +53,7 @@ func UserUpgrade(paramLog *basic.ParamLog, user domain.User, nik string, faceIma
 			return err
 		}
 
-		err = service.UserVerify(paramLog, &user, body.DeviceID, body.NIK, body.DigitalID, session)
+		err = service.UserVerify(paramLog, &user, body.DeviceID, body.Nik, body.DigitalID, session)
 		if err != nil {
 			session.AbortTransaction(session)
 			return err
