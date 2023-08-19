@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -61,6 +62,9 @@ func (gateway XenditGateway) CreateVA(paramLog *basic.ParamLog, balanceID string
 
 func (gateway XenditGateway) TransferToPartner1(paramLog *basic.ParamLog, payload string, header http.Header, query url.Values) {
 	client := &http.Client{}
+	client.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
 	var data = strings.NewReader(payload)
 	url := os.Getenv("PARTNERCALLBACK1_URL_PAID") + "?" + query.Encode()
 	basic.LogInformation2(paramLog, "TransferToPartner1.URL", url)
