@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -58,6 +59,33 @@ func (gateway XenditGateway) CreateVA(paramLog *basic.ParamLog, balanceID string
 	return result.AccountNumber, nil
 }
 
+func (gateway XenditGateway) TransferToPartner1(paramLog *basic.ParamLog, payload string, header http.Header, query url.Values) {
+	client := &http.Client{}
+	var data = strings.NewReader(payload)
+	url := os.Getenv("PARTNERCALLBACK1_URL") + "?" + query.Encode()
+	basic.LogInformation2(paramLog, "TransferToPartner1.URL", url)
+	req, err := http.NewRequest("POST", url, data)
+	if err != nil {
+		basic.LogInformation2(paramLog, "TransferToPartner1.Error1", err.Error())
+		return
+	}
+	header.Del("Connection")
+	req.Header = header
+	basic.LogInformation2(paramLog, "TransferToPartner1.Header", req.Header)
+	resp, err := client.Do(req)
+	if err != nil {
+		basic.LogInformation2(paramLog, "TransferToPartner1.Error2", err.Error())
+		return
+	}
+	defer resp.Body.Close()
+	bodyText, err := io.ReadAll(resp.Body)
+	if err != nil {
+		basic.LogInformation2(paramLog, "TransferToPartner1.Error3", err.Error())
+		return
+	}
+	basic.LogInformation2(paramLog, "TransferToPartner1.Respons", string(bodyText))
+}
+
 func (gateway XenditGateway) CallbackVA(w http.ResponseWriter, r *http.Request) (
 	string, int, domain.Bank, string, error) {
 	ioCloser, span, tag := basic.RequestToTracing(r)
@@ -71,7 +99,14 @@ func (gateway XenditGateway) CallbackVA(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		return "", 0, domain.Bank{}, "", err
 	}
+	//TRANSFER TO PARTNER IF MATCH
 	b, _ := json.Marshal(payload)
+
+	indexPartner1 := strings.Index(payload.BalanceID, "VA-RMTFS")
+	basic.LogInformation2(paramLog, "IndexPartner1", indexPartner1)
+	if indexPartner1 == 0 {
+		gateway.TransferToPartner1(paramLog, string(b), r.Header, r.URL.Query())
+	}
 
 	basic.LogInformation(paramLog, "Xendit topup callback payload :"+string(b))
 
