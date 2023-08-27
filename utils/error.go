@@ -134,6 +134,17 @@ func ErrorBadRequest(paramLog *basic.ParamLog, errorCode int, logMessage string)
 	}
 }
 
+func ErrorUnprocessableEntity(paramLog *basic.ParamLog, errorCode int, logMessage string) error {
+	basic.LogError(paramLog, "Bad Response")
+
+	return CustomError{
+		HttpStatus:  http.StatusUnprocessableEntity,
+		Code:        errorCode,
+		Description: logMessage,
+		Time:        TimestampNow(),
+	}
+}
+
 func ErrorInternalServer(paramLog *basic.ParamLog, errorCode int, logMessage string) error {
 	_, fn, line, _ := runtime.Caller(1)
 	basic.LogError(paramLog, fmt.Sprintf("Internal server error on %v at line %v (%v)", fn, line, logMessage))

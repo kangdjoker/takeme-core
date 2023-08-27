@@ -100,7 +100,7 @@ func (self BPJSTKBiller) Execute(paramLog *basic.ParamLog, corporate domain.Corp
 		return domain.Transaction{}, nil, err
 	}
 	if resPayment.Status == "1" {
-		return domain.Transaction{}, nil, errors.New(resPayment.Data1)
+		return domain.Transaction{}, nil, utils.ErrorUnprocessableEntity(paramLog, 0, resPayment.Data1)
 	} else if resPayment.Status != "0" {
 		return domain.Transaction{}, nil, errors.New("unknown error")
 	}
