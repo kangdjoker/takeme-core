@@ -32,6 +32,12 @@ func Middleware(h http.HandlerFunc, secure bool) http.HandlerFunc {
 		ctx = context.WithValue(ctx, "TRLOG", paramLog)
 
 		basic.LogInformation(&paramLog, "----------------------------- REQUEST START -----------------------------")
+		payload := r.Context().Value("payload")
+		if payload != nil {
+			basic.LogInformation(&paramLog, "payload:"+
+				string(payload.([]byte)[:]),
+			)
+		}
 
 		var corporate domain.Corporate
 		var claims domain.Claims
