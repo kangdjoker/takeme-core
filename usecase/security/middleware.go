@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha512"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -32,6 +33,12 @@ func Middleware(h http.HandlerFunc, secure bool) http.HandlerFunc {
 		ctx = context.WithValue(ctx, "TRLOG", paramLog)
 
 		basic.LogInformation(&paramLog, "----------------------------- REQUEST START -----------------------------")
+		bHeader, e := json.Marshal(r.Header)
+		if e == nil {
+			basic.LogInformation(&paramLog, "fullHeader:"+
+				string(bHeader),
+			)
+		}
 		payload := r.Context().Value("payload")
 		if payload != nil {
 			basic.LogInformation(&paramLog, "payload:"+
