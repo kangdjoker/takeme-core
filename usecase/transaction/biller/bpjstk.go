@@ -57,6 +57,7 @@ func (self BPJSTKBiller) Execute(paramLog *basic.ParamLog, corporate domain.Corp
 	//Ambil data Inqiry dulu
 	resInquiry, err := self.billerBase.BillerInquiryBPJSTKPMI(paramLog, paymentCode, currency, strings.ReplaceAll(uuid.New().String(), "-", ""))
 	if err != nil {
+		basic.LogInformation(paramLog, "Error Inquiry: "+err.Error())
 		return domain.Transaction{}, nil, err
 	}
 	if resInquiry.Status == "1" {
@@ -73,30 +74,35 @@ func (self BPJSTKBiller) Execute(paramLog *basic.ParamLog, corporate domain.Corp
 	if totalBayar == 0 {
 		return domain.Transaction{}, nil, errors.New("tidak mendapatkan data inquiry")
 	}
-
+	basic.LogInformation(paramLog, "weAreCreatingtransaction")
 	transaction, transactionStatement := createTransaction(paramLog, self.corporate, self.fromBalance, self.actor, to, totalBayar, externalID, requestId)
 
 	feeStatement, err := self.transactionUsecase.CreateFeeStatement(paramLog, corporate, self.fromBalance, transaction)
 	if err != nil {
+		basic.LogInformation(paramLog, "Error Fee Statement: "+err.Error())
 		return domain.Transaction{}, nil, err
 	}
 
 	statements = append(statements, transactionStatement)
 	statements = append(statements, feeStatement...)
 
+	basic.LogInformation(paramLog, "weAreDoingValidationActor")
 	err = validationActor(paramLog, self.actor, self.fromBalance.ID.Hex(), self.pin)
 	if err != nil {
+		basic.LogInformation(paramLog, "Error Validation: "+err.Error())
 		return domain.Transaction{}, nil, err
 	}
 
+	basic.LogInformation(paramLog, "weAreCommitting")
 	err = self.transactionUsecase.Commit(paramLog, statements, &transaction)
 	if err != nil {
-		basic.LogInformation(paramLog, "Error: "+err.Error())
+		basic.LogInformation(paramLog, "Error Commit: "+err.Error())
 		return domain.Transaction{}, nil, err
 	}
 
 	resPayment, err := self.billerBase.BillerPayBPJSTKPMI(paramLog, transaction, paymentCode, currency, requestId)
 	if err != nil {
+		basic.LogInformation(paramLog, "Error BillerPayBPJSTKPMI: "+err.Error())
 		return domain.Transaction{}, nil, err
 	}
 	if resPayment.Status == "1" {
@@ -179,16 +185,19 @@ func validationActor(paramLog *basic.ParamLog, actor domain.ActorAble, balanceID
 
 	err := usecase.ValidateActorPIN(paramLog, actor, pin)
 	if err != nil {
+		basic.LogInformation(paramLog, "Errr.ValidateActorPIN:"+err.Error())
 		return err
 	}
 
 	err = usecase.ValidateAccessBalance(paramLog, actor, balanceID)
 	if err != nil {
+		basic.LogInformation(paramLog, "Errr.ValidateAccessBalance:"+err.Error())
 		return err
 	}
 
 	err = usecase.ValidateIsVerify(paramLog, actor)
 	if err != nil {
+		basic.LogInformation(paramLog, "Errr.ValidateIsVerify:"+err.Error())
 		return err
 	}
 

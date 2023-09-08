@@ -21,6 +21,7 @@ func ValidateActorPIN(paramLog *basic.ParamLog, actor domain.ActorAble, pinEncry
 
 	if actor.IsFaceAsPIN() == false {
 		if pinEncrypted == "" {
+			basic.LogInformation(paramLog, "error.pinEncrypted")
 			return utils.ErrorForbidden(paramLog)
 		}
 
@@ -42,6 +43,7 @@ func ValidateActorPIN(paramLog *basic.ParamLog, actor domain.ActorAble, pinEncry
 				go security.InvalidCorporateAuth(paramLog, a)
 			}
 
+			basic.LogInformation(paramLog, "error.pin != actor.GetPIN()")
 			return utils.ErrorForbidden(paramLog)
 		}
 
@@ -50,6 +52,7 @@ func ValidateActorPIN(paramLog *basic.ParamLog, actor domain.ActorAble, pinEncry
 		pin, err := utils.RSADecrypt(pinEncrypted)
 
 		if err != nil {
+			basic.LogInformation(paramLog, "error.RSADecrypt")
 			return utils.ErrorInternalServer(paramLog, utils.DecryptError, "Decrypt error")
 		}
 
@@ -62,7 +65,7 @@ func ValidateActorPIN(paramLog *basic.ParamLog, actor domain.ActorAble, pinEncry
 				a, _ := actor.(domain.Corporate)
 				go security.InvalidCorporateAuth(paramLog, a)
 			}
-
+			basic.LogInformation(paramLog, "error.pin != actor.GetTemporaryPIN()")
 			return utils.ErrorForbidden(paramLog)
 		}
 
