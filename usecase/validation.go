@@ -43,7 +43,7 @@ func ValidateActorPIN(paramLog *basic.ParamLog, actor domain.ActorAble, pinEncry
 				go security.InvalidCorporateAuth(paramLog, a)
 			}
 
-			basic.LogInformation(paramLog, "error.pin != actor.GetPIN()")
+			basic.LogInformation(paramLog, "error.pin != actor.GetPIN();pin:"+pin+";actor.GetPIN():"+actor.GetPIN())
 			return utils.ErrorForbidden(paramLog)
 		}
 
